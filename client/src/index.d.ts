@@ -1,0 +1,11 @@
+declare module "*.jpg";
+declare module "*.svg";
+declare module "*.png";
+declare module "*.gif";
+declare module "*.jpeg";
+declare module "*.webp";
+declare module "*.avif";
+declare module "*.ico";
+declare module "*.bmp";
+declare module "*.tiff";
+declare module "*.css";
