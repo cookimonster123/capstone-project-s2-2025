@@ -1,0 +1,29 @@
+{
+  "parameters": [
+    { "parameterType": "semester" },
+    { "parameterType": "category" }
+  ],
+  "projects": [
+    {
+      "name": "Capstone Project",
+      "teamname": "Team 36",
+      "description": "A demo capstone project.",
+      "semester": "", 
+      "category": "", 
+      "links": [
+        { "type": "github", "value": "https://github.com/example/capstone" }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "name": "Alice",
+      "email": "alice@example.com",
+      "password": "password123",
+      "profilePicture": "",
+      "role": "student",
+      "links": [{ "type": "github", "value": "https://github.com/alice" }],
+      "project": "" 
+    }
+  ]
+}
