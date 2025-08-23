@@ -51,21 +51,62 @@ npm install
 
 ---
 
-### 3. Environment Variables
+### 3. MongoDB Atlas Setup
+
+1. **Create MongoDB Atlas Account:**
+
+   - Sign up for a free account at [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
+   - Create a new cluster (free tier)
+
+2. **Configure Database Access:**
+
+3. **Configure Network Access:**
+
+   - Go to Security → Network Access
+   - Click "Add IP Address"
+   - Choose "Allow Access from Anywhere" (Add: 0.0.0.0/0)
+
+4. **Get Connection String:**
+   - Click "Connect" on your cluster
+   - Choose "Connect your application"
+   - Copy the connection string
+   - Replace `<password>` with your database user's password
+
+### 4. Environment Variables
 
 The server uses a `.env` file for environment variables.
 Create a `.env` file in the `/server` directory and add the following variables:
 
-| Name       | Description                       |
-| ---------- | --------------------------------- |
-| MONGO_URI  | MongoDB connection string         |
-| JWT_SECRET | Secret key for JWT authentication |
+| Name        | Description                       | Example Value                                                               |
+| ----------- | --------------------------------- | --------------------------------------------------------------------------- |
+| MONGODB_URI | MongoDB Atlas connection string   | mongodb+srv://username:password@cluster0.xxxxx.mongodb.net/capstone-project |
+| JWT_SECRET  | Secret key for JWT authentication | your-secret-key                                                             |
 
 Edit the values as needed for your local setup.
 
+### 5. Database Seeding
+
+The project includes sample data to help you get started. To seed your database:
+
+1. Ensure your MongoDB connection is configured in `.env`
+2. Navigate to the server directory:
+   ```bash
+   cd server
+   ```
+3. Run the seeding script:
+   ```bash
+   npm run seed
+   ```
+
+This will populate your database with initial data including:
+
+- Parameters (semester, category)
+- Sample projects
+- User accounts
+
 ---
 
-### 4. Running the Application
+### 6. Running the Application
 
 #### Start the Server
 
@@ -89,18 +130,18 @@ npm run dev
 npm run dev
 ```
 
-### 5. Accessing the App
+### 7. Accessing the App
 
 - **Client:** [http://localhost:5173](http://localhost:5173)
 - **Server:** [http://localhost:3000](http://localhost:3000)
 
 ## Common Commands
 
-| Command         | Location      | Description           |
-| --------------- | ------------- | --------------------- |
-| `npm install`   | client/server | Install dependencies  |
-| `npm run dev`   | client/server | Start dev server      |
-| `npm run seed`  | server        | Seed database         |
+| Command        | Location      | Description          |
+| -------------- | ------------- | -------------------- |
+| `npm install`  | client/server | Install dependencies |
+| `npm run dev`  | client/server | Start dev server     |
+| `npm run seed` | server        | Seed database        |
 
 ## Project Structure
 
