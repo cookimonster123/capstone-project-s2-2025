@@ -1,32 +1,37 @@
 {
-  "name": "capstone-project-s2-2025-team-36",
-  "version": "1.0.0",
-  "description": "[![Open in Codespaces](https://classroom.github.com/assets/launch-codespace-2972f46106e565e64193e422d61a12cf1da4916b45550586e14ef0a7c637dd04.svg)](https://classroom.github.com/open-in-codespaces?assignment_repo_id=19990476)",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "concurrently \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
-    "prepare": "husky install"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/uoa-compsci399-s2-2025/capstone-project-s2-2025-team-36.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "bugs": {
-    "url": "https://github.com/uoa-compsci399-s2-2025/capstone-project-s2-2025-team-36/issues"
-  },
-  "homepage": "https://github.com/uoa-compsci399-s2-2025/capstone-project-s2-2025-team-36#readme",
-  "devDependencies": {
-    "concurrently": "^9.2.0",
-    "husky": "^9.1.7",
-    "lint-staged": "^16.1.5",
-    "prettier": "^3.6.2"
-  },
-  "dependencies": {
-    "csv-parser": "^3.2.0"
-  }
+   "name": "capstone-project-s2-2025-team-36",
+   "version": "1.0.0",
+   "description": "[![Open in Codespaces](https://classroom.github.com/assets/launch-codespace-2972f46106e565e64193e422d61a12cf1da4916b45550586e14ef0a7c637dd04.svg)](https://classroom.github.com/open-in-codespaces?assignment_repo_id=19990476)",
+   "main": "index.js",
+   "scripts": {
+      "test": "echo \"Error: no test specified\" && exit 1",
+      "dev": "concurrently \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
+      "prepare": "husky install"
+   },
+   "repository": {
+      "type": "git",
+      "url": "git+https://github.com/uoa-compsci399-s2-2025/capstone-project-s2-2025-team-36.git"
+   },
+   "keywords": [],
+   "author": "",
+   "license": "ISC",
+   "type": "commonjs",
+   "bugs": {
+      "url": "https://github.com/uoa-compsci399-s2-2025/capstone-project-s2-2025-team-36/issues"
+   },
+   "homepage": "https://github.com/uoa-compsci399-s2-2025/capstone-project-s2-2025-team-36#readme",
+   "devDependencies": {
+      "concurrently": "^9.2.0",
+      "husky": "^9.1.7",
+      "lint-staged": "^16.1.5",
+      "prettier": "^3.6.2"
+   },
+   "lint-staged": {
+      "*.{js,ts,jsx,tsx,json,css,md}": [
+         "prettier --write"
+      ]
+   },
+   "dependencies": {
+      "csv-parser": "^3.2.0"
+   }
 }

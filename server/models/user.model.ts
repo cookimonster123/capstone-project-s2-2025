@@ -20,12 +20,12 @@ const userSchema = new mongoose.Schema({
    },
    profilePicture: {
       type: String,
-      default: '', // TODO: Add default pfp (aws)
+      default: "", // TODO: Add default pfp (aws)
    },
    role: {
       type: String,
-      enum: ['student', 'admin', 'staff', 'capstoneStudent'],
-      default: 'student',
+      enum: ["student", "admin", "staff", "capstoneStudent"],
+      default: "student",
       required: true,
    },
    links: [
@@ -36,21 +36,20 @@ const userSchema = new mongoose.Schema({
             },
             type: {
                type: String,
-               enum: [
-                  'github',
-                  'linkedin',
-                  'personalWebsite'
-               ],
-            }
+               enum: ["github", "linkedin", "personalWebsite"],
+            },
          }),
-      }
+      },
    ],
    project: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Project',
-   }
+      ref: "Project",
+   },
+   team: {
+      // if the user is a capstone student
+   },
 });
 
 // TODO: jwt token
 
-export const User = mongoose.model('User', userSchema);
+export const User = mongoose.model("User", userSchema);
