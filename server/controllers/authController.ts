@@ -31,15 +31,11 @@ export const register = async (req: Request, res: Response) => {
       });
       const salt = await bcrypt.genSalt(10);
       user.password = await bcrypt.hash(user.password, salt);
-      let isCapstoneStudent = checkCapstoneStudent(
-         filePath,
-         field,
-         user.email.split("@")[0]
-      );
+      let isCapstoneStudent = checkCapstoneStudent(filePath, field, user.email);
       if (await isCapstoneStudent) {
          user.role = "capstoneStudent";
       } else {
-         user.role = "student";
+         user.role = "visitor";
       }
       await user.save();
 
@@ -70,13 +66,13 @@ function validateUser(user: any) {
       password: Joi.string().min(6).required(),
       profilePicture: Joi.string().allow(""), // remove allow('') later
       role: Joi.string()
-         .valid("student", "admin", "staff", "capstoneStudent")
-         .default("student"),
+         .valid("visitor", "admin", "staff", "capstoneStudent")
+         .default("visitor"),
       links: Joi.array().items(
          Joi.object({
             type: Joi.string().valid("github", "linkedin", "personalWebsite"),
             value: Joi.string(),
-         })
+         }),
       ),
       project: Joi.string().allow(""),
    });
@@ -84,16 +80,24 @@ function validateUser(user: any) {
    return schema.validate(user);
 }
 
-// Ths function assumes the students upi's are stored in the CSV file under the login_id field
+// This function assumes the students emails are stored in the CSV file under the login_id field
+// Future refactor: Store the entire list to database ONCE
 async function checkCapstoneStudent(
    filePath: string = "../seed/data/ProjectGroups.csv",
    field: string = "login_id",
-   upi: string
+   email: string,
 ): Promise<boolean> {
    return new Promise((resolve, reject) => {
       let resolved = false;
+      const upi = email.split("@")[0];
+      const domain = email.split("@")[1];
 
-      const stream = fs.createReadStream(path.join(__dirname, filePath))
+         resolve(false);
+         return;
+      }
+
+      const stream = fs
+         .createReadStream(path.join(__dirname, filePath))
          .pipe(csv())
          .on("data", (row) => {
             if (!resolved && row[field] === upi) {

@@ -39,15 +39,8 @@ const RegisterForm: React.FC = () => {
          } else {
             setMessage(`Error: ${data.error}`);
          }
-         let errorMsg = "A network error occurred. Please check your internet connection and try again.";
-         if (error instanceof TypeError) {
-            // TypeError is often thrown for failed fetch due to network issues
-            errorMsg = "Unable to connect to the server. Please check your internet connection or try again later.";
-         } else if (error && typeof error === "object" && "message" in error) {
-            errorMsg = `Error: ${(error as Error).message}`;
-         }
-         setMessage(errorMsg);
-         console.error("Error:", error);
+      } catch (error) {
+         console.error("Error: ", error);
       }
    };
 
