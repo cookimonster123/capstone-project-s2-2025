@@ -8,6 +8,7 @@ import {
    ValidationResult,
    RegisterUserData,
    AuthTokenData,
+   LoginUserData,
 } from "../interfaces";
 
 /**
@@ -179,5 +180,90 @@ export async function registerUser(
    } catch (error) {
       console.error("Error in registerUser service:", error);
       throw error; // Re-throw to be handled by controller
+   }
+}
+
+/**
+ * Validates user login data
+ * @param userData - The user login data to validate
+ * @returns Validation result containing validated data or error details
+ */
+export function validateUserLogin(
+   userData: LoginUserData,
+): ValidationResult<LoginUserData> {
+   const schema = Joi.object({
+      email: Joi.string().email().required(),
+      password: Joi.string().min(6).required(),
+   });
+
+   return schema.validate(userData);
+}
+
+/**
+ * Authenticates a user with email and password
+ * @param userData - The user login credentials containing email and password
+ * @returns Promise<ServiceResult<AuthTokenData>> authentication result with token and user data or error
+ * @throws Error for unexpected server errors during authentication process
+ */
+export async function loginUser(
+   userData: LoginUserData,
+): Promise<ServiceResult<AuthTokenData>> {
+   try {
+      // Validate input data
+      const { error, value } = validateUserLogin(userData);
+      if (error) {
+         return {
+            success: false,
+            error: error.details[0].message,
+         };
+      }
+
+      const { email, password } = userData;
+
+      // Find user by email
+      const user = await User.findOne({ email }).select("+password");
+      if (!user) {
+         return {
+            success: false,
+            error: "Invalid credentials",
+         };
+      }
+
+      // Verify password
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+      if (!isPasswordValid) {
+         return {
+            success: false,
+            error: "Invalid credentials",
+         };
+      }
+
+      // Update last login timestamp
+      await User.findByIdAndUpdate(user._id, {
+         lastLogin: new Date(),
+      });
+
+      // Generate JWT token
+      const token = generateToken({
+         id: user._id.toString(),
+         email: user.email,
+         role: user.role,
+      });
+
+      return {
+         success: true,
+         data: {
+            token,
+            user: {
+               id: user._id.toString(),
+               email: user.email,
+               role: user.role,
+               name: user.name,
+            },
+         },
+      };
+   } catch (error) {
+      console.error("Error in loginUser service:", error);
+      throw error;
    }
 }
