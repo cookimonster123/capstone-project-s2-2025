@@ -11,6 +11,14 @@ export const requireTeamOwnership = async (
       const projectId = req.params.id;
       const userId = req.user?.id;
 
+      // Find the user's role
+      const userRole = req.user?.role;
+      if (userRole === "admin" || userRole === "staff") {
+         // Admins and staff have full access
+         next();
+         return;
+      }
+
       // Find the user's team
       const userTeam = (await User.findById(userId)
          .select("team")
