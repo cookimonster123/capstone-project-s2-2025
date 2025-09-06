@@ -18,12 +18,12 @@ const projectSchema = new mongoose.Schema({
    },
    semester: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Parameter",
+      ref: "Semester",
       required: true,
    },
    category: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Parameter",
+      ref: "Category",
    },
    links: [
       {

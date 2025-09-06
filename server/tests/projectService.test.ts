@@ -3,11 +3,11 @@ import { Parameter } from "../models/parameter.model";
 import {
    validateProjectData,
    validateUpdateProjectData,
-   createProject,
-   getAllProjects,
-   getProjectById,
+   insertProject,
+   findAllProjects,
+   findProjectById,
    updateProject,
-   deleteProject,
+   removeProject,
 } from "../services/projectService";
 
 describe("ProjectService", () => {
@@ -222,7 +222,7 @@ describe("ProjectService", () => {
       });
    });
 
-   describe("createProject", () => {
+   describe("insertProject", () => {
       it("should successfully create a new project", async () => {
          const projectData = {
             name: "New Test Project",
@@ -238,7 +238,7 @@ describe("ProjectService", () => {
             ],
          };
 
-         const result = await createProject(projectData);
+         const result = await insertProject(projectData);
 
          expect(result.success).toBe(true);
          expect(result.data).toBeDefined();
@@ -264,7 +264,7 @@ describe("ProjectService", () => {
             links: [],
          };
 
-         const result = await createProject(invalidProjectData);
+         const result = await insertProject(invalidProjectData);
 
          expect(result.success).toBe(false);
          expect(result.error).toBeDefined();
@@ -287,7 +287,7 @@ describe("ProjectService", () => {
             links: [],
          };
 
-         await expect(createProject(projectData)).rejects.toThrow(
+         await expect(insertProject(projectData)).rejects.toThrow(
             "Database error",
          );
 
@@ -296,7 +296,7 @@ describe("ProjectService", () => {
       });
    });
 
-   describe("getAllProjects", () => {
+   describe("findAllProjects", () => {
       beforeEach(async () => {
          // Create test projects
          await Project.create([
@@ -320,7 +320,7 @@ describe("ProjectService", () => {
       });
 
       it("should return all projects with populated fields", async () => {
-         const result = await getAllProjects();
+         const result = await findAllProjects();
 
          expect(result.success).toBe(true);
          expect(result.data).toBeDefined();
@@ -335,7 +335,7 @@ describe("ProjectService", () => {
       it("should return empty array when no projects exist", async () => {
          await Project.deleteMany({});
 
-         const result = await getAllProjects();
+         const result = await findAllProjects();
 
          expect(result.success).toBe(true);
          expect(result.data).toBeDefined();
@@ -356,14 +356,14 @@ describe("ProjectService", () => {
             }),
          });
 
-         await expect(getAllProjects()).rejects.toThrow("Database error");
+         await expect(findAllProjects()).rejects.toThrow("Database error");
 
          // Restore original method
          Project.find = originalFind;
       });
    });
 
-   describe("getProjectById", () => {
+   describe("findProjectById", () => {
       let testProject: any;
 
       beforeEach(async () => {
@@ -378,7 +378,7 @@ describe("ProjectService", () => {
       });
 
       it("should return project by valid ID", async () => {
-         const result = await getProjectById(testProject._id.toString());
+         const result = await findProjectById(testProject._id.toString());
 
          expect(result.success).toBe(true);
          expect(result.data).toBeDefined();
@@ -390,7 +390,7 @@ describe("ProjectService", () => {
 
       it("should return error for non-existent project ID", async () => {
          const nonExistentId = "507f1f77bcf86cd799439011";
-         const result = await getProjectById(nonExistentId);
+         const result = await findProjectById(nonExistentId);
 
          expect(result.success).toBe(false);
          expect(result.error).toBe("Project not found");
@@ -399,7 +399,7 @@ describe("ProjectService", () => {
       it("should handle invalid ObjectId format", async () => {
          const invalidId = "invalid-id";
 
-         await expect(getProjectById(invalidId)).rejects.toBeDefined();
+         await expect(findProjectById(invalidId)).rejects.toBeDefined();
       });
    });
 
@@ -514,7 +514,7 @@ describe("ProjectService", () => {
       });
    });
 
-   describe("deleteProject", () => {
+   describe("removeProject", () => {
       let testProject: any;
 
       beforeEach(async () => {
@@ -529,7 +529,7 @@ describe("ProjectService", () => {
       });
 
       it("should successfully delete existing project", async () => {
-         const result = await deleteProject(testProject._id.toString());
+         const result = await removeProject(testProject._id.toString());
 
          expect(result.success).toBe(true);
          expect(result.data).toBeDefined();
@@ -545,7 +545,7 @@ describe("ProjectService", () => {
       it("should return error for non-existent project", async () => {
          const nonExistentId = "507f1f77bcf86cd799439011";
 
-         const result = await deleteProject(nonExistentId);
+         const result = await removeProject(nonExistentId);
 
          expect(result.success).toBe(false);
          expect(result.error).toBe("Project not found");
@@ -554,7 +554,7 @@ describe("ProjectService", () => {
       it("should handle invalid ObjectId format", async () => {
          const invalidId = "invalid-id";
 
-         await expect(deleteProject(invalidId)).rejects.toBeDefined();
+         await expect(removeProject(invalidId)).rejects.toBeDefined();
       });
 
       it("should handle database errors gracefully", async () => {
@@ -565,7 +565,7 @@ describe("ProjectService", () => {
             .mockRejectedValue(new Error("Database error"));
 
          await expect(
-            deleteProject(testProject._id.toString()),
+            removeProject(testProject._id.toString()),
          ).rejects.toThrow("Database error");
 
          // Restore original method

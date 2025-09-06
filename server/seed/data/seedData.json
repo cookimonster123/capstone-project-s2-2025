@@ -1,29 +1,110 @@
 {
-   "parameters": [
-      { "parameterType": "semester" },
-      { "parameterType": "category" }
+   "semesters": [
+      {
+         "year": 2023,
+         "semester": "S1",
+         "isActive": false
+      },
+      {
+         "year": 2023,
+         "semester": "S2",
+         "isActive": false
+      },
+      {
+         "year": 2024,
+         "semester": "S1",
+         "isActive": false
+      },
+      {
+         "year": 2024,
+         "semester": "S2",
+         "isActive": true
+      }
+   ],
+   "categories": [
+      {
+         "name": "Web Application",
+         "description": "Full-stack web applications and websites"
+      },
+      {
+         "name": "Mobile App",
+         "description": "iOS and Android mobile applications"
+      },
+      {
+         "name": "AI/ML",
+         "description": "Artificial Intelligence and Machine Learning projects"
+      },
+      {
+         "name": "Game Development",
+         "description": "Video games and interactive entertainment"
+      }
    ],
    "projects": [
       {
-         "name": "Capstone Project",
+         "name": "Capstone Project Showcase",
          "teamname": "Team 36",
-         "description": "A demo capstone project.",
-         "semester": "",
-         "category": "",
+         "description": "A comprehensive web application for showcasing Computer Science capstone projects with search, filtering, and user interaction features.",
+         "semester": { "year": 2024, "semester": "S2" },
+         "category": "Web Application",
          "links": [
-            { "type": "github", "value": "https://github.com/example/capstone" }
+            {
+               "type": "github",
+               "value": "https://github.com/example/capstone"
+            },
+            { "type": "deployedWebsite", "value": "https://capstone-demo.com" }
+         ]
+      },
+      {
+         "name": "AI Study Assistant",
+         "teamname": "Team 12",
+         "description": "An intelligent tutoring system that helps students learn programming concepts through personalized recommendations.",
+         "semester": { "year": 2024, "semester": "S2" },
+         "category": "AI/ML",
+         "links": [
+            { "type": "github", "value": "https://github.com/example/ai-tutor" }
+         ]
+      },
+      {
+         "name": "Campus Navigation App",
+         "teamname": "Team 8",
+         "description": "A mobile application providing indoor navigation and campus information for students and visitors.",
+         "semester": { "year": 2024, "semester": "S1" },
+         "category": "Mobile App",
+         "links": [
+            {
+               "type": "github",
+               "value": "https://github.com/example/campus-nav"
+            }
          ]
       }
    ],
    "users": [
       {
-         "name": "Alice",
+         "name": "Alice Johnson",
          "email": "alice@example.com",
          "password": "password123",
          "profilePicture": "",
-         "role": "visitor",
+         "role": "capstoneStudent",
          "links": [{ "type": "github", "value": "https://github.com/alice" }],
-         "project": ""
+         "project": "Capstone Project Showcase"
+      },
+      {
+         "name": "Bob Chen",
+         "email": "bob@example.com",
+         "password": "password123",
+         "profilePicture": "",
+         "role": "visitor",
+         "links": [{ "type": "github", "value": "https://github.com/bobchen" }],
+         "project": "AI Study Assistant"
+      },
+      {
+         "name": "Carol Davis",
+         "email": "carol@university.edu",
+         "password": "password123",
+         "profilePicture": "",
+         "role": "staff",
+         "links": [],
+         "project": "Campus Navigation App"
       }
    ]
 }

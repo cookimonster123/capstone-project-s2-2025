@@ -1,10 +1,9 @@
 import Joi from "joi";
-import { Project } from "../models/project.model";
+import { Project } from "@models";
 import {
    ServiceResult,
    ValidationResult,
    ProjectData,
-   CreateProjectData,
    UpdateProjectData,
 } from "../interfaces";
 
@@ -66,7 +65,7 @@ export function validateUpdateProjectData(
  * @returns Promise<ServiceResult> creation result
  * @throws Error for unexpected server errors
  */
-export async function createProject(
+export async function insertProject(
    projectData: ProjectData,
 ): Promise<ServiceResult> {
    try {
@@ -88,7 +87,7 @@ export async function createProject(
          data: project,
       };
    } catch (error) {
-      console.error("Error in createProject service:", error);
+      console.error("Error in insertProject service:", error);
       throw error;
    }
 }
@@ -98,7 +97,7 @@ export async function createProject(
  * @returns Promise<ServiceResult> projects result
  * @throws Error for unexpected server errors
  */
-export async function getAllProjects(): Promise<ServiceResult> {
+export async function findAllProjects(): Promise<ServiceResult> {
    try {
       const projects = await Project.find()
          .populate("semester")
@@ -109,7 +108,7 @@ export async function getAllProjects(): Promise<ServiceResult> {
          data: projects,
       };
    } catch (error) {
-      console.error("Error in getAllProjects service:", error);
+      console.error("Error in findAllProjects service:", error);
       throw error;
    }
 }
@@ -120,7 +119,7 @@ export async function getAllProjects(): Promise<ServiceResult> {
  * @returns Promise<ServiceResult> project result
  * @throws Error for unexpected server errors
  */
-export async function getProjectById(
+export async function findProjectById(
    projectId: string,
 ): Promise<ServiceResult> {
    try {
@@ -140,7 +139,7 @@ export async function getProjectById(
          data: project,
       };
    } catch (error) {
-      console.error("Error in getProjectById service:", error);
+      console.error("Error in findProjectById service:", error);
       throw error;
    }
 }
@@ -196,7 +195,7 @@ export async function updateProject(
  * @returns Promise<ServiceResult> deletion result
  * @throws Error for unexpected server errors
  */
-export async function deleteProject(projectId: string): Promise<ServiceResult> {
+export async function removeProject(projectId: string): Promise<ServiceResult> {
    try {
       const project = await Project.findByIdAndDelete(projectId);
 
@@ -212,7 +211,7 @@ export async function deleteProject(projectId: string): Promise<ServiceResult> {
          data: { message: "Project deleted successfully" },
       };
    } catch (error) {
-      console.error("Error in deleteProject service:", error);
+      console.error("Error in removeProject service:", error);
       throw error;
    }
 }

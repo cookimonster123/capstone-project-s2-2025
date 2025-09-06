@@ -4,6 +4,10 @@ import cookieParser from "cookie-parser";
 import { connectDB } from "./config/db";
 import dotenv from "dotenv";
 import auth from "./routes/auth";
+import projects from "./routes/projects";
+
+// Import models to ensure they are registered with Mongoose
+import "@models";
 
 dotenv.config();
 
@@ -23,5 +27,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use("/api/auth", auth);
+app.use("/api/projects", projects);
 
 export default app;
