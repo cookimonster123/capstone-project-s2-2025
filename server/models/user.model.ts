@@ -48,7 +48,8 @@ const userSchema = new mongoose.Schema(
          ref: "Project",
       },
       team: {
-         // if the user is a capstone student
+         type: mongoose.Schema.Types.ObjectId,
+         ref: "Team",
       },
       lastLogin: {
          type: Date,

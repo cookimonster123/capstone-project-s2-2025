@@ -1,5 +1,9 @@
 import { Request, Response } from "express";
-import { findAllProjects, findProjectById } from "../services/projectService";
+import {
+   findAllProjects,
+   findProjectById,
+   removeProject,
+} from "../services/projectService";
 
 /**
  * Retrieves all projects from the database
@@ -44,6 +48,30 @@ export const getProjectById = async (
       res.status(200).json({ project: result.data });
    } catch (error) {
       console.error("Error fetching project:", error);
+      res.status(500).json({ error: "Internal server error" });
+   }
+};
+
+/**
+ * Deletes a specific project by its ID
+ * @param req - Express request object containing project ID in params
+ * @param res - Express response object
+ * @returns Promise<void> - Sends JSON response with success message or error
+ */
+export const deleteProjectById = async (
+   req: Request,
+   res: Response,
+): Promise<void> => {
+   const projectId = req.params.id;
+   try {
+      const result = await removeProject(projectId);
+      if (!result.success) {
+         res.status(404).json({ error: "Project not found" });
+         return;
+      }
+      res.status(200).json({ message: "Project deleted successfully" });
+   } catch (error) {
+      console.error("Error deleting project:", error);
       res.status(500).json({ error: "Internal server error" });
    }
 };
