@@ -2,6 +2,23 @@ import { NextFunction, Response } from "express";
 import { User } from "@models";
 import { AuthRequest } from "./auth";
 
+/**
+ * Middleware to verify that a user has permission to access/modify a project.
+ *
+ * Authorization rules:
+ * - Admin and staff users have full access to all projects
+ * - Capstone students can only access projects assigned to their team
+ * - Visitors have no project modification access
+ *
+ * @param req - Express request object with authenticated user data
+ * @param res - Express response object
+ * @param next - Express next function
+ * @returns Promise<void>
+ *
+ * @throws {401} When user is not authenticated
+ * @throws {403} When user doesn't have permission to access the project
+ * @throws {500} When database query fails or other server error occurs
+ */
 export const requireTeamOwnership = async (
    req: AuthRequest,
    res: Response,
@@ -41,5 +58,11 @@ export const requireTeamOwnership = async (
       }
 
       next();
-   } catch (error) {}
+   } catch (error) {
+      console.error("Error in requireTeamOwnership middleware:", error);
+      res.status(500).json({
+         error: "Internal server error while verifying project permissions",
+      });
+      return;
+   }
 };

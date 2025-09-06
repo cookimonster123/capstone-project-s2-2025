@@ -3,22 +3,30 @@
       {
          "year": 2023,
          "semester": "S1",
-         "isActive": false
+         "isActive": false,
+         "startDate": "2023-02-27T00:00:00.000Z",
+         "endDate": "2023-06-16T00:00:00.000Z"
       },
       {
          "year": 2023,
          "semester": "S2",
-         "isActive": false
+         "isActive": false,
+         "startDate": "2023-07-17T00:00:00.000Z",
+         "endDate": "2023-11-17T00:00:00.000Z"
       },
       {
          "year": 2024,
          "semester": "S1",
-         "isActive": false
+         "isActive": false,
+         "startDate": "2024-02-26T00:00:00.000Z",
+         "endDate": "2024-06-14T00:00:00.000Z"
       },
       {
          "year": 2024,
          "semester": "S2",
-         "isActive": true
+         "isActive": true,
+         "startDate": "2024-07-15T00:00:00.000Z",
+         "endDate": "2024-11-15T00:00:00.000Z"
       }
    ],
    "categories": [
@@ -39,10 +47,24 @@
          "description": "Video games and interactive entertainment"
       }
    ],
+   "teams": [
+      {
+         "name": "Team 36",
+         "projectName": "Capstone Project Showcase"
+      },
+      {
+         "name": "Team 12",
+         "projectName": "AI Study Assistant"
+      },
+      {
+         "name": "Team 8",
+         "projectName": "Campus Navigation App"
+      }
+   ],
    "projects": [
       {
          "name": "Capstone Project Showcase",
-         "teamname": "Team 36",
+         "teamName": "Team 36",
          "description": "A comprehensive web application for showcasing Computer Science capstone projects with search, filtering, and user interaction features.",
          "semester": { "year": 2024, "semester": "S2" },
          "category": "Web Application",
@@ -56,7 +78,7 @@
       },
       {
          "name": "AI Study Assistant",
-         "teamname": "Team 12",
+         "teamName": "Team 12",
          "description": "An intelligent tutoring system that helps students learn programming concepts through personalized recommendations.",
          "semester": { "year": 2024, "semester": "S2" },
          "category": "AI/ML",
@@ -66,7 +88,7 @@
       },
       {
          "name": "Campus Navigation App",
-         "teamname": "Team 8",
+         "teamName": "Team 8",
          "description": "A mobile application providing indoor navigation and campus information for students and visitors.",
          "semester": { "year": 2024, "semester": "S1" },
          "category": "Mobile App",
@@ -85,17 +107,31 @@
          "password": "password123",
          "profilePicture": "",
          "role": "capstoneStudent",
-         "links": [{ "type": "github", "value": "https://github.com/alice" }],
-         "project": "Capstone Project Showcase"
+         "links": [
+            {
+               "type": "github",
+               "value": "https://github.com/alice"
+            },
+            {
+               "type": "linkedin",
+               "value": "https://linkedin.com/in/alice-johnson"
+            }
+         ],
+         "teamName": "Team 36"
       },
       {
          "name": "Bob Chen",
          "email": "bob@example.com",
          "password": "password123",
          "profilePicture": "",
-         "role": "visitor",
-         "links": [{ "type": "github", "value": "https://github.com/bobchen" }],
-         "project": "AI Study Assistant"
+         "role": "capstoneStudent",
+         "links": [
+            {
+               "type": "github",
+               "value": "https://github.com/bobchen"
+            }
+         ],
+         "teamName": "Team 12"
       },
       {
          "name": "Carol Davis",
@@ -103,8 +139,34 @@
          "password": "password123",
          "profilePicture": "",
          "role": "staff",
-         "links": [],
-         "project": "Campus Navigation App"
+         "links": [
+            {
+               "type": "personalWebsite",
+               "value": "https://www.carol-davis.com"
+            }
+         ]
+      },
+      {
+         "name": "David Wilson",
+         "email": "david@example.com",
+         "password": "password123",
+         "profilePicture": "",
+         "role": "capstoneStudent",
+         "links": [
+            {
+               "type": "github",
+               "value": "https://github.com/davidwilson"
+            }
+         ],
+         "teamName": "Team 8"
+      },
+      {
+         "name": "Admin User",
+         "email": "admin@university.edu",
+         "password": "admin123456",
+         "profilePicture": "",
+         "role": "admin",
+         "links": []
       }
    ]
 }

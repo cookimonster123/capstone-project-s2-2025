@@ -3,7 +3,9 @@ import {
    findAllProjects,
    findProjectById,
    removeProject,
+   updateProject,
 } from "../services/projectService";
+import { UpdateProjectData } from "interfaces";
 
 /**
  * Retrieves all projects from the database
@@ -72,6 +74,37 @@ export const deleteProjectById = async (
       res.status(200).json({ message: "Project deleted successfully" });
    } catch (error) {
       console.error("Error deleting project:", error);
+      res.status(500).json({ error: "Internal server error" });
+   }
+};
+
+/**
+ * Updates a specific project by its ID
+ * @param req - Express request object containing project ID in params and update data in body
+ * @param res - Express response object
+ * @returns Promise<void> - Sends JSON response with updated project data or error message
+ */
+export const updateProjectById = async (
+   req: Request,
+   res: Response,
+): Promise<void> => {
+   try {
+      const projectId = req.params.id;
+      const updateData: UpdateProjectData = req.body;
+
+      const result = await updateProject(projectId, updateData);
+      if (!result.success) {
+         if (result.error === "Project not found") {
+            res.status(404).json({ error: result.error });
+         } else {
+            res.status(400).json({ error: result.error });
+         }
+         return;
+      }
+
+      res.status(200).json({ project: result.data });
+   } catch (error) {
+      console.error("Error updating project:", error);
       res.status(500).json({ error: "Internal server error" });
    }
 };
