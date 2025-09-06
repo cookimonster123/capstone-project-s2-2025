@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
+import { JwtPayload } from "../interfaces/auth";
 
 /**
  * Extended Request interface to include user information
@@ -40,7 +41,7 @@ export const authenticateToken = async (
       }
 
       // Verify token
-      const decoded = jwt.verify(token, process.env.JWT_SECRET) as any;
+      const decoded = jwt.verify(token, process.env.JWT_SECRET) as JwtPayload;
 
       if (!decoded.user) {
          res.status(401).json({ error: "Invalid token format" });

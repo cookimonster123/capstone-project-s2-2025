@@ -34,3 +34,16 @@ export interface AuthTokenData {
       name: string;
    };
 }
+
+/**
+ * Interface for JWT payload structure
+ */
+export interface JwtPayload {
+   user: {
+      id: string;
+      email: string;
+      role: string;
+   };
+   iat?: number; // issued at
+   exp?: number; // expires at
+}

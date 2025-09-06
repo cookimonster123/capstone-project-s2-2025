@@ -3,8 +3,10 @@ import {
    getAllProjects,
    getProjectById,
    deleteProjectById,
+   updateProjectById,
 } from "@controllers";
 import { authenticateToken, authorizeRoles } from "../middleware/auth";
+import { requireTeamOwnership } from "../middleware/projects";
 
 const router = Router();
 
@@ -15,6 +17,14 @@ router.delete(
    authenticateToken,
    authorizeRoles(["admin", "staff"]),
    deleteProjectById,
+);
+
+router.put(
+   "/:id",
+   authenticateToken,
+   authorizeRoles(["admin", "staff", "capstoneStudent"]),
+   requireTeamOwnership,
+   updateProjectById,
 );
 
 export default router;

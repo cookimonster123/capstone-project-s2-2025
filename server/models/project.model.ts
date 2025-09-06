@@ -7,10 +7,10 @@ const projectSchema = new mongoose.Schema({
       minlength: 1,
       maxlength: 100,
    },
-   teamname: {
-      type: String,
-      default: "",
-      // might need to do a ref in the future
+   team: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Team",
+      required: true,
    },
    description: {
       type: String,
