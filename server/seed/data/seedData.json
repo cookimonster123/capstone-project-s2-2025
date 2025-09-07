@@ -59,6 +59,10 @@
       {
          "name": "Team 8",
          "projectName": "Campus Navigation App"
+      },
+      {
+         "name": "Team 5",
+         "projectName": null
       }
    ],
    "projects": [
@@ -167,6 +171,24 @@
          "profilePicture": "",
          "role": "admin",
          "links": []
+      },
+      {
+         "name": "Emma Thompson",
+         "email": "emma@example.com",
+         "password": "password123",
+         "profilePicture": "",
+         "role": "capstoneStudent",
+         "links": [
+            {
+               "type": "github",
+               "value": "https://github.com/emmathompson"
+            },
+            {
+               "type": "linkedin",
+               "value": "https://linkedin.com/in/emma-thompson"
+            }
+         ],
+         "teamName": "Team 5"
       }
    ]
 }

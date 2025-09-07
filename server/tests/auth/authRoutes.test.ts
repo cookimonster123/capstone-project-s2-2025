@@ -1,14 +1,14 @@
 import request from "supertest";
 import { Express } from "express";
 import bcrypt from "bcryptjs";
-import { User } from "../models/user.model";
-import { RegisteredStudent } from "../models/registeredStudent.model";
+import { User } from "../../models/user.model";
+import { RegisteredStudent } from "../../models/registeredStudent.model";
 
 // We'll need to import the app for testing
 // For now, let's create a minimal test app setup
 import express from "express";
 import cookieParser from "cookie-parser";
-import authRoutes from "../routes/auth";
+import authRoutes from "../../routes/auth";
 
 const createTestApp = (): Express => {
    const app = express();

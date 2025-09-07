@@ -1,11 +1,15 @@
-import { Request, Response } from "express";
+import { Response } from "express";
+import { AuthRequest } from "../middleware/auth";
 import {
    findAllProjects,
    findProjectById,
    removeProject,
    updateProject,
+   insertProject,
+   linkProjectToTeam,
+   linkProjectToTeamMembers,
 } from "../services/projectService";
-import { UpdateProjectData } from "interfaces";
+import { UpdateProjectData, ProjectData } from "interfaces";
 
 /**
  * Retrieves all projects from the database
@@ -14,7 +18,7 @@ import { UpdateProjectData } from "interfaces";
  * @returns Promise<void> - Sends JSON response with projects array or error message
  */
 export const getAllProjects = async (
-   req: Request,
+   req: AuthRequest,
    res: Response,
 ): Promise<void> => {
    try {
@@ -37,7 +41,7 @@ export const getAllProjects = async (
  * @returns Promise<void> - Sends JSON response with project data or error message
  */
 export const getProjectById = async (
-   req: Request,
+   req: AuthRequest,
    res: Response,
 ): Promise<void> => {
    const projectId = req.params.id;
@@ -61,7 +65,7 @@ export const getProjectById = async (
  * @returns Promise<void> - Sends JSON response with success message or error
  */
 export const deleteProjectById = async (
-   req: Request,
+   req: AuthRequest,
    res: Response,
 ): Promise<void> => {
    const projectId = req.params.id;
@@ -85,7 +89,7 @@ export const deleteProjectById = async (
  * @returns Promise<void> - Sends JSON response with updated project data or error message
  */
 export const updateProjectById = async (
-   req: Request,
+   req: AuthRequest,
    res: Response,
 ): Promise<void> => {
    try {
@@ -105,6 +109,40 @@ export const updateProjectById = async (
       res.status(200).json({ project: result.data });
    } catch (error) {
       console.error("Error updating project:", error);
+      res.status(500).json({ error: "Internal server error" });
+   }
+};
+
+/**
+ * Creates a new project
+ * @param req - Express request object containing project data in body and user info
+ * @param res - Express response object
+ * @returns Promise<void> - Sends JSON response with created project data or error message
+ */
+export const createProject = async (
+   req: AuthRequest,
+   res: Response,
+): Promise<void> => {
+   try {
+      const projectData: ProjectData = req.body;
+      const teamId = projectData.teamId;
+
+      const result = await insertProject(projectData);
+      if (!result.success) {
+         res.status(400).json({ error: result.error });
+         return;
+      }
+      const projectId = result.data?._id;
+
+      await linkProjectToTeam(projectId, teamId);
+      await linkProjectToTeamMembers(projectId, teamId);
+
+      res.status(201).json({
+         message: "Project created successfully",
+         project: result.data,
+      });
+   } catch (error) {
+      console.error("Error creating project:", error);
       res.status(500).json({ error: "Internal server error" });
    }
 };

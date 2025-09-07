@@ -1,14 +1,14 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { User } from "../models/user.model";
-import { RegisteredStudent } from "../models/registeredStudent.model";
+import { User } from "../../models/user.model";
+import { RegisteredStudent } from "../../models/registeredStudent.model";
 import {
    validateUserRegistration,
    checkCapstoneStudent,
    hashPassword,
    generateToken,
    registerUser,
-} from "../services/authService";
+} from "../../services/authService";
 
 // Mock environment variables
 process.env.JWT_SECRET = "test_jwt_secret_key_for_testing_purposes_only";

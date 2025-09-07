@@ -3,7 +3,7 @@
  */
 export interface ProjectData {
    name: string;
-   teamname?: string;
+   teamId: string;
    description?: string;
    semester: string;
    category?: string;

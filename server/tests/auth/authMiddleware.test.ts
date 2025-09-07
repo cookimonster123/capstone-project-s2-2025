@@ -4,7 +4,7 @@ import {
    authenticateToken,
    authorizeRoles,
    AuthRequest,
-} from "../middleware/auth";
+} from "../../middleware/auth";
 
 // Mock jwt
 jest.mock("jsonwebtoken", () => ({

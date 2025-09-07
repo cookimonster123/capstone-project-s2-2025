@@ -12,6 +12,10 @@ export default {
    },
    moduleNameMapper: {
       "^(\\.{1,2}/.*)\\.js$": "$1",
+      "^@models$": "<rootDir>/models/index.ts",
+      "^@models/(.*)$": "<rootDir>/models/$1",
+      "^@controllers$": "<rootDir>/controllers/index.ts",
+      "^@controllers/(.*)$": "<rootDir>/controllers/$1",
    },
    testMatch: ["**/tests/**/*.test.ts", "**/tests/**/*.spec.ts"],
    collectCoverageFrom: [

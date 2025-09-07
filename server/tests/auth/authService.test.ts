@@ -1,14 +1,14 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { User } from "../models/user.model";
-import { RegisteredStudent } from "../models/registeredStudent.model";
+import { User } from "../../models/user.model";
+import { RegisteredStudent } from "../../models/registeredStudent.model";
 import {
    validateUserLogin,
    hashPassword,
    generateToken,
    checkCapstoneStudent,
    loginUser,
-} from "../services/authService";
+} from "../../services/authService";
 
 // Mock the models
 jest.mock("../models/user.model");

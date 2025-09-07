@@ -4,6 +4,7 @@ import {
    getProjectById,
    deleteProjectById,
    updateProjectById,
+   createProject,
 } from "@controllers";
 import { authenticateToken, authorizeRoles } from "../middleware/auth";
 import { requireTeamOwnership } from "../middleware/projects";
@@ -25,6 +26,13 @@ router.put(
    authorizeRoles(["admin", "staff", "capstoneStudent"]),
    requireTeamOwnership,
    updateProjectById,
+);
+
+router.post(
+   "/",
+   authenticateToken,
+   authorizeRoles(["admin", "staff", "capstoneStudent"]),
+   createProject,
 );
 
 export default router;

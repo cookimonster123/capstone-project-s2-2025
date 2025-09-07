@@ -1,11 +1,12 @@
 import Joi from "joi";
-import { Project } from "@models";
+import { Project, Team, User } from "@models";
 import {
    ServiceResult,
    ValidationResult,
    ProjectData,
    UpdateProjectData,
 } from "../interfaces";
+import mongoose from "mongoose";
 
 /**
  * Validates project data
@@ -17,7 +18,7 @@ export function validateProjectData(
 ): ValidationResult<ProjectData> {
    const schema = Joi.object({
       name: Joi.string().min(1).max(100).required(),
-      teamname: Joi.string().allow(""),
+      teamId: Joi.string().allow(""),
       description: Joi.string().allow(""),
       semester: Joi.string().required(),
       category: Joi.string().allow(""),
@@ -42,7 +43,7 @@ export function validateUpdateProjectData(
 ): ValidationResult<UpdateProjectData> {
    const schema = Joi.object({
       name: Joi.string().min(1).max(100).optional(),
-      teamname: Joi.string().allow("").optional(),
+      teamId: Joi.string().allow("").optional(),
       description: Joi.string().allow("").optional(),
       semester: Joi.string().optional(),
       category: Joi.string().allow("").optional(),
@@ -78,8 +79,23 @@ export async function insertProject(
          };
       }
 
-      // Create new project
-      const project = new Project(projectData);
+      const teamId = projectData.teamId;
+
+      // Check if team has a project already
+      const hasProject = await teamHasProject(teamId);
+      if (hasProject) {
+         return {
+            success: false,
+            error: "This team already has a project",
+         };
+      }
+
+      // Create new project with proper field mapping
+      const { teamId: _, ...projectFields } = projectData;
+      const project = new Project({
+         ...projectFields,
+         team: teamId, // Map teamId to team field required by the schema
+      });
       await project.save();
 
       return {
@@ -212,6 +228,78 @@ export async function removeProject(projectId: string): Promise<ServiceResult> {
       };
    } catch (error) {
       console.error("Error in removeProject service:", error);
+      throw error;
+   }
+}
+
+/**
+ * Checks if a team has an existing project (returns boolean)
+ * @param teamId - ID of the team to check
+ * @returns Promise<boolean> true if team has a project, false otherwise
+ * @throws Error for unexpected server errors
+ */
+export async function teamHasProject(teamId: string): Promise<boolean> {
+   try {
+      const project = await Project.findOne({ team: teamId });
+      return project !== null;
+   } catch (error) {
+      console.error("Error in teamHasProject service:", error);
+      throw error;
+   }
+}
+
+/**
+ * Links a project to a team by updating the team's project reference
+ * @param projectId - The ID of the project to link
+ * @param teamId - The ID of the team to link the project to
+ * @returns Promise<void> resolves when the team is successfully updated
+ * @throws Error when team is not found or database operation fails
+ */
+export async function linkProjectToTeam(
+   projectId: string,
+   teamId: string,
+): Promise<void> {
+   try {
+      const team = await Team.findById(teamId);
+      if (!team) {
+         throw new Error("Team not found");
+      }
+      team.project = new mongoose.Types.ObjectId(projectId);
+      await team.save();
+   } catch (error) {
+      console.error("Error linking project to team:", error);
+      throw error;
+   }
+}
+
+/**
+ * Links a project to all members of a team by updating each user's project reference
+ * @param projectId - The ID of the project to link
+ * @param teamId - The ID of the team whose members should be linked to the project
+ * @returns Promise<void> resolves when all team members are successfully updated
+ * @throws Error when team is not found, any team member is not found, or database operations fail
+ */
+export async function linkProjectToTeamMembers(
+   projectId: string,
+   teamId: string,
+): Promise<void> {
+   try {
+      const team = await Team.findById(teamId).populate("members");
+      const teamMembers = team?.members || [];
+
+      await Promise.all(
+         teamMembers.map(async (id: mongoose.Types.ObjectId) => {
+            const user = await User.findById(id);
+            if (!user) {
+               throw new Error(`User with ID ${id} not found`);
+            }
+
+            user.project = new mongoose.Types.ObjectId(projectId);
+            await user.save();
+         }),
+      );
+   } catch (error) {
+      console.error("Error linking project to team members:", error);
       throw error;
    }
 }

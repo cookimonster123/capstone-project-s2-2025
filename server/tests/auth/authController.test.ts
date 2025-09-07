@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import { login, logout } from "../controllers/authController";
-import * as authService from "../services/authService";
+import { login, logout } from "../../controllers/authController";
+import * as authService from "../../services/authService";
 
 // Mock the auth service
 jest.mock("../services/authService");
