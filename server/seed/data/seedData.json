@@ -63,6 +63,54 @@
       {
          "name": "Team 5",
          "projectName": null
+      },
+      {
+         "name": "Team 15",
+         "projectName": "Smart Home Controller"
+      },
+      {
+         "name": "Team 22",
+         "projectName": "Budget Tracker Mobile"
+      },
+      {
+         "name": "Team 7",
+         "projectName": "Code Review Assistant"
+      },
+      {
+         "name": "Team 33",
+         "projectName": "Virtual Reality Classroom"
+      },
+      {
+         "name": "Team 19",
+         "projectName": "Recipe Recommendation Engine"
+      },
+      {
+         "name": "Team 41",
+         "projectName": "Fitness Challenge Game"
+      },
+      {
+         "name": "Team 28",
+         "projectName": "Blockchain Voting System"
+      },
+      {
+         "name": "Team 14",
+         "projectName": "Music Therapy App"
+      },
+      {
+         "name": "Team 9",
+         "projectName": "Puzzle Adventure RPG"
+      },
+      {
+         "name": "Team 31",
+         "projectName": "Study Group Organizer"
+      },
+      {
+         "name": "Team 26",
+         "projectName": "Plant Care Reminder"
+      },
+      {
+         "name": "Team 17",
+         "projectName": "Traffic Optimization AI"
       }
    ],
    "projects": [
@@ -100,6 +148,190 @@
             {
                "type": "github",
                "value": "https://github.com/example/campus-nav"
+            }
+         ]
+      },
+      {
+         "name": "Smart Home Controller",
+         "teamName": "Team 15",
+         "description": "IoT-based smart home management system with voice control and automated scheduling features.",
+         "semester": { "year": 2024, "semester": "S2" },
+         "category": "Web Application",
+         "links": [
+            {
+               "type": "github",
+               "value": "https://github.com/example/smart-home"
+            },
+            {
+               "type": "deployedWebsite",
+               "value": "https://smarthome-demo.com"
+            }
+         ]
+      },
+      {
+         "name": "Budget Tracker Mobile",
+         "teamName": "Team 22",
+         "description": "Personal finance management app with expense tracking, budget planning, and financial goal setting.",
+         "semester": { "year": 2024, "semester": "S1" },
+         "category": "Mobile App",
+         "links": [
+            {
+               "type": "github",
+               "value": "https://github.com/example/budget-tracker"
+            }
+         ]
+      },
+      {
+         "name": "Code Review Assistant",
+         "teamName": "Team 7",
+         "description": "AI-powered tool that analyzes code quality, suggests improvements, and identifies potential bugs.",
+         "semester": { "year": 2024, "semester": "S2" },
+         "category": "AI/ML",
+         "links": [
+            {
+               "type": "github",
+               "value": "https://github.com/example/code-review-ai"
+            },
+            {
+               "type": "deployedWebsite",
+               "value": "https://codereview-ai.com"
+            }
+         ]
+      },
+      {
+         "name": "Virtual Reality Classroom",
+         "teamName": "Team 33",
+         "description": "Immersive VR educational platform for interactive learning experiences in various subjects.",
+         "semester": { "year": 2023, "semester": "S2" },
+         "category": "Game Development",
+         "links": [
+            {
+               "type": "github",
+               "value": "https://github.com/example/vr-classroom"
+            }
+         ]
+      },
+      {
+         "name": "Recipe Recommendation Engine",
+         "teamName": "Team 19",
+         "description": "Machine learning system that suggests recipes based on dietary preferences, available ingredients, and nutritional goals.",
+         "semester": { "year": 2024, "semester": "S1" },
+         "category": "AI/ML",
+         "links": [
+            {
+               "type": "github",
+               "value": "https://github.com/example/recipe-recommender"
+            },
+            {
+               "type": "deployedWebsite",
+               "value": "https://recipe-ai.com"
+            }
+         ]
+      },
+      {
+         "name": "Fitness Challenge Game",
+         "teamName": "Team 41",
+         "description": "Gamified fitness app that turns workouts into competitive challenges with friends and achievements.",
+         "semester": { "year": 2023, "semester": "S1" },
+         "category": "Mobile App",
+         "links": [
+            {
+               "type": "github",
+               "value": "https://github.com/example/fitness-game"
+            }
+         ]
+      },
+      {
+         "name": "Blockchain Voting System",
+         "teamName": "Team 28",
+         "description": "Secure and transparent voting platform using blockchain technology for student elections and surveys.",
+         "semester": { "year": 2024, "semester": "S2" },
+         "category": "Web Application",
+         "links": [
+            {
+               "type": "github",
+               "value": "https://github.com/example/blockchain-voting"
+            },
+            {
+               "type": "deployedWebsite",
+               "value": "https://secure-vote.com"
+            }
+         ]
+      },
+      {
+         "name": "Music Therapy App",
+         "teamName": "Team 14",
+         "description": "Mobile application that uses AI to create personalized music therapy sessions for stress relief and mental wellness.",
+         "semester": { "year": 2023, "semester": "S2" },
+         "category": "AI/ML",
+         "links": [
+            {
+               "type": "github",
+               "value": "https://github.com/example/music-therapy"
+            }
+         ]
+      },
+      {
+         "name": "Puzzle Adventure RPG",
+         "teamName": "Team 9",
+         "description": "Story-driven role-playing game with challenging puzzles and character progression mechanics.",
+         "semester": { "year": 2024, "semester": "S1" },
+         "category": "Game Development",
+         "links": [
+            {
+               "type": "github",
+               "value": "https://github.com/example/puzzle-rpg"
+            },
+            {
+               "type": "deployedWebsite",
+               "value": "https://puzzle-adventure.com"
+            }
+         ]
+      },
+      {
+         "name": "Study Group Organizer",
+         "teamName": "Team 31",
+         "description": "Platform for students to form study groups, schedule sessions, and share learning resources collaboratively.",
+         "semester": { "year": 2023, "semester": "S1" },
+         "category": "Web Application",
+         "links": [
+            {
+               "type": "github",
+               "value": "https://github.com/example/study-groups"
+            },
+            {
+               "type": "deployedWebsite",
+               "value": "https://studygroups.edu"
+            }
+         ]
+      },
+      {
+         "name": "Plant Care Reminder",
+         "teamName": "Team 26",
+         "description": "Mobile app with plant identification, care scheduling, and growth tracking features for gardening enthusiasts.",
+         "semester": { "year": 2024, "semester": "S2" },
+         "category": "Mobile App",
+         "links": [
+            {
+               "type": "github",
+               "value": "https://github.com/example/plant-care"
+            }
+         ]
+      },
+      {
+         "name": "Traffic Optimization AI",
+         "teamName": "Team 17",
+         "description": "Machine learning system for analyzing traffic patterns and optimizing signal timing in urban environments.",
+         "semester": { "year": 2023, "semester": "S2" },
+         "category": "AI/ML",
+         "links": [
+            {
+               "type": "github",
+               "value": "https://github.com/example/traffic-ai"
+            },
+            {
+               "type": "deployedWebsite",
+               "value": "https://traffic-optimizer.com"
             }
          ]
       }

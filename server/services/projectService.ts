@@ -116,6 +116,7 @@ export async function insertProject(
 export async function findAllProjects(): Promise<ServiceResult> {
    try {
       const projects = await Project.find()
+         .populate("team")
          .populate("semester")
          .populate("category");
 
@@ -140,6 +141,7 @@ export async function findProjectById(
 ): Promise<ServiceResult> {
    try {
       const project = await Project.findById(projectId)
+         .populate("team")
          .populate("semester")
          .populate("category");
 
