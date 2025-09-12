@@ -5,6 +5,7 @@ import { connectDB } from "./config/db";
 import dotenv from "dotenv";
 import auth from "./routes/auth";
 import projects from "./routes/projects";
+import users from "./routes/users";
 
 // Import models to ensure they are registered with Mongoose
 import "@models";
@@ -28,5 +29,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use("/api/auth", auth);
 app.use("/api/projects", projects);
+app.use("/api/users", users);
 
 export default app;

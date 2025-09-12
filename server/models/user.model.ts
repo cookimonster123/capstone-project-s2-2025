@@ -32,15 +32,15 @@ const userSchema = new mongoose.Schema(
       },
       links: [
          {
-            type: new mongoose.Schema({
-               value: {
-                  type: String,
-               },
-               type: {
-                  type: String,
-                  enum: ["github", "linkedin", "personalWebsite"],
-               },
-            }),
+            type: {
+               type: String,
+               enum: ["github", "linkedin", "personalWebsite"],
+               required: true,
+            },
+            value: {
+               type: String,
+               required: true,
+            },
          },
       ],
       project: {
