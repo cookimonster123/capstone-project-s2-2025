@@ -13,11 +13,24 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       const result = await registerUser(req.body);
 
       if (!result.success) {
-         res.status(400).json({ error: result.error });
+         res.status(400).json(result);
          return;
       }
 
-      res.status(201).json({ token: result.data?.token });
+      // Set cookie with JWT token
+      res.cookie("token", result.data?.token, {
+         httpOnly: true, // Prevents XSS attacks
+         secure: process.env.NODE_ENV === "production", // HTTPS only in production
+         sameSite: "strict", // CSRF protection
+         maxAge: 60 * 60 * 1000, // 1 hour (matches JWT expiration)
+      });
+
+      res.status(201).json({
+         success: true,
+         data: {
+            user: result.data?.user,
+         },
+      });
    } catch (error: any) {
       console.error("Registration controller error:", error.message);
       res.status(500).json({ error: "Server error" });
@@ -44,11 +57,17 @@ export const login = async (req: Request, res: Response): Promise<void> => {
             result.error?.includes("password") ||
             result.error?.includes("required")
          ) {
-            res.status(400).json({ error: result.error });
+            res.status(400).json({
+               success: false,
+               error: result.error,
+            });
             return;
          } else {
             // 401: authentication errors
-            res.status(401).json({ error: result.error });
+            res.status(401).json({
+               success: false,
+               error: result.error,
+            });
             return;
          }
       }
@@ -63,8 +82,10 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
       // Return user data without token (token is in cookie)
       res.status(200).json({
-         message: "Login successful",
-         user: result.data?.user,
+         success: true,
+         data: {
+            user: result.data?.user,
+         },
       });
    } catch (error: any) {
       console.error("Login controller error:", error.message);

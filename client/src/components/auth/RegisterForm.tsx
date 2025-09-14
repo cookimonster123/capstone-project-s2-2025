@@ -1,116 +1,320 @@
 import React, { useState } from "react";
+import { Link as RouterLink } from "react-router-dom";
+import {
+   Alert,
+   Box,
+   Button,
+   Container,
+   IconButton,
+   InputAdornment,
+   Link,
+   TextField,
+   Typography,
+} from "@mui/material";
+import { Visibility, VisibilityOff, ArrowBack } from "@mui/icons-material";
+import { registerUser } from "../../api/authApi";
+import type { FormFieldErrors, RegisterFormData } from "@types";
 
+// Registration form (MUI)
 const RegisterForm: React.FC = () => {
-   const [formData, setFormData] = useState({
+   const [formData, setFormData] = useState<RegisterFormData>({
       name: "",
       email: "",
       password: "",
    });
-
+   const [showPassword, setShowPassword] = useState(false);
    const [message, setMessage] = useState("");
+   const [errors, setErrors] = useState<FormFieldErrors>({});
 
    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      setFormData({
-         ...formData,
-         [e.target.name]: e.target.value,
-      });
+      const { name, value } = e.target;
+      setFormData({ ...formData, [name]: value });
+      if (errors[name as keyof typeof errors]) {
+         setErrors((prev) => ({ ...prev, [name]: undefined }));
+      }
    };
 
    const handleSubmit = async (e: React.FormEvent) => {
-      // move this
       e.preventDefault();
-      try {
-         const response = await fetch(
-            "http://localhost:3000/api/auth/register",
-            {
-               method: "POST",
-               headers: {
-                  "Content-Type": "application/json",
-               },
-               body: JSON.stringify(formData),
-            },
-         );
+      setErrors({});
+      setMessage("");
 
-         const data = await response.json();
+      const nextErrors: typeof errors = {};
+      if (!formData.name || formData.name.trim().length < 1) {
+         nextErrors.name = "Name is required";
+      } else if (formData.name.trim().length > 30) {
+         nextErrors.name = "Name must be at most 30 characters";
+      }
+      if (
+         !formData.email ||
+         !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
+      ) {
+         nextErrors.email = "Please enter a valid email";
+      }
+      if (!formData.password || formData.password.length < 6) {
+         nextErrors.password = "Password must be at least 6 characters";
+      }
+      if (Object.keys(nextErrors).length) {
+         setErrors(nextErrors);
+         return;
+      }
 
-         if (response.ok) {
-            setMessage("Registration successful!");
-            console.log("Token:", data.token);
+      const result = await registerUser(formData);
+      if (!result.success) {
+         const errorMessage = result.error || "Registration failed";
+         // Handle API errors
+         if (/email/i.test(errorMessage)) {
+            setErrors((prev) => ({ ...prev, email: errorMessage! }));
+         } else if (/password/i.test(errorMessage)) {
+            setErrors((prev) => ({ ...prev, password: errorMessage! }));
+         } else if (/name/i.test(errorMessage)) {
+            setErrors((prev) => ({ ...prev, name: errorMessage! }));
+         } else if (/already registered/i.test(errorMessage)) {
+            setErrors((prev) => ({
+               ...prev,
+               email: "This email is already registered",
+            }));
          } else {
-            setMessage(`Error: ${data.error}`);
+            setErrors((prev) => ({ ...prev, form: result.error! }));
          }
-      } catch (error) {
-         console.error("Error: ", error);
+      } else {
+         setMessage("Registration successful!");
       }
    };
 
    return (
-      <div style={{ maxWidth: "400px", margin: "50px auto", padding: "20px" }}>
-         <h2>Sign Up</h2>
-         <form onSubmit={handleSubmit}>
-            <div style={{ marginBottom: "15px" }}>
-               <label>Name:</label>
-               <input
-                  type="text"
+      <Container
+         component="main"
+         maxWidth={false}
+         sx={{
+            height: "calc(100dvh - 4rem)",
+            display: "grid",
+            placeItems: "center",
+            p: 0,
+            overflow: "hidden",
+         }}
+      >
+         <Box sx={{ position: "fixed", top: 12, left: 12, zIndex: 1000 }}>
+            <Button
+               variant="text"
+               size="medium"
+               startIcon={<ArrowBack sx={{ fontSize: "1.35rem" }} />}
+               // component={RouterLink}
+               // to="/"
+               sx={{
+                  fontSize: "1.1rem",
+                  fontWeight: 700,
+                  px: 1.25,
+                  py: 0.75,
+                  borderRadius: 9999,
+               }}
+            >
+               Back
+            </Button>
+         </Box>
+
+         <Box sx={{ width: "100%", maxWidth: 840, px: 2 }}>
+            <Typography
+               component="h1"
+               variant="h3"
+               align="center"
+               fontWeight={700}
+               gutterBottom
+            >
+               Create an account
+            </Typography>
+            <Typography align="center" color="text.secondary">
+               Already have an account?{" "}
+               {/* <Link component={RouterLink} to="/login">
+                  Log in
+               </Link> */}
+            </Typography>
+
+            <Box
+               component="form"
+               onSubmit={handleSubmit}
+               noValidate
+               sx={{ mt: 2 }}
+            >
+               <TextField
+                  margin="normal"
+                  fullWidth
+                  label="What should we call you?"
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
+                  error={!!errors.name}
+                  helperText={errors.name}
                   required
-                  style={{ width: "100%", padding: "8px", marginTop: "5px" }}
+                  InputLabelProps={{
+                     sx: {
+                        fontSize: "1.15rem",
+                        "&.MuiInputLabel-shrink": {
+                           backgroundColor: "#eaf2ff",
+                           px: 0.5,
+                        },
+                        "&:not(.MuiInputLabel-shrink)": {
+                           transform: "translate(14px, 24px) scale(1)",
+                        },
+                     },
+                  }}
+                  sx={{
+                     "& .MuiInputBase-input": {
+                        fontSize: "1.4rem",
+                        py: 3,
+                        px: 2.5,
+                     },
+                     "& .MuiFormHelperText-root": { fontSize: "1rem" },
+                  }}
                />
-            </div>
 
-            <div style={{ marginBottom: "15px" }}>
-               <label>Email:</label>
-               <input
-                  type="email"
+               <TextField
+                  margin="normal"
+                  fullWidth
+                  label="What's your email?"
                   name="email"
+                  type="email"
                   value={formData.email}
                   onChange={handleChange}
+                  error={!!errors.email}
+                  helperText={errors.email}
+                  autoComplete="email"
                   required
-                  style={{ width: "100%", padding: "8px", marginTop: "5px" }}
+                  InputLabelProps={{
+                     sx: {
+                        fontSize: "1.15rem",
+                        "&.MuiInputLabel-shrink": {
+                           backgroundColor: "#eaf2ff",
+                           px: 0.5,
+                        },
+                        "&:not(.MuiInputLabel-shrink)": {
+                           transform: "translate(14px, 24px) scale(1)",
+                        },
+                     },
+                  }}
+                  sx={{
+                     "& .MuiInputBase-input": {
+                        fontSize: "1.4rem",
+                        py: 3,
+                        px: 2.5,
+                     },
+                     "& .MuiFormHelperText-root": { fontSize: "1rem" },
+                  }}
                />
-            </div>
 
-            <div style={{ marginBottom: "15px" }}>
-               <label>Password:</label>
-               <input
-                  type="password"
+               <TextField
+                  margin="normal"
+                  fullWidth
+                  label="Create a password"
                   name="password"
+                  type={showPassword ? "text" : "password"}
                   value={formData.password}
                   onChange={handleChange}
+                  error={!!errors.password}
+                  helperText={
+                     errors.password ||
+                     "Use 8+ chars with letters, numbers & symbols"
+                  }
                   required
-                  style={{ width: "100%", padding: "8px", marginTop: "5px" }}
+                  InputLabelProps={{
+                     sx: {
+                        fontSize: "1.15rem",
+                        "&.MuiInputLabel-shrink": {
+                           backgroundColor: "#eaf2ff",
+                           px: 0.5,
+                        },
+                        "&:not(.MuiInputLabel-shrink)": {
+                           transform: "translate(14px, 24px) scale(1)",
+                        },
+                     },
+                  }}
+                  InputProps={{
+                     endAdornment: (
+                        <InputAdornment position="end" sx={{ mr: 1 }}>
+                           <IconButton
+                              aria-label={
+                                 showPassword
+                                    ? "Hide password"
+                                    : "Show password"
+                              }
+                              onClick={() => setShowPassword((p) => !p)}
+                              edge="end"
+                              disableRipple
+                              disableFocusRipple
+                              sx={{
+                                 outline: "none",
+                                 boxShadow: "none",
+                                 "&:focus": {
+                                    outline: "none",
+                                    boxShadow: "none",
+                                 },
+                                 "&:focus-visible": {
+                                    outline: "none",
+                                    boxShadow: "none",
+                                 },
+                              }}
+                           >
+                              {showPassword ? (
+                                 <VisibilityOff />
+                              ) : (
+                                 <Visibility />
+                              )}
+                           </IconButton>
+                        </InputAdornment>
+                     ),
+                     sx: {
+                        "& .MuiInputBase-input": {
+                           fontSize: "1.4rem",
+                           py: 3,
+                           px: 2.5,
+                        },
+                     },
+                  }}
+                  sx={{ "& .MuiFormHelperText-root": { fontSize: "1rem" } }}
                />
-            </div>
 
-            <button
-               type="submit"
-               style={{
-                  width: "100%",
-                  padding: "10px",
-                  backgroundColor: "#007bff",
-                  color: "white",
-                  border: "none",
-               }}
-            >
-               Sign Up
-            </button>
-         </form>
+               <Button
+                  type="submit"
+                  fullWidth
+                  variant="contained"
+                  size="large"
+                  disableElevation
+                  sx={{
+                     mt: 3.5,
+                     py: 1.9,
+                     fontSize: "1.15rem",
+                     borderRadius: 9999,
+                     backgroundColor: "#1976d2",
+                     color: "#fff",
+                     textTransform: "none",
+                     boxShadow: "none",
+                     "&:hover": {
+                        backgroundColor: "#1565c0",
+                        boxShadow: "none",
+                     },
+                     "&:active": { boxShadow: "none" },
+                     "&:disabled": {
+                        backgroundColor: "#90caf9",
+                        color: "#fff",
+                     },
+                  }}
+               >
+                  Create an account
+               </Button>
 
-         {message && (
-            <div
-               style={{
-                  marginTop: "20px",
-                  padding: "10px",
-                  backgroundColor: "#f8f9fa",
-                  border: "1px solid #ddd",
-               }}
-            >
-               {message}
-            </div>
-         )}
-      </div>
+               {message && (
+                  <Alert severity="success" sx={{ mt: 2 }}>
+                     {message}
+                  </Alert>
+               )}
+               {errors.form && (
+                  <Alert severity="error" sx={{ mt: 2 }}>
+                     {errors.form}
+                  </Alert>
+               )}
+            </Box>
+         </Box>
+      </Container>
    );
 };
 
