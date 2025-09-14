@@ -6,6 +6,7 @@ import dotenv from "dotenv";
 import auth from "./routes/auth";
 import projects from "./routes/projects";
 import users from "./routes/users";
+import { loggingMiddleware } from "./middleware/loggingMiddleware";
 
 // Import models to ensure they are registered with Mongoose
 import "@models";
@@ -13,6 +14,8 @@ import "@models";
 dotenv.config();
 
 const app = express();
+
+app.use(loggingMiddleware);
 
 app.use(
    cors({
