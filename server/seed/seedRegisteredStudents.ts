@@ -11,6 +11,7 @@ const __dirname = path.dirname(__filename);
 interface StudentRow {
    login_id: string;
    name: string;
+   group_name: string;
    [key: string]: any; // For any additional CSV columns
 }
 
@@ -55,19 +56,20 @@ export async function seedRegisteredStudents(): Promise<void> {
  */
 function readStudentsFromCSV(
    filePath: string,
-): Promise<{ upi: string; name: string }[]> {
+): Promise<{ upi: string; name: string; teamName: string }[]> {
    return new Promise((resolve, reject) => {
-      const students: { upi: string; name: string }[] = [];
+      const students: { upi: string; name: string; teamName: string }[] = [];
 
       fs.createReadStream(filePath)
          .pipe(csv())
          .on("data", (row: StudentRow) => {
-            // Extract UPI and name from CSV row
+            // Extract UPI, name, and team name from CSV row
             const upi = row.login_id?.trim();
             const name = row.name?.trim();
+            const teamName = row.group_name?.trim();
 
-            if (upi && name) {
-               students.push({ upi, name });
+            if (upi && name && teamName) {
+               students.push({ upi, name, teamName });
             }
          })
          .on("end", () => {

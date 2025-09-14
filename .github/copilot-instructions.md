@@ -246,7 +246,7 @@ Use modern technologies as described below for all code suggestions. Prioritize 
 
  
 
-## JavaScript Requirements
+## JavaScript / TypeScript Requirements
 
  
 
@@ -289,9 +289,7 @@ Use modern technologies as described below for all code suggestions. Prioritize 
     - Consider a central error handler function (like `useErrorBoundary` from React) or global event (e.g., `window.addEventListener('unhandledrejection')`) to consolidate reporting.
     - Carefully handle and validate JSON responses, incorrect HTTP status codes, etc.
 
- 
-
- 
+- When writing api's in the frontend, ensure the return types are well defined and documented and match the backend api's
 
 ## Documentation Requirements
 

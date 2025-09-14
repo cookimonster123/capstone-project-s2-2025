@@ -7,7 +7,7 @@ import { IBulkUpsertResult } from "../interfaces/registeredStudent";
  * @returns Promise with operation result
  */
 export async function bulkAddStudents(
-   students: { upi: string; name: string }[],
+   students: { upi: string; name: string; teamName: string }[],
 ): Promise<{ success: boolean; message: string; stats?: any }> {
    try {
       if (!students || students.length === 0) {
@@ -23,7 +23,10 @@ export async function bulkAddStudents(
             typeof student.upi === "string" &&
             typeof student.name === "string" &&
             student.upi.trim().length > 0 &&
-            student.name.trim().length > 0
+            student.name.trim().length > 0 &&
+            student.teamName &&
+            typeof student.teamName === "string" &&
+            student.teamName.trim().length > 0
          );
       });
 

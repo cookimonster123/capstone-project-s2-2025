@@ -10,6 +10,9 @@ import {
    AuthTokenData,
    LoginUserData,
 } from "../interfaces";
+import { Team } from "@models";
+import mongoose from "mongoose";
+import { addUserToTeam } from "./teamService";
 
 /**
  * Validates user registration data
@@ -148,15 +151,25 @@ export async function registerUser(
       const isCapstoneStudent = await checkCapstoneStudent(email);
       const userRole = isCapstoneStudent ? "capstoneStudent" : "visitor";
 
+      const teamObjectId = isCapstoneStudent
+         ? await getTeamByEmail(email)
+         : null;
+
       // Create new user
       const user = new User({
          name,
          email,
          password: hashedPassword,
          role: userRole,
+         team: teamObjectId,
       });
 
       await user.save();
+
+      if (isCapstoneStudent && teamObjectId) {
+         // Add user to team by updating the Team model
+         await addUserToTeam(user._id.toString(), teamObjectId.toString());
+      }
 
       // Generate token
       const token = generateToken({
@@ -265,5 +278,36 @@ export async function loginUser(
    } catch (error) {
       console.error("Error in loginUser service:", error);
       throw error;
+   }
+}
+
+/**
+ * Retrieves the team ObjectId for a capstone student based on their email address
+ *
+ * @param email - The student's university email address (e.g., "abc123@auckland.ac.nz")
+ * @returns Promise resolving to the team's ObjectId if found, null if student has no team assignment or team doesn't exist
+ * @throws Does not throw - catches all errors and returns null for robustness during user registration
+ */
+export async function getTeamByEmail(
+   email: string,
+): Promise<mongoose.Types.ObjectId | null> {
+   try {
+      const upi = email.split("@")[0];
+      const student = await RegisteredStudent.findOne({ upi: upi }).select(
+         "teamName",
+      );
+
+      if (!student || !student.teamName) {
+         return null;
+      }
+
+      // TODO: Parse teamName if necessary
+      // Assume teamName in RegisteredStudent matches Team.name
+      const team = await Team.findOne({ name: student.teamName }).select("_id");
+
+      return team ? team._id : null;
+   } catch (error) {
+      console.error("Error fetching team by email:", error);
+      return null;
    }
 }
