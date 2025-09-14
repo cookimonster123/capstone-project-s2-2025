@@ -1,0 +1,82 @@
+# Pull Request
+
+## 📋 Description
+
+<!-- Provide a brief description of the changes in this PR -->
+
+### Type of Change
+
+<!-- Mark the relevant option with an 'x' -->
+
+- [ ] 🐛 Bug fix (non-breaking change which fixes an issue)
+- [ ] ✨ New feature (non-breaking change which adds functionality)
+- [ ] 💥 Breaking change (fix or feature that would cause existing functionality to not work as expected)
+- [ ] 📚 Documentation update
+- [ ] 🎨 UI/UX improvements
+- [ ] 🔧 Refactoring (no functional changes)
+- [ ] ⚡ Performance improvements
+- [ ] 🧪 Tests
+- [ ] 🚀 CI/CD changes
+
+## 🔗 Related Issues
+
+<!-- Link any related issues using #issue_number -->
+
+Closes #<!-- issue_number -->
+
+## 📸 Screenshots / Demo
+
+<!-- If your changes include UI modifications, please provide screenshots or GIFs -->
+<!-- Use the format below for before/after comparisons -->
+
+### Before
+
+<!-- Screenshot of the current state -->
+
+### After
+
+<!-- Screenshot of the new state -->
+
+### Mobile View (if applicable)
+
+<!-- Screenshots for mobile responsiveness -->
+
+### Test Coverage
+
+- [ ] Unit tests added/updated
+- [ ] Integration tests added/updated
+- [ ] Manual testing completed
+- [ ] Cross-browser testing (Chrome, Firefox, Safari, Edge)
+- [ ] Mobile responsiveness tested
+- [ ] Accessibility testing completed
+
+## 🔄 Migration Notes
+
+<!-- If this PR requires database migrations or environment changes -->
+
+- [ ] No migrations required
+- [ ] Database migration required (include migration steps)
+- [ ] Environment variables need updating
+- [ ] Third-party service configuration needed
+
+### Migration Steps
+
+<!-- If migrations are needed, provide clear steps -->
+
+1.
+2.
+3.
+
+## 🔍 Code Review Focus Areas
+
+<!-- Highlight specific areas where you want reviewer attention -->
+
+-
+-
+-
+
+## 📋 Additional Notes
+
+<!-- Any additional information for reviewers -->
+
+---
