@@ -106,7 +106,8 @@ const Navbar: React.FC = () => {
 
                {!isLoggedIn ? (
                   <Button
-                     onClick={signIn}
+                     component={NavLink}
+                     to="/sign-in"
                      variant="contained"
                      color="primary"
                      sx={{

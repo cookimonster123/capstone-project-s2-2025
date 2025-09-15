@@ -18,12 +18,6 @@
 - [ ] 🧪 Tests
 - [ ] 🚀 CI/CD changes
 
-## 🔗 Related Issues
-
-<!-- Link any related issues using #issue_number -->
-
-Closes #<!-- issue_number -->
-
 ## 📸 Screenshots / Demo
 
 <!-- If your changes include UI modifications, please provide screenshots or GIFs -->
@@ -49,23 +43,6 @@ Closes #<!-- issue_number -->
 - [ ] Cross-browser testing (Chrome, Firefox, Safari, Edge)
 - [ ] Mobile responsiveness tested
 - [ ] Accessibility testing completed
-
-## 🔄 Migration Notes
-
-<!-- If this PR requires database migrations or environment changes -->
-
-- [ ] No migrations required
-- [ ] Database migration required (include migration steps)
-- [ ] Environment variables need updating
-- [ ] Third-party service configuration needed
-
-### Migration Steps
-
-<!-- If migrations are needed, provide clear steps -->
-
-1.
-2.
-3.
 
 ## 🔍 Code Review Focus Areas
 
