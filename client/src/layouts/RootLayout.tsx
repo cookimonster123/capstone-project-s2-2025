@@ -8,7 +8,7 @@ const RootLayout: React.FC = () => {
    return (
       <>
          <Navbar />
-         <Box component="main" sx={{ pt: NAV_HEIGHT, px: 3, pb: 6 }}>
+         <Box component="main" sx={{ pt: `${NAV_HEIGHT}px`, px: 3, pb: 6 }}>
             <Outlet />
          </Box>
       </>

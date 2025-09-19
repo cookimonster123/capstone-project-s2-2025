@@ -79,9 +79,32 @@
 
 For every generated feature, Copilot must output: 2. Unit tests and sample data ONLY WHEN ASKED 3. README updates ONLY WHEN ASKED
 
-# COPILOT EDITS OPERATIONAL GUIDELINES
+## Engineering Principles and Best Practices
 
- 
+    1.	API Usage
+    •	Do not guess how an API works.
+    •	Always read the implementation and documentation carefully before implementation.
+    2.	Execution
+    •	Do not execute tasks vaguely or with assumptions.
+    •	Always seek clarification and confirmation when requirements are unclear.
+    3.	Business Understanding
+    •	Do not rely on untested or speculative business theories.
+    •	Always validate assumptions with real users, stakeholders, or data.
+    4.	API Design
+    •	Do not invent new APIs without justification.
+    •	Always reuse existing APIs when possible and appropriate.
+    5.	Validation
+    •	Do not skip validation or testing.
+    •	Always test proactively to confirm correctness.
+    6.	Architecture
+    •	Do not break the agreed architecture.
+    •	Always follow established standards, conventions, and design patterns.
+    7.	Knowledge & Communication
+    •	Do not pretend to understand when you do not.
+    •	Always say “I don’t know” honestly, then seek to learn.
+    8.	Code Changes
+    •	Do not make blind or unreviewed edits.
+    •	Always refactor carefully with reasoning and context.
 
 ## PRIME DIRECTIVE
 

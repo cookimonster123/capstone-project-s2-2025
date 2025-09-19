@@ -16,10 +16,8 @@
 
 body {
    margin: 0;
-   display: flex;
-   place-items: center;
+   /* Use normal document flow so content starts below navbar */
    min-width: 320px;
-   min-height: 100vh;
    /* ensure body inherits the soft blue as well */
    background-color: #eaf2ff;
    color: #213547;
