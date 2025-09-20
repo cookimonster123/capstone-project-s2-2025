@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-// import { Link as RouterLink, useNavigate } from "react-router-dom";
+import { Link as RouterLink } from "react-router-dom";
 import {
    Alert,
    Box,
@@ -16,6 +16,8 @@ import {
 import { Visibility, VisibilityOff, ArrowBack } from "@mui/icons-material";
 import type { FormFieldErrors } from "@types";
 import { loginUser } from "../../api/authApi";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 
 const LoginForm: React.FC = () => {
    const [formData, setFormData] = useState({ email: "", password: "" });
@@ -26,6 +28,9 @@ const LoginForm: React.FC = () => {
    const [showPassword, setShowPassword] = useState(false);
    const [rememberMe, setRememberMe] = useState(false);
 
+   const nav = useNavigate();
+   const { signIn } = useAuth();
+
    // const navigate = useNavigate();
 
    useEffect(() => {
@@ -35,8 +40,10 @@ const LoginForm: React.FC = () => {
             setFormData((prev) => ({ ...prev, email: savedEmail }));
             setRememberMe(true);
          }
-      } catch {
-         // ignore storage errors
+      } catch (err) {
+         setMessage(
+            "Unable to load remembered email. Please check your browser settings.",
+         );
       }
    }, []);
 
@@ -75,24 +82,46 @@ const LoginForm: React.FC = () => {
       const result = await loginUser(formData);
       if (result.success) {
          setMessage("Login successful!");
+         // update global auth so Navbar reflects login state
+         try {
+            signIn();
+         } catch (err) {
+            setMessage(
+               "Login succeeded, but session could not be established. Please refresh.",
+            );
+         }
          try {
             if (rememberMe) {
                localStorage.setItem("rememberEmail", formData.email);
             } else {
                localStorage.removeItem("rememberEmail");
             }
-         } catch {
-            // ignore storage errors
+         } catch (err) {
+            setMessage(
+               "Unable to save your email preference. Please check your browser settings.",
+            );
          }
-         // navigate
+         nav("/");
       } else {
          const errorMessage = result.error || "Login failed";
+         // Clear success message for error cases
+         setMessage("");
+
          if (/email/i.test(errorMessage)) {
             setErrors((prev) => ({ ...prev, email: errorMessage }));
          } else if (/password/i.test(errorMessage)) {
             setErrors((prev) => ({ ...prev, password: errorMessage }));
+         } else if (/invalid credentials/i.test(errorMessage)) {
+            setErrors((prev) => ({
+               ...prev,
+               form: "Invalid email or password",
+            }));
+         } else if (
+            /not found|no account|user does not exist/i.test(errorMessage)
+         ) {
+            setErrors((prev) => ({ ...prev, form: "Account not found" }));
          } else {
-            setMessage(errorMessage);
+            setErrors((prev) => ({ ...prev, form: errorMessage }));
          }
       }
       setLoading(false);
@@ -111,7 +140,7 @@ const LoginForm: React.FC = () => {
          }}
       >
          <Box sx={{ position: "fixed", top: 12, left: 12, zIndex: 1000 }}>
-            {/* <Button
+            <Button
                variant="text"
                size="medium"
                startIcon={<ArrowBack sx={{ fontSize: "1.35rem" }} />}
@@ -126,7 +155,8 @@ const LoginForm: React.FC = () => {
                }}
             >
                Back
-            </Button> */}
+            </Button>
+            {/* Move this to LoginPage */}
          </Box>
 
          <Box sx={{ width: "100%", maxWidth: 840, px: 2 }}>
@@ -141,9 +171,9 @@ const LoginForm: React.FC = () => {
             </Typography>
             <Typography align="center" color="text.secondary">
                Don't have an account?{" "}
-               {/* <Link component={RouterLink} to="/register">
+               <Link component={RouterLink} to="/register">
                   Sign up
-               </Link> */}
+               </Link>
             </Typography>
 
             <Box

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link as RouterLink } from "react-router-dom";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
 import {
    Alert,
    Box,
@@ -25,6 +25,8 @@ const RegisterForm: React.FC = () => {
    const [showPassword, setShowPassword] = useState(false);
    const [message, setMessage] = useState("");
    const [errors, setErrors] = useState<FormFieldErrors>({});
+
+   const nav = useNavigate();
 
    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const { name, value } = e.target;
@@ -79,6 +81,7 @@ const RegisterForm: React.FC = () => {
          }
       } else {
          setMessage("Registration successful!");
+         nav("/sign-in");
       }
    };
 
@@ -99,8 +102,8 @@ const RegisterForm: React.FC = () => {
                variant="text"
                size="medium"
                startIcon={<ArrowBack sx={{ fontSize: "1.35rem" }} />}
-               // component={RouterLink}
-               // to="/"
+               component={RouterLink}
+               to="/"
                sx={{
                   fontSize: "1.1rem",
                   fontWeight: 700,
@@ -125,9 +128,9 @@ const RegisterForm: React.FC = () => {
             </Typography>
             <Typography align="center" color="text.secondary">
                Already have an account?{" "}
-               {/* <Link component={RouterLink} to="/login">
+               <Link component={RouterLink} to="/sign-in">
                   Log in
-               </Link> */}
+               </Link>
             </Typography>
 
             <Box

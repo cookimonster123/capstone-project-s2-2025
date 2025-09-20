@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate } from "react-router-dom";
 import RootLayout from "./layouts/RootLayout";
 import ProjectGalleryPage from "./pages/ProjectGalleryPage";
 import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
 import ProjectProfilePage from "./pages/ProjectProfile";
 
 export const router = createBrowserRouter([
@@ -13,6 +14,7 @@ export const router = createBrowserRouter([
          { path: "projects", element: <ProjectGalleryPage /> },
          { path: "profile/:id", element: <ProjectProfilePage /> },
          { path: "sign-in", element: <LoginPage /> },
+         { path: "register", element: <RegisterPage /> },
       ],
    },
 ]);

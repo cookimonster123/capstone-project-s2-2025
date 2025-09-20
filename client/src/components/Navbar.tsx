@@ -51,12 +51,15 @@ const Navbar: React.FC = () => {
                   flexGrow: 1,
                }}
             >
-               <Box
-                  component="img"
-                  src={logo}
-                  alt="Site logo"
-                  sx={{ width: 225, height: 40, objectFit: "contain" }}
-               />
+               <NavLink to="/">
+                  <Box
+                     component="img"
+                     src={logo}
+                     alt="Site logo"
+                     sx={{ width: 225, height: 40, objectFit: "contain" }}
+                  />
+               </NavLink>
+
                <Box sx={{ display: "flex", gap: 2 }}>
                   {links.map((l) => (
                      <Button
