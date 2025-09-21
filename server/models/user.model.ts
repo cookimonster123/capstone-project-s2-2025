@@ -54,6 +54,12 @@ const userSchema = new mongoose.Schema(
       lastLogin: {
          type: Date,
       },
+      likedProjects: [
+         {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Project",
+         },
+      ],
    },
    {
       timestamps: true,

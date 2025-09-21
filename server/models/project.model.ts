@@ -38,6 +38,11 @@ const projectSchema = new mongoose.Schema({
          }),
       },
    ],
+   likeCounts: {
+      type: Number,
+      default: 0,
+      required: true,
+   },
    tags: [
       {
          type: mongoose.Schema.Types.ObjectId,

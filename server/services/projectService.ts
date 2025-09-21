@@ -236,6 +236,11 @@ export async function removeProject(projectId: string): Promise<ServiceResult> {
    try {
       const project = await Project.findById(projectId);
 
+      // Remove the projectId from all users' liked projects arrays
+      await User.updateMany(
+         { likedProjects: projectId },
+         { $pull: { likedProjects: projectId } },
+      );
       if (!project) {
          return {
             success: false,
@@ -336,6 +341,83 @@ export async function linkProjectToTeamMembers(
       );
    } catch (error) {
       console.error("Error linking project to team members:", error);
+      throw error;
+   }
+}
+
+/**
+ * LikeButton to record the like counts of a project and user like state to different projects
+ * @param userId - The ID of the user
+ * @param projectId - The ID of the project
+ * @returns Promise<ServiceResult> user's like result to a project by id
+ * @throws Error when likeButton runs error.
+ */
+export async function likeButton(
+   userId: string,
+   projectId: string,
+): Promise<ServiceResult> {
+   try {
+      const user = await User.findById(userId);
+      const project = await Project.findById(projectId);
+      if (!user || !project) {
+         return {
+            success: false,
+            error: "Not found",
+         };
+      }
+
+      const alreadyLiked = user.likedProjects.some((projectID) =>
+         projectID.equals(project._id),
+      );
+      if (alreadyLiked) {
+         //Unlike
+         await User.updateOne(
+            { _id: user._id },
+            { $pull: { likedProjects: project._id } },
+         );
+
+         await Project.updateOne(
+            { _id: project._id },
+            { $inc: { likeCounts: -1 } },
+         );
+
+         const updatedUser = await User.findById(user._id).lean();
+         const updatedProject = await Project.findById(project._id).lean();
+
+         return {
+            success: true,
+            data: {
+               button: false,
+               likedProjects: updatedUser?.likedProjects,
+               likeCounts: updatedProject?.likeCounts,
+            },
+         };
+      }
+
+      //like
+      await User.updateOne(
+         { _id: user._id },
+         { $addToSet: { likedProjects: project._id } },
+      );
+
+      await Project.updateOne(
+         { _id: project._id },
+         { $inc: { likeCounts: 1 } },
+      );
+
+      const updatedUser = await User.findById(user._id).lean();
+      const updatedProject = await Project.findById(project._id).lean();
+
+      return {
+         success: true,
+         data: {
+            button: true,
+            likedProjects: updatedUser?.likedProjects,
+            likeCounts: updatedProject?.likeCounts,
+         },
+      };
+   } catch (error) {
+      console.error("Error in likeButton function:", error);
       throw error;
    }
 }

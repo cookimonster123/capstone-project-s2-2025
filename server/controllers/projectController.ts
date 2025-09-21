@@ -8,6 +8,7 @@ import {
    insertProject,
    linkProjectToTeam,
    linkProjectToTeamMembers,
+   likeButton,
 } from "../services/projectService";
 import { UpdateProjectData, ProjectData } from "interfaces";
 
@@ -143,6 +144,44 @@ export const createProject = async (
       });
    } catch (error) {
       console.error("Error creating project:", error);
+      res.status(500).json({ error: "Internal server error" });
+   }
+};
+
+/**
+ * like a project
+ * @param req - Express request object containing project id in params and user id in body
+ * @param res - Express response object
+ * @returns Promise<void> - Sends JSON response with created project data or error message
+ */
+export const likeProject = async (
+   req: AuthRequest,
+   res: Response,
+): Promise<void> => {
+   try {
+      //from auth/session
+      if (!req.user || !req.user.id) {
+         res.status(401).json({ error: "unauthorised" });
+         return;
+      }
+      const userId = req.user.id;
+      const projectId = req.params.id;
+
+      const result = await likeButton(userId, projectId);
+
+      if (!result.success) {
+         res.status(404).json({ error: result.error });
+         return;
+      }
+
+      res.status(200).json({
+         message: result.data.button
+            ? "Successfully liked the project"
+            : "Successfully unliked the project",
+         data: result.data,
+      });
+   } catch (error) {
+      console.error("Error liking project:", error);
       res.status(500).json({ error: "Internal server error" });
    }
 };

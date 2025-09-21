@@ -5,6 +5,7 @@ import {
    deleteProjectById,
    updateProjectById,
    createProject,
+   likeProject,
    deleteTagFromProject,
    setTagToProject,
 } from "@controllers";
@@ -36,6 +37,8 @@ router.post(
    authorizeRoles(["admin", "staff", "capstoneStudent"]),
    createProject,
 );
+
+router.post("/:id/like", authenticateToken, likeProject);
 
 router.post(
    "/:id/tags",
