@@ -1,5 +1,5 @@
 import Joi from "joi";
-import { Project, Team, User } from "@models";
+import { Project, Team, User, Tag } from "@models";
 import {
    ServiceResult,
    ValidationResult,
@@ -7,6 +7,7 @@ import {
    UpdateProjectData,
 } from "../interfaces";
 import mongoose from "mongoose";
+import { addTagToProject } from "./tagService";
 
 /**
  * Validates project data
@@ -28,6 +29,7 @@ export function validateProjectData(
             value: Joi.string().uri().required(),
          }),
       ),
+      tags: Joi.array().items(Joi.string()),
    });
 
    return schema.validate(projectData);
@@ -91,16 +93,31 @@ export async function insertProject(
       }
 
       // Create new project with proper field mapping
-      const { teamId: _, ...projectFields } = projectData;
+      const { tags, teamId: _, ...projectFields } = projectData;
       const project = new Project({
          ...projectFields,
          team: teamId, // Map teamId to team field required by the schema
       });
+
       await project.save();
+
+      //add at most first five tags from tags array to the project
+      const projectId = project._id.toString();
+      if (tags?.length) {
+         const slicedTags = tags.slice(0, 5);
+         for (const tagName of slicedTags) {
+            await addTagToProject(tagName.trim(), projectId);
+         }
+      }
+
+      const updatedProject = await Project.findById(projectId).populate(
+         "tags",
+         "name",
+      );
 
       return {
          success: true,
-         data: project,
+         data: updatedProject,
       };
    } catch (error) {
       console.error("Error in insertProject service:", error);
@@ -118,7 +135,8 @@ export async function findAllProjects(): Promise<ServiceResult> {
       const projects = await Project.find()
          .populate("team")
          .populate("semester")
-         .populate("category");
+         .populate("category")
+         .populate("tags", "name");
 
       return {
          success: true,
@@ -143,7 +161,8 @@ export async function findProjectById(
       const project = await Project.findById(projectId)
          .populate("team")
          .populate("semester")
-         .populate("category");
+         .populate("category")
+         .populate("tags", "name");
 
       if (!project) {
          return {
@@ -215,7 +234,7 @@ export async function updateProject(
  */
 export async function removeProject(projectId: string): Promise<ServiceResult> {
    try {
-      const project = await Project.findByIdAndDelete(projectId);
+      const project = await Project.findById(projectId);
 
       if (!project) {
          return {
@@ -224,9 +243,24 @@ export async function removeProject(projectId: string): Promise<ServiceResult> {
          };
       }
 
+      //clean up bound tags if project has
+      if (project.tags.length > 0) {
+         await Tag.updateMany(
+            { _id: { $in: project.tags } },
+            { $pull: { projects: projectId }, $inc: { mentions: -1 } },
+         );
+
+         await Tag.deleteMany({
+            _id: { $in: project.tags },
+            mentions: { $lte: 0 },
+         });
+      }
+
+      await Project.findByIdAndDelete(projectId);
+
       return {
          success: true,
-         data: { message: "Project deleted successfully" },
+         message: "Project deleted successfully",
       };
    } catch (error) {
       console.error("Error in removeProject service:", error);

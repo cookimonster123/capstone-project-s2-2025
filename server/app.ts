@@ -6,6 +6,7 @@ import dotenv from "dotenv";
 import auth from "./routes/auth";
 import projects from "./routes/projects";
 import users from "./routes/users";
+import tags from "./routes/tags";
 import { loggingMiddleware } from "./middleware/loggingMiddleware";
 
 // Import models to ensure they are registered with Mongoose
@@ -33,5 +34,6 @@ app.use(cookieParser());
 app.use("/api/auth", auth);
 app.use("/api/projects", projects);
 app.use("/api/users", users);
+app.use("/api/tags", tags);
 
 export default app;

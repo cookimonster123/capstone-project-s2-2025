@@ -38,6 +38,12 @@ const projectSchema = new mongoose.Schema({
          }),
       },
    ],
+   tags: [
+      {
+         type: mongoose.Schema.Types.ObjectId,
+         ref: "Tag",
+      },
+   ],
 });
 
 export const Project = mongoose.model("Project", projectSchema);

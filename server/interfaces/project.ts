@@ -1,3 +1,5 @@
+import { Types } from "mongoose";
+
 /**
  * Interface for project data
  */
@@ -11,6 +13,7 @@ export interface ProjectData {
       type: "github" | "deployedWebsite";
       value: string;
    }>;
+   tags?: string[];
 }
 
 /**

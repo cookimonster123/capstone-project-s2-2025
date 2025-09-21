@@ -25,7 +25,7 @@ export const requireTeamOwnership = async (
    next: NextFunction,
 ) => {
    try {
-      const projectId = req.params.id;
+      const projectId = req.params?.id;
       const userId = req.user?.id;
 
       // Find the user's role
