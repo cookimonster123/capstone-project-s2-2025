@@ -110,3 +110,37 @@ export const updateUserContent = async (
       return;
    }
 };
+
+/**
+ * Middleware to ensure that the user can only access their own favorites
+ * RBAC rules:
+ * - Users can only access their own favorite projects
+ * @param req - Express request object with potential user data
+ * @param res - Express response object
+ * @param next - Express next function
+ * @returns Promise<void>
+ */
+export const accessOwnFavoritesOnly = async (
+   req: AuthRequest,
+   res: Response,
+   next: NextFunction,
+): Promise<void> => {
+   try {
+      const userId = req.user?.id;
+      const targetUserId = req.params.id;
+
+      if (userId !== targetUserId) {
+         res.status(403).json({
+            error: "Access denied: You can only access your own favorite projects",
+         });
+         return;
+      }
+
+      next();
+      return;
+   } catch (error) {
+      console.error("Error in accessOwnFavoritesOnly middleware:", error);
+      res.status(500).json({ error: "Internal server error" });
+      return;
+   }
+};

@@ -60,6 +60,12 @@ const userSchema = new mongoose.Schema(
             ref: "Project",
          },
       ],
+      favorites: [
+         {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Project",
+         },
+      ],
    },
    {
       timestamps: true,

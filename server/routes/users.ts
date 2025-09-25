@@ -4,11 +4,15 @@ import {
    getUserById,
    deleteUserById,
    updateUserById,
+   addProjectToFavorites,
+   deleteProjectFromFavorites,
+   getUserFavoritesByUserId,
 } from "@controllers";
 import { authenticateToken, authorizeRoles } from "../middleware/auth";
 import {
    deleteUsersWithLimitedRole,
    updateUserContent,
+   accessOwnFavoritesOnly,
 } from "../middleware/users";
 
 const router = Router();
@@ -36,6 +40,27 @@ router.delete(
    authorizeRoles(["admin", "staff"]),
    deleteUsersWithLimitedRole,
    deleteUserById,
+);
+
+router.get(
+   "/:id/favorites",
+   authenticateToken,
+   accessOwnFavoritesOnly,
+   getUserFavoritesByUserId,
+);
+
+router.post(
+   "/:id/favorites",
+   authenticateToken,
+   accessOwnFavoritesOnly,
+   addProjectToFavorites,
+);
+
+router.delete(
+   "/:id/favorites/:projectId",
+   authenticateToken,
+   accessOwnFavoritesOnly,
+   deleteProjectFromFavorites,
 );
 
 export default router;

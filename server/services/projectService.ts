@@ -30,6 +30,7 @@ export function validateProjectData(
          }),
       ),
       tags: Joi.array().items(Joi.string()),
+      likeCounts: Joi.number().integer().min(0).required(),
       award: Joi.array().items(Joi.string()).optional(),
    });
 
@@ -111,10 +112,7 @@ export async function insertProject(
          }
       }
 
-      const updatedProject = await Project.findById(projectId).populate(
-         "tags",
-         "name",
-      );
+      const updatedProject = await Project.findById(projectId);
 
       return {
          success: true,

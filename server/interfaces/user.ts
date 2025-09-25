@@ -15,6 +15,7 @@ export interface UserData {
    team?: string; // Team ID
    lastLogin?: Date;
    likedProjects?: string[];
+   favorites?: string[];
 }
 
 /**

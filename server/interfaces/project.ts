@@ -14,6 +14,7 @@ export interface ProjectData {
       value: string;
    }>;
    tags?: string[];
+   likeCounts: number;
    awards?: string[];
 }
 
