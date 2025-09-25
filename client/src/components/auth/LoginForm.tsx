@@ -84,7 +84,19 @@ const LoginForm: React.FC = () => {
          setMessage("Login successful!");
          // update global auth so Navbar reflects login state
          try {
-            signIn();
+            if (result.data?.user) {
+               // Persist user into global auth context/localStorage
+               signIn({
+                  id: result.data.user.id,
+                  name: result.data.user.name,
+                  email: result.data.user.email,
+                  role: result.data.user.role,
+               });
+            } else {
+               setMessage(
+                  "Login succeeded but missing user data. Please refresh.",
+               );
+            }
          } catch (err) {
             setMessage(
                "Login succeeded, but session could not be established. Please refresh.",
