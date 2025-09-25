@@ -30,6 +30,7 @@ export function validateProjectData(
          }),
       ),
       tags: Joi.array().items(Joi.string()),
+      award: Joi.array().items(Joi.string()).optional(),
    });
 
    return schema.validate(projectData);
@@ -136,7 +137,8 @@ export async function findAllProjects(): Promise<ServiceResult> {
          .populate("team")
          .populate("semester")
          .populate("category")
-         .populate("tags", "name");
+         .populate("tags", "name")
+         .populate("awards", "_id iconUrl name");
 
       return {
          success: true,
@@ -162,7 +164,8 @@ export async function findProjectById(
          .populate("team")
          .populate("semester")
          .populate("category")
-         .populate("tags", "name");
+         .populate("tags", "name")
+         .populate("awards", "_id iconUrl name");
 
       if (!project) {
          return {
