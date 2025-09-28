@@ -30,7 +30,7 @@ export function validateProjectData(
          }),
       ),
       tags: Joi.array().items(Joi.string()),
-      likeCounts: Joi.number().integer().min(0).required(),
+      likeCounts: Joi.number().integer().min(0).optional(),
       award: Joi.array().items(Joi.string()).optional(),
    });
 
