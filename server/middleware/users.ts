@@ -1,6 +1,6 @@
 import { Response, NextFunction } from "express";
 import { AuthRequest } from "./auth";
-import { User } from "@models";
+import { User, Comment } from "@models";
 
 /**
  * Middleware to enforce access control on deleteUserById
@@ -142,5 +142,90 @@ export const accessOwnFavoritesOnly = async (
       console.error("Error in accessOwnFavoritesOnly middleware:", error);
       res.status(500).json({ error: "Internal server error" });
       return;
+   }
+};
+
+/**
+ * Middleware to ensure that users can only delete comment by their own permissions
+ * RBAC rules:
+ * - users can only delete their own comments
+ * - admin/staff can delete any comments
+ * @param req - Express request object with potential user data
+ * @param res - Express response object
+ * @param next - Express next function
+ * @returns Promise<void>
+ */
+export const canDeleteComment = async (
+   req: AuthRequest,
+   res: Response,
+   next: NextFunction,
+): Promise<void> => {
+   try {
+      const userId = req.user?.id;
+      const role = req.user?.role;
+      const commentId = req.params.id;
+
+      const comment = await Comment.findById(commentId);
+
+      if (!comment) {
+         res.status(404).json({ error: "Comment not found" });
+         return;
+      }
+
+      if (
+         role !== "admin" &&
+         role !== "staff" &&
+         comment.author._id.toString() !== userId
+      ) {
+         res.status(403).json({
+            error: "Access denied: You can only delete your own comments",
+         });
+         return;
+      }
+
+      next();
+   } catch (error) {
+      console.error("Error in canDeleteComment middleware:", error);
+      res.status(500).json({ error: "Internal server error" });
+   }
+};
+
+/**
+ * Middleware to ensure that users can only update own comments
+ * RBAC rules:
+ * - users can only update their own comments (author only)
+ * @param req - Express request object with potential user data
+ * @param res - Express response object
+ * @param next - Express next function
+ * @returns Promise<void>
+ */
+export const canUpdateComment = async (
+   req: AuthRequest,
+   res: Response,
+   next: NextFunction,
+): Promise<void> => {
+   try {
+      const userId = req.user?.id;
+      const commentId = req.params.id;
+
+      const comment = await Comment.findById(commentId);
+
+      if (!comment) {
+         res.status(404).json({ error: "Comment not found" });
+         return;
+      }
+
+      // Only author can update
+      if (comment.author._id.toString() !== userId) {
+         res.status(403).json({
+            error: "You can only update your own comment",
+         });
+         return;
+      }
+
+      next();
+   } catch (error) {
+      console.error("Error in canUpdateComment middleware:", error);
+      res.status(500).json({ error: "Internal server error" });
    }
 };

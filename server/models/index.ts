@@ -7,3 +7,4 @@ export { RegisteredStudent } from "./registeredStudent.model";
 export { Team } from "./team.model";
 export { Tag } from "./tag.model";
 export { Award } from "./award.model";
+export { Comment } from "./comment.model";

@@ -5,3 +5,4 @@ export * from "./tagController";
 export * from "./favoriteController";
 export * from "./categoryController";
 export * from "./awardController";
+export * from "./commentController";
