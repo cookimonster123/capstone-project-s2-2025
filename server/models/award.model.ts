@@ -9,7 +9,8 @@ const awardSchema = new mongoose.Schema(
       },
       iconUrl: {
          type: String,
-         default: "client/src/assets/default_avatar.jpg", //TODO: replace with actual default icon URL in client assets folder
+         default:
+            "https://showcaseweb.s3.ap-southeast-2.amazonaws.com/assets/defaultMedal.svg",
       },
       description: {
          type: String,
