@@ -28,6 +28,9 @@ export interface Project {
    links: ProjectLink[];
    createdAt: string;
    updatedAt: string;
+
+   likesCount?: number;
+   userLiked?: boolean;
 }
 
 export interface ProjectsResponse {
