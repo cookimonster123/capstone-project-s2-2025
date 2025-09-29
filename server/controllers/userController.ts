@@ -128,3 +128,22 @@ export const updateUserById = async (
       res.status(500).json({ error: "Internal server error" });
    }
 };
+
+/**
+ * get a user self id
+ * @param req - Express request object containing logged in user id
+ * @param res - Express response object
+ * @returns Promise<void> - Sends JSON response with current user data
+ */
+export const getMyId = async (
+   req: AuthRequest,
+   res: Response,
+): Promise<void> => {
+   try {
+      res.status(200).json(req.user?.id);
+      return;
+   } catch (error) {
+      console.error("Error finding me:", error);
+      res.status(500).json({ error: "Internal server error" });
+   }
+};

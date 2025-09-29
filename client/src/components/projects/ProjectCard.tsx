@@ -9,32 +9,13 @@ import {
    Tooltip,
 } from "@mui/material";
 import { ThumbUpOffAlt, ThumbUp } from "@mui/icons-material";
-import type { Project as BaseProject } from "../../types/project";
+import type { Project } from "../../types/project";
+import { fetchUserById, fetchCurrentUserId } from "../../api/userApi";
+import type { UserSummary } from "../../api/userApi";
 import medalIconDefault from "../../assets/medal.svg";
+import { BASE_API_URL } from "../../config/api";
 
-type SemesterInfo =
-   | { year?: number | string; semester?: string }
-   | null
-   | undefined;
-type CategoryInfo = { name?: string } | string | null | undefined;
-type TeamInfo = { name?: string } | null | undefined;
-type AwardInfo = { _id?: string; name?: string; iconUrl?: string };
-
-type ProjectForCard = BaseProject & {
-   _id?: string;
-   id?: string;
-   title?: string;
-   name?: string;
-   semester?: SemesterInfo;
-   category?: CategoryInfo;
-   team?: TeamInfo;
-   likedByMe?: boolean;
-   likesCount?: number;
-   likeCounts?: number;
-   likes?: number;
-   awards?: AwardInfo[];
-};
-
+type ProjectForCard = Project;
 type Props = {
    project: ProjectForCard;
    onClick: (p: ProjectForCard) => void;
@@ -44,25 +25,14 @@ type Props = {
    height?: number;
 };
 
-const DEFAULT_API_BASE = "http://localhost:3000/api";
-
-function getAuthToken(): string | undefined {
-   const keys = ["token", "accessToken", "access_token", "jwt", "id_token"];
-   for (const k of keys) {
-      const v =
-         (typeof localStorage !== "undefined" && localStorage.getItem(k)) ||
-         (typeof sessionStorage !== "undefined" && sessionStorage.getItem(k));
-      if (v && v.trim()) return v.trim();
-   }
-   return undefined;
-}
+const DEFAULT_API_BASE = BASE_API_URL;
 
 /** Field resolvers */
 function resolveProjectId(p: ProjectForCard): string {
-   return (p._id ?? p.id ?? "").toString();
+   return (p._id ?? "").toString();
 }
 function resolveTitle(p: ProjectForCard): string {
-   return p.title ?? p.name ?? "Untitled Project";
+   return p.name ?? "Untitled Project";
 }
 function resolveSemester(p: ProjectForCard): string {
    const s = p.semester;
@@ -83,51 +53,66 @@ function resolveTeamName(p: ProjectForCard): string {
    return t.name ?? "";
 }
 function resolveInitialLikes(p: ProjectForCard): number {
-   if (typeof p.likesCount === "number") return p.likesCount;
-   if (typeof p.likeCounts === "number") return p.likeCounts;
-   if (typeof p.likes === "number") return p.likes;
-   return 0;
+   return p.likeCounts ?? 0;
 }
 
 export default function ProjectCard({
    project,
    onClick,
    isAuthenticated,
-   token,
    apiBase = DEFAULT_API_BASE,
    height = 380,
 }: Props) {
-   const [liked, setLiked] = React.useState<boolean>(
-      Boolean(project.likedByMe),
-   );
+   const [user, setUser] = React.useState<UserSummary | null>(null);
+   const [liked, setLiked] = React.useState<boolean>(false);
    const [likes, setLikes] = React.useState<number>(
       resolveInitialLikes(project),
    );
    const [busy, setBusy] = React.useState(false);
+
+   // Fetch current user on mount
+   React.useEffect(() => {
+      if (!isAuthenticated) return;
+
+      const fetchUser = async () => {
+         try {
+            const currentUserId = await fetchCurrentUserId();
+            const userData = await fetchUserById(currentUserId);
+
+            setUser(userData.user);
+         } catch (error) {
+            console.error("Failed to fetch current user:", error);
+         }
+      };
+      fetchUser();
+   }, [isAuthenticated]);
+
+   // Sync liked state whenever user or project changes
+   React.useEffect(() => {
+      if (user && project._id) {
+         setLiked(user.likedProjects.map(String).includes(String(project._id)));
+      }
+   }, [user, project._id]);
 
    const when = resolveSemester(project);
    const categoryName = resolveCategoryName(project);
    const teamName = resolveTeamName(project);
 
    // award (show only when list is non-empty; use the first award)
-   const firstAward: AwardInfo | undefined = Array.isArray(project.awards)
-      ? project.awards[0]
-      : undefined;
+   const firstAward = Array.isArray(project.awards) ? project.awards[0] : null;
    const awardName = firstAward?.name?.trim() ?? "";
    const awardIcon = firstAward?.iconUrl?.trim() || medalIconDefault;
    const hasAward = Boolean(awardName);
 
    /** Like API */
-   async function callLikeAPI(projectId: string, wasLiked: boolean) {
-      const bearer = token || getAuthToken();
-      const headers: Record<string, string> = {
-         "Content-Type": "application/json",
-      };
-      if (bearer) headers.Authorization = `Bearer ${bearer}`;
-
+   async function callLikeAPI(projectId: string) {
       const r = await fetch(
          `${apiBase.replace(/\/$/, "")}/projects/${projectId}/like`,
-         { method: "POST", headers, credentials: "include" },
+         {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+         },
       );
 
       if (r.status === 401) {
@@ -147,15 +132,14 @@ export default function ProjectCard({
       };
    }
 
-   /** Like click handler */
    const handleLikeClick: React.MouseEventHandler<HTMLButtonElement> = async (
       e,
    ) => {
       e.preventDefault();
       e.stopPropagation();
       if (busy) return;
-
-      if (isAuthenticated === false) {
+      console.log(isAuthenticated);
+      if (!isAuthenticated) {
          alert("Please log in to like projects.");
          return;
       }
@@ -163,23 +147,18 @@ export default function ProjectCard({
       const pid = resolveProjectId(project);
       if (!pid) return;
 
-      const nextLiked = !liked;
-      setLiked(nextLiked);
-      setLikes((c) =>
-         Math.max(0, (Number.isFinite(c) ? c : 0) + (nextLiked ? 1 : -1)),
-      );
       setBusy(true);
 
+      const currentlyLiked = liked;
+      setLiked(!currentlyLiked);
+      setLikes((prev) => prev + (currentlyLiked ? -1 : 1));
       try {
-         const res = await callLikeAPI(pid, liked);
-         setLiked(res.liked);
-         setLikes(Number.isFinite(res.likes) ? res.likes : 0);
+         const res = await callLikeAPI(pid);
+         setLiked(res.liked); // backend truth
+         setLikes(res.likes); // backend likeCounts
       } catch (err) {
-         setLiked(!nextLiked);
-         setLikes((c) =>
-            Math.max(0, (Number.isFinite(c) ? c : 0) + (nextLiked ? -1 : 1)),
-         );
          console.error("[Like] failed:", err);
+         alert("Failed to like/unlike project.");
       } finally {
          setBusy(false);
       }
@@ -258,6 +237,10 @@ export default function ProjectCard({
                         width={22}
                         height={22}
                         style={{ display: "block" }}
+                        onError={(e) => {
+                           (e.currentTarget as HTMLImageElement).src =
+                              medalIconDefault;
+                        }}
                      />
                      <Typography
                         variant="caption"
@@ -318,7 +301,7 @@ export default function ProjectCard({
                               liked ? "unlike project" : "like project"
                            }
                            onClick={handleLikeClick}
-                           disabled={busy}
+                           disabled={busy || !isAuthenticated}
                            size="small"
                            sx={{
                               opacity: isAuthenticated === false ? 0.6 : 1,
@@ -327,11 +310,14 @@ export default function ProjectCard({
                                     ? "not-allowed"
                                     : "pointer",
                               "&:hover svg": {
-                                 color: liked ? "error.dark" : undefined,
+                                 color:
+                                    liked && isAuthenticated
+                                       ? "error.dark"
+                                       : undefined,
                               },
                            }}
                         >
-                           {liked ? (
+                           {liked && isAuthenticated ? (
                               <ThumbUp sx={{ color: "error.main" }} />
                            ) : (
                               <ThumbUpOffAlt />
@@ -341,7 +327,12 @@ export default function ProjectCard({
                   </Tooltip>
                   <Typography
                      variant="body2"
-                     sx={{ color: liked ? "error.main" : "text.primary" }}
+                     sx={{
+                        color:
+                           liked && isAuthenticated
+                              ? "error.main"
+                              : "text.primary",
+                     }}
                   >
                      {Number.isFinite(likes) ? likes : 0}
                   </Typography>

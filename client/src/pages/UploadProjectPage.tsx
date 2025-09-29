@@ -272,7 +272,7 @@ const UploadProjectPage: React.FC = () => {
                      {/* Tags as stack (tech stack) */}
                      <Box>
                         <Typography variant="subtitle1" sx={{ mb: 1 }}>
-                           Tech Stack (up to 5 tags)
+                           Tag (up to 5 tags)
                         </Typography>
                         <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
                            <TextField

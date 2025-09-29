@@ -7,6 +7,7 @@ import {
    addProjectToFavorites,
    deleteProjectFromFavorites,
    getUserFavoritesByUserId,
+   getMyId,
 } from "@controllers";
 import { authenticateToken, authorizeRoles } from "../middleware/auth";
 import {
@@ -23,6 +24,8 @@ router.get(
    authorizeRoles(["admin", "staff"]),
    getAllUsers,
 );
+
+router.get("/me", authenticateToken, getMyId);
 
 router.get("/:id", getUserById);
 

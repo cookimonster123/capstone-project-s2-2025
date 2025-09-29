@@ -15,11 +15,7 @@ import FavoriteIcon from "@mui/icons-material/Favorite";
 import UploadIcon from "@mui/icons-material/Upload";
 
 import type { Project } from "../types/project";
-import {
-   fetchProjectById,
-   fetchProjects,
-   likeProject,
-} from "../api/projectApi";
+import { fetchProjectById, fetchProjects } from "../api/projectApi";
 import ProjectCard from "../components/projects/ProjectCard";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -42,10 +38,6 @@ const StudentDashboard: React.FC = () => {
    const [myProject, setMyProject] = useState<Project | null>(null);
    const [loading, setLoading] = useState<boolean>(!!myProjectId);
    const [error, setError] = useState<string | null>(null);
-
-   // Like state for my project
-   const [liked, setLiked] = useState(false);
-   const [likeCount, setLikeCount] = useState<number>(0);
 
    // Projects feed for the Favorites tab (sample)
    const [allProjects, setAllProjects] = useState<Project[]>([]);
@@ -81,8 +73,6 @@ const StudentDashboard: React.FC = () => {
                   const p = await fetchProjectById(pid);
                   if (!active) return;
                   setMyProject(p);
-                  const lc = (p as any)?.likeCounts;
-                  setLikeCount(typeof lc === "number" ? lc : 0);
                   return; // done
                }
             } catch (e) {}
@@ -94,8 +84,6 @@ const StudentDashboard: React.FC = () => {
                const p = await fetchProjectById(cached);
                if (!active) return;
                setMyProject(p);
-               const lc = (p as any)?.likeCounts;
-               setLikeCount(typeof lc === "number" ? lc : 0);
                return;
             }
 
@@ -118,15 +106,6 @@ const StudentDashboard: React.FC = () => {
       };
    }, [user?.id]);
 
-   // Restore like from storage when project changes
-   useEffect(() => {
-      if (!myProjectId) {
-         setLiked(false);
-         return;
-      }
-      setLiked(localStorage.getItem(`like:${myProjectId}`) === "true");
-   }, [myProjectId]);
-
    // Load projects once for the Favorites tab
    useEffect(() => {
       let active = true;
@@ -145,23 +124,6 @@ const StudentDashboard: React.FC = () => {
          active = false;
       };
    }, []);
-
-   const toggleLike = async () => {
-      if (!myProjectId) return;
-      try {
-         const res = await likeProject(myProjectId);
-         const next = !!res.data.button;
-         setLiked(next);
-         if (typeof res.data.likeCounts === "number") {
-            setLikeCount(res.data.likeCounts);
-         } else {
-            setLikeCount((c) => c + (next ? 1 : -1));
-         }
-         try {
-            localStorage.setItem(`like:${myProjectId}`, String(next));
-         } catch {}
-      } catch (e) {}
-   };
 
    if (!isLoggedIn) {
       return (
@@ -196,7 +158,7 @@ const StudentDashboard: React.FC = () => {
             justifyContent: "center",
          }}
       >
-         <Box sx={{ width: "100%", maxWidth: 980 }}>
+         <Box sx={{ width: "100%", maxWidth: 980, ml: 10 }}>
             <Typography
                component="h1"
                sx={{
@@ -223,7 +185,7 @@ const StudentDashboard: React.FC = () => {
                }}
             >
                {/* Left profile panel */}
-               <Stack spacing={3}>
+               <Stack spacing={3} mx={2} mt={6}>
                   <Card elevation={1}>
                      <CardHeader title="Profile" />
                      <CardContent>
@@ -263,17 +225,6 @@ const StudentDashboard: React.FC = () => {
                         </Stack>
                      </CardContent>
                   </Card>
-
-                  <Card elevation={1}>
-                     <CardHeader title="Quick Stats" />
-                     <CardContent>
-                        <Stack spacing={1}>
-                           <Typography variant="body2">
-                              Likes: {likeCount}
-                           </Typography>
-                        </Stack>
-                     </CardContent>
-                  </Card>
                </Stack>
 
                {/* Right: Tabs + Content */}
@@ -282,7 +233,7 @@ const StudentDashboard: React.FC = () => {
                   <Stack
                      direction="row"
                      spacing={2}
-                     sx={{ mb: 2, alignItems: "center" }}
+                     sx={{ mb: 2, alignItems: "center", ml: 11 }}
                   >
                      <Button
                         variant="text"
@@ -310,7 +261,12 @@ const StudentDashboard: React.FC = () => {
                   </Stack>
 
                   {activeTab === "overview" && (
-                     <Card elevation={1}>
+                     <Card
+                        elevation={1}
+                        sx={{
+                           width: "73%",
+                        }}
+                     >
                         <CardHeader
                            title={
                               <Stack
@@ -349,25 +305,8 @@ const StudentDashboard: React.FC = () => {
                                  <ProjectCard
                                     project={myProject}
                                     onClick={() => navigate("/profile")}
+                                    isAuthenticated={isLoggedIn}
                                  />
-                                 <Stack
-                                    direction="row"
-                                    spacing={2}
-                                    alignItems="center"
-                                 >
-                                    <Button
-                                       onClick={toggleLike}
-                                       startIcon={
-                                          liked ? (
-                                             <FavoriteIcon color="error" />
-                                          ) : (
-                                             <FavoriteBorderIcon />
-                                          )
-                                       }
-                                    >
-                                       {liked ? "Liked" : "Like"}
-                                    </Button>
-                                 </Stack>
                               </Stack>
                            ) : (
                               <Stack
@@ -406,49 +345,6 @@ const StudentDashboard: React.FC = () => {
                               </Typography>
                            }
                         />
-                        <CardContent>
-                           <Box
-                              sx={{
-                                 display: "grid",
-                                 gridTemplateColumns: {
-                                    xs: "repeat(1, 1fr)",
-                                    sm: "repeat(2, 1fr)",
-                                    md: "repeat(3, 1fr)",
-                                 },
-                                 gap: 2,
-                              }}
-                           >
-                              {(() => {
-                                 if (!allProjects || allProjects.length === 0) {
-                                    return (
-                                       <Typography color="text.secondary">
-                                          No projects found.
-                                       </Typography>
-                                    );
-                                 }
-                                 const sorted = [...allProjects].sort(
-                                    (a, b) => {
-                                       const la = (a as any)?.likeCounts;
-                                       const lb = (b as any)?.likeCounts;
-                                       const na =
-                                          typeof la === "number" ? la : 0;
-                                       const nb =
-                                          typeof lb === "number" ? lb : 0;
-                                       return nb - na;
-                                    },
-                                 );
-                                 const top = sorted.slice(0, 6);
-                                 return top.map((p) => (
-                                    <Box key={p._id}>
-                                       <ProjectCard
-                                          project={p}
-                                          onClick={() => navigate("/profile")}
-                                       />
-                                    </Box>
-                                 ));
-                              })()}
-                           </Box>
-                        </CardContent>
                      </Card>
                   )}
                </Box>

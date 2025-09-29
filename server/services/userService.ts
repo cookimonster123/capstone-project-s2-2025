@@ -96,6 +96,10 @@ export async function findAllUsers(): Promise<ServiceResult<UserData[]>> {
                   value: link.value,
                })) || [],
             project: user.project?.id?.toString(),
+            likedProjects:
+               user.likedProjects?.map((likedProject) =>
+                  likedProject._id.toString(),
+               ) || [],
             team: user.team?.id?.toString(),
          })),
       };
@@ -140,6 +144,10 @@ export async function findUserById(
                   value: link.value,
                })) || [],
             project: user.project?.id?.toString(),
+            likedProjects:
+               user.likedProjects?.map((likedProject) =>
+                  likedProject._id.toString(),
+               ) || [],
             team: user.team?.id?.toString(),
          },
       };
