@@ -1,6 +1,5 @@
 ﻿import React, { useEffect, useMemo, useState } from "react";
 import type { Project } from "../types/project";
-
 import {
    Avatar,
    Box,
@@ -44,6 +43,7 @@ const ProjectProfileView: React.FC<ProjectProfileProps> = ({
    const [isLiked, setIsLiked] = useState(false);
    const [isFavorited, setIsFavorited] = useState(false);
    const [comment, setComment] = useState("");
+   const navigate = useNavigate();
    const [comments, setComments] = useState([
       {
          id: "1",
@@ -145,11 +145,35 @@ const ProjectProfileView: React.FC<ProjectProfileProps> = ({
                   sx={{ mb: 1 }}
                >
                   <Chip label={categoryName} size="small" />
-                  {project.semester?.name && (
-                     <Chip label={project.semester.name} size="small" />
+                  {project.semester?.semester && (
+                     <Chip label={project.semester.semester} size="small" />
                   )}
                   {project.semester?.year && (
                      <Chip label={String(project.semester.year)} size="small" />
+                  )}
+                  {/* Project tags as clickable chips (jump to /projects?tag=...) */}
+                  {!!project.tags?.length && (
+                     <Stack
+                        direction="row"
+                        spacing={0.5}
+                        flexWrap="wrap"
+                        sx={{ mb: 2, rowGap: 0.5 }}
+                     >
+                        {project.tags.map((t) => (
+                           <Chip
+                              key={t._id ?? t.name}
+                              label={t.name}
+                              size="small"
+                              variant="outlined"
+                              clickable
+                              onClick={() =>
+                                 navigate(
+                                    `/projects?tag=${encodeURIComponent(t.name)}`,
+                                 )
+                              }
+                           />
+                        ))}
+                     </Stack>
                   )}
                </Stack>
 
@@ -588,7 +612,7 @@ const ProjectProfileView: React.FC<ProjectProfileProps> = ({
                                        </Typography>
                                        <Typography variant="body2">
                                           {project.semester
-                                             ? `${project.semester.name} ${project.semester.year}`
+                                             ? `${project.semester.semester} ${project.semester.year}`
                                              : "Not specified"}
                                        </Typography>
                                     </Box>
@@ -641,22 +665,30 @@ const ProjectProfileView: React.FC<ProjectProfileProps> = ({
                                     spacing={1}
                                     flexWrap="wrap"
                                  >
-                                    {/* Placeholder chips for layout parity; replace with real data when available */}
-                                    <Chip
-                                       label="Java"
-                                       size="small"
-                                       variant="outlined"
-                                    />
-                                    <Chip
-                                       label="Next.js"
-                                       size="small"
-                                       variant="outlined"
-                                    />
-                                    <Chip
-                                       label="AWS Cognito"
-                                       size="small"
-                                       variant="outlined"
-                                    />
+                                    {(project.tags ?? []).map((t) => (
+                                       <Chip
+                                          key={t._id ?? t.name}
+                                          label={t.name}
+                                          size="small"
+                                          variant="outlined"
+                                          clickable
+                                          onClick={() =>
+                                             navigate(
+                                                `/projects?tag=${encodeURIComponent(t.name)}`,
+                                             )
+                                          }
+                                       />
+                                    ))}
+
+                                    {(!project.tags ||
+                                       project.tags.length === 0) && (
+                                       <Typography
+                                          variant="body2"
+                                          color="text.secondary"
+                                       >
+                                          No tags.
+                                       </Typography>
+                                    )}
                                  </Stack>
 
                                  <Stack spacing={1} sx={{ mt: 2 }}>

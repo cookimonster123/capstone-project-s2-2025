@@ -3,28 +3,51 @@ export interface ProjectLink {
    type: "github" | "deployedWebsite";
 }
 
+export interface TeamMember {
+   _id: string;
+   name: string;
+   email: string;
+}
+
+export interface TeamInfo {
+   _id: string;
+   name: string;
+   members: TeamMember[];
+}
+
+export interface SemesterInfo {
+   _id: string;
+   semester: string;
+   year: number;
+}
+
+export interface CategoryInfo {
+   _id: string;
+   name: string;
+}
+
+export interface TagInfo {
+   _id?: string;
+   name: string;
+}
+
+export interface AwardInfo {
+   _id: string;
+   name: string;
+   iconUrl?: string;
+}
+
 export interface Project {
    _id: string;
    name: string;
    description: string;
-   team?: {
-      _id: string;
-      name: string;
-      members: Array<{
-         _id: string;
-         name: string;
-         email: string;
-      }>;
-   } | null;
-   semester?: {
-      _id: string;
-      name: string;
-      year: number;
-   } | null;
-   category?: {
-      _id: string;
-      name: string;
-   } | null;
+   team?: TeamInfo | null;
+   semester?: SemesterInfo | null;
+   category?: CategoryInfo | null;
+   tags?: TagInfo[];
+   awards?: AwardInfo[];
+   likeCounts?: number;
+
    links: ProjectLink[];
    createdAt: string;
    updatedAt: string;

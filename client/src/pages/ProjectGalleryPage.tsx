@@ -21,7 +21,7 @@ import { useDebounce } from "../hooks/useDebounce";
 import { fetchProjects, fetchProjectById } from "../api/projectApi";
 import type { Project } from "../types/project";
 import { projectCache } from "../state/projectCache";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 // MUI-based gallery page that preserves search bar and filters while using ProjectGrid
 const ProjectGalleryPage: React.FC = () => {
@@ -29,13 +29,27 @@ const ProjectGalleryPage: React.FC = () => {
    const [searchInput, setSearchInput] = useState("");
    const debouncedSearch = useDebounce(searchInput, 200);
    const [category, setCategory] = useState<string>("");
+   const [year, setYear] = useState<string>("");
+   const [semester, setSemester] = useState<string>("");
    const [categoryOptions, setCategoryOptions] = useState<string[]>([]);
    const [openCat, setOpenCat] = useState(false);
+   const [openYear, setOpenYear] = useState<boolean>(false);
+   const [openSem, setOpenSem] = useState<boolean>(false);
    const [projects, setProjects] = useState<Project[]>([]);
    const [loading, setLoading] = useState(true);
    const [error, setError] = useState<string | null>(null);
-
+   const [searchParams, setSearchParams] = useSearchParams();
    const navigate = useNavigate();
+
+   useEffect(() => {
+      const tag = searchParams.get("tag");
+      const q = searchParams.get("q");
+      if (tag) {
+         setSearchInput(tag);
+      } else if (q) {
+         setSearchInput(q);
+      }
+   }, [searchParams]);
 
    // Fetch data
    useEffect(() => {
@@ -65,28 +79,104 @@ const ProjectGalleryPage: React.FC = () => {
       loadProjects();
    }, []);
 
+   const handleSearchChange = useCallback(
+      (e: React.ChangeEvent<HTMLInputElement>) => {
+         const val = e.target.value;
+         setSearchInput(val);
+
+         const params = new URLSearchParams(searchParams);
+         if (val.trim()) {
+            params.set("q", val.trim());
+            params.delete("tag");
+         } else {
+            params.delete("q");
+            params.delete("tag");
+         }
+         setSearchParams(params, { replace: true });
+      },
+      [searchParams, setSearchParams],
+   );
+
    // Filter data
    const filteredProjects = useMemo(() => {
       const search = debouncedSearch.trim().toLowerCase();
       const selectedCategory = category === "" ? null : category;
+      const selectedYear = year === "" ? null : Number(year);
+      const selectedSemester = semester === "" ? null : semester;
 
-      return projects.filter((project) => {
-         const name = project.name?.toLowerCase() ?? "";
-         const description = project.description?.toLowerCase() ?? "";
-         const team = project.team?.name?.toLowerCase() ?? "";
+      // tag / keyword / team helpers
+      const hasTagMatch = (p: Project) =>
+         (p.tags ?? []).some((t) => t.name.toLowerCase().includes(search));
 
-         const matchesSearch =
-            !search ||
-            name.includes(search) ||
-            description.includes(search) ||
-            team.includes(search);
+      const hasKeywordMatch = (p: Project) => {
+         const name = p.name?.toLowerCase() ?? "";
+         const description = p.description?.toLowerCase() ?? "";
+         return (
+            !search || name.includes(search) || description.includes(search)
+         );
+      };
 
+      const hasTeamMatch = (p: Project) => {
+         const team = p.team?.name?.toLowerCase() ?? "";
+         return !search || team.includes(search);
+      };
+
+      const filtered = projects.filter((p) => {
          const matchesCategory =
-            !selectedCategory || project.category?.name === selectedCategory;
+            !selectedCategory || p.category?.name === selectedCategory;
 
-         return matchesSearch && matchesCategory;
+         const matchesYear = !selectedYear || p.semester?.year === selectedYear;
+
+         const matchesSemester =
+            !selectedSemester || p.semester?.semester === selectedSemester;
+
+         if (!search) return matchesCategory && matchesYear && matchesSemester;
+
+         const anyMatch =
+            hasTeamMatch(p) || hasKeywordMatch(p) || hasTagMatch(p);
+         return matchesCategory && matchesYear && matchesSemester && anyMatch;
       });
-   }, [projects, debouncedSearch, category]);
+
+      if (!search) return filtered;
+
+      // team > keyword > tag
+      const scored = filtered
+         .map((p) => {
+            const team = search
+               ? (p.team?.name?.toLowerCase() ?? "").includes(search)
+               : false;
+            const keyword = search
+               ? p.name?.toLowerCase().includes(search) ||
+                 (p.description?.toLowerCase() ?? "").includes(search)
+               : false;
+            const tag = search ? hasTagMatch(p) : false;
+
+            const score: [number, number, number] = [
+               team ? 1 : 0,
+               keyword ? 1 : 0,
+               tag ? 1 : 0,
+            ];
+            return { p, score };
+         })
+         .sort((a, b) => {
+            if (b.score[0] !== a.score[0]) return b.score[0] - a.score[0]; // team
+            if (b.score[1] !== a.score[1]) return b.score[1] - a.score[1]; // keyword
+            if (b.score[2] !== a.score[2]) return b.score[2] - a.score[2]; // tag
+            return (a.p.name || "").localeCompare(b.p.name || ""); // stable fallback
+         })
+         .map((x) => x.p);
+
+      return scored;
+   }, [projects, debouncedSearch, category, year, semester]);
+
+   const yearOptions = useMemo(() => {
+      const years = new Set<number>();
+      for (const p of projects) {
+         const y = p.semester?.year;
+         if (typeof y === "number") years.add(y);
+      }
+      return Array.from(years).sort((a, b) => b - a);
+   }, [projects]);
 
    const handleProjectClick = async (project: Project) => {
       try {
@@ -142,7 +232,7 @@ const ProjectGalleryPage: React.FC = () => {
                      </Typography>
                   </Box>
 
-                  {/* Filter toolbar (no box, simple row) */}
+                  {/* Filter toolbar*/}
                   <Box
                      sx={{
                         position: "sticky",
@@ -153,141 +243,308 @@ const ProjectGalleryPage: React.FC = () => {
                   >
                      <Stack
                         direction={{ xs: "column", md: "row" }}
-                        spacing={2}
                         alignItems={{ xs: "stretch", md: "center" }}
+                        justifyContent="space-between"
+                        spacing={2}
+                        sx={{ width: "100%" }}
                      >
-                        <TextField
-                           placeholder="Search projects, teams or keywords..."
-                           value={searchInput}
-                           onChange={(e) => setSearchInput(e.target.value)}
-                           InputProps={{
-                              startAdornment: (
-                                 <InputAdornment position="start">
-                                    <SearchIcon color="disabled" />
-                                 </InputAdornment>
-                              ),
-                           }}
-                           fullWidth
-                           sx={{
-                              "& .MuiOutlinedInput-notchedOutline": {
-                                 borderWidth: "2px",
-                              },
-                              "& .MuiOutlinedInput-root:not(.Mui-focused):hover .MuiOutlinedInput-notchedOutline":
-                                 {
-                                    borderColor: "rgba(0,0,0,0.87)",
-                                 },
-                           }}
-                        />
-                        <FormControl
-                           variant="outlined"
-                           sx={{
-                              minWidth: 180,
-                              // Hide notch when label not shrunk
-                              "& .MuiInputLabel-root:not(.MuiInputLabel-shrink) + .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline legend":
-                                 {
-                                    width: 0,
-                                 },
-                              // Default (idle) thickness
-                              "& .MuiOutlinedInput-notchedOutline": {
-                                 borderWidth: "2px",
-                              },
-                              // Focus keeps same thickness for consistency
-                              "& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline":
-                                 {
+                        <Box sx={{ flex: 1, minWidth: 280 }}>
+                           <TextField
+                              placeholder="Search projects, teams or keywords..."
+                              value={searchInput}
+                              onChange={handleSearchChange}
+                              InputProps={{
+                                 startAdornment: (
+                                    <InputAdornment position="start">
+                                       <SearchIcon color="disabled" />
+                                    </InputAdornment>
+                                 ),
+                              }}
+                              fullWidth
+                              sx={{
+                                 "& .MuiOutlinedInput-notchedOutline": {
                                     borderWidth: "2px",
                                  },
+                                 "& .MuiOutlinedInput-root:not(.Mui-focused):hover .MuiOutlinedInput-notchedOutline":
+                                    { borderColor: "rgba(0,0,0,0.87)" },
+                              }}
+                           />
+                        </Box>
+
+                        <Stack
+                           direction="row"
+                           spacing={2}
+                           alignItems="center"
+                           flexShrink={0}
+                           sx={{
+                              flexWrap: { xs: "wrap", md: "nowrap" },
+                              rowGap: 1,
                            }}
                         >
-                           <InputLabel
-                              id="cat-label"
-                              shrink={Boolean(category) || openCat}
+                           <FormControl
+                              variant="outlined"
                               sx={{
-                                 "&.Mui-focused": {
-                                    color: (theme) =>
-                                       Boolean(category) || openCat
-                                          ? theme.palette.primary.main
-                                          : theme.palette.text.secondary,
+                                 minWidth: 180,
+                                 "& .MuiInputLabel-root:not(.MuiInputLabel-shrink) + .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline legend":
+                                    { width: 0 },
+                                 "& .MuiOutlinedInput-notchedOutline": {
+                                    borderWidth: "2px",
                                  },
-                                 "&:not(.MuiInputLabel-shrink)": {
-                                    color: (theme) =>
-                                       theme.palette.text.primary,
-                                    fontWeight: 400,
-                                 },
+                                 "& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline":
+                                    { borderWidth: "2px" },
                               }}
                            >
-                              Category
-                           </InputLabel>
-                           <Select
-                              value={category}
-                              onChange={(e) => setCategory(e.target.value)}
-                              labelId="cat-label"
-                              label="Category"
-                              displayEmpty
-                              open={openCat}
-                              onOpen={() => setOpenCat(true)}
-                              onClose={() => {
-                                 setOpenCat(false);
-                                 // Ensure the element that kept focus (Select display) releases it
-                                 requestAnimationFrame(() => {
-                                    const el =
-                                       document.activeElement as HTMLElement | null;
-                                    el?.blur?.();
-                                 });
-                              }}
-                              input={
-                                 <OutlinedInput
-                                    label="Category"
-                                    notched={Boolean(category) || openCat}
-                                    sx={{
-                                       "&.Mui-focused .MuiOutlinedInput-notchedOutline":
-                                          {
-                                             borderColor:
-                                                Boolean(category) || openCat
-                                                   ? undefined
-                                                   : "rgba(0,0,0,0.23)",
-                                             borderWidth:
-                                                Boolean(category) || openCat
-                                                   ? undefined
-                                                   : "1px",
-                                          },
-                                    }}
-                                 />
-                              }
-                              renderValue={(selected) =>
-                                 selected ? (
-                                    (selected as string as unknown as React.ReactNode)
-                                 ) : openCat ? (
-                                    <span style={{ color: "#9aa0a6" }}>
-                                       Any
-                                    </span>
-                                 ) : null
-                              }
-                           >
-                              <MenuItem value="" disabled>
-                                 <em>Any</em>
-                              </MenuItem>
-                              {categoryOptions.map((c) => (
-                                 <MenuItem key={c} value={c}>
-                                    {c}
+                              <InputLabel
+                                 id="cat-label"
+                                 shrink={Boolean(category) || openCat}
+                                 sx={{
+                                    "&.Mui-focused": {
+                                       color: (theme) =>
+                                          Boolean(category) || openCat
+                                             ? theme.palette.primary.main
+                                             : theme.palette.text.secondary,
+                                    },
+                                    "&:not(.MuiInputLabel-shrink)": {
+                                       color: (theme) =>
+                                          theme.palette.text.primary,
+                                       fontWeight: 400,
+                                    },
+                                 }}
+                              >
+                                 Category
+                              </InputLabel>
+                              <Select
+                                 value={category}
+                                 onChange={(e) => setCategory(e.target.value)}
+                                 labelId="cat-label"
+                                 label="Category"
+                                 displayEmpty
+                                 open={openCat}
+                                 onOpen={() => setOpenCat(true)}
+                                 onClose={() => {
+                                    setOpenCat(false);
+                                    requestAnimationFrame(() => {
+                                       const el =
+                                          document.activeElement as HTMLElement | null;
+                                       el?.blur?.();
+                                    });
+                                 }}
+                                 input={
+                                    <OutlinedInput
+                                       label="Category"
+                                       notched={Boolean(category) || openCat}
+                                       sx={{
+                                          "&.Mui-focused .MuiOutlinedInput-notchedOutline":
+                                             {
+                                                borderColor:
+                                                   Boolean(category) || openCat
+                                                      ? undefined
+                                                      : "rgba(0,0,0,0.23)",
+                                                borderWidth:
+                                                   Boolean(category) || openCat
+                                                      ? undefined
+                                                      : "1px",
+                                             },
+                                       }}
+                                    />
+                                 }
+                                 renderValue={(selected) =>
+                                    selected ? (
+                                       (selected as string as unknown as React.ReactNode)
+                                    ) : openCat ? (
+                                       <span style={{ color: "#9aa0a6" }}>
+                                          Any
+                                       </span>
+                                    ) : null
+                                 }
+                              >
+                                 <MenuItem value="">
+                                    <em>Any</em>
                                  </MenuItem>
-                              ))}
-                           </Select>
-                        </FormControl>
-                        <Box sx={{ flex: 1 }} />
-                        {(searchInput ||
-                           debouncedSearch ||
-                           category !== "") && (
-                           <Button
-                              onClick={() => {
-                                 setSearchInput("");
-                                 setCategory("");
+                                 {categoryOptions.map((c) => (
+                                    <MenuItem key={c} value={c}>
+                                       {c}
+                                    </MenuItem>
+                                 ))}
+                              </Select>
+                           </FormControl>
+
+                           <FormControl
+                              variant="outlined"
+                              sx={{
+                                 minWidth: 180,
+                                 "& .MuiInputLabel-root:not(.MuiInputLabel-shrink) ~ .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline legend":
+                                    { width: 0 },
+                                 "& .MuiOutlinedInput-notchedOutline": {
+                                    borderWidth: "2px",
+                                 },
+                                 "& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline":
+                                    { borderWidth: "2px" },
                               }}
                            >
-                              Clear
-                           </Button>
-                        )}
+                              <InputLabel
+                                 id="year-label"
+                                 shrink={Boolean(year) || openYear}
+                                 sx={{
+                                    "&.Mui-focused": (theme) => ({
+                                       color:
+                                          Boolean(year) || openYear
+                                             ? theme.palette.primary.main
+                                             : theme.palette.text.secondary,
+                                    }),
+                                    "&:not(.MuiInputLabel-shrink)": (
+                                       theme,
+                                    ) => ({
+                                       color: theme.palette.text.primary,
+                                       fontWeight: 400,
+                                    }),
+                                 }}
+                              >
+                                 Year
+                              </InputLabel>
+                              <Select
+                                 value={year}
+                                 onChange={(e) => setYear(e.target.value)}
+                                 labelId="year-label"
+                                 label="Year"
+                                 displayEmpty
+                                 open={openYear}
+                                 onOpen={() => setOpenYear(true)}
+                                 onClose={() => {
+                                    setOpenYear(false);
+                                    requestAnimationFrame(() =>
+                                       (
+                                          document.activeElement as HTMLElement | null
+                                       )?.blur?.(),
+                                    );
+                                 }}
+                                 input={
+                                    <OutlinedInput
+                                       label="Year"
+                                       notched={Boolean(year) || openYear}
+                                       sx={{
+                                          "&.Mui-focused .MuiOutlinedInput-notchedOutline":
+                                             {
+                                                borderColor:
+                                                   Boolean(year) || openYear
+                                                      ? undefined
+                                                      : "rgba(0,0,0,0.23)",
+                                                borderWidth:
+                                                   Boolean(year) || openYear
+                                                      ? undefined
+                                                      : "1px",
+                                             },
+                                       }}
+                                    />
+                                 }
+                                 renderValue={(selected) =>
+                                    selected ? (
+                                       (selected as React.ReactNode)
+                                    ) : openYear ? (
+                                       <span style={{ color: "#9aa0a6" }}>
+                                          Year
+                                       </span>
+                                    ) : null
+                                 }
+                              >
+                                 <MenuItem value="">
+                                    <em>Any</em>
+                                 </MenuItem>
+                                 {yearOptions.map((y) => (
+                                    <MenuItem key={y} value={String(y)}>
+                                       {y}
+                                    </MenuItem>
+                                 ))}
+                              </Select>
+                           </FormControl>
+
+                           <FormControl
+                              variant="outlined"
+                              sx={{
+                                 minWidth: 180,
+                                 "& .MuiInputLabel-root:not(.MuiInputLabel-shrink) ~ .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline legend":
+                                    { width: 0 },
+                                 "& .MuiOutlinedInput-notchedOutline": {
+                                    borderWidth: "2px",
+                                 },
+                                 "& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline":
+                                    { borderWidth: "2px" },
+                              }}
+                           >
+                              <InputLabel
+                                 id="semester-label"
+                                 shrink={Boolean(semester) || openSem}
+                                 sx={{
+                                    "&.Mui-focused": (theme) => ({
+                                       color:
+                                          Boolean(semester) || openSem
+                                             ? theme.palette.primary.main
+                                             : theme.palette.text.secondary,
+                                    }),
+                                    "&:not(.MuiInputLabel-shrink)": (
+                                       theme,
+                                    ) => ({
+                                       color: theme.palette.text.primary,
+                                       fontWeight: 400,
+                                    }),
+                                 }}
+                              >
+                                 Semester
+                              </InputLabel>
+                              <Select
+                                 value={semester}
+                                 onChange={(e) => setSemester(e.target.value)}
+                                 labelId="semester-label"
+                                 label="Semester"
+                                 displayEmpty
+                                 open={openSem}
+                                 onOpen={() => setOpenSem(true)}
+                                 onClose={() => {
+                                    setOpenSem(false);
+                                    requestAnimationFrame(() =>
+                                       (
+                                          document.activeElement as HTMLElement | null
+                                       )?.blur?.(),
+                                    );
+                                 }}
+                                 input={
+                                    <OutlinedInput
+                                       label="Semester"
+                                       notched={Boolean(semester) || openSem}
+                                       sx={{
+                                          "&.Mui-focused .MuiOutlinedInput-notchedOutline":
+                                             {
+                                                borderColor:
+                                                   Boolean(semester) || openSem
+                                                      ? undefined
+                                                      : "rgba(0,0,0,0.23)",
+                                                borderWidth:
+                                                   Boolean(semester) || openSem
+                                                      ? undefined
+                                                      : "1px",
+                                             },
+                                       }}
+                                    />
+                                 }
+                                 renderValue={(selected) =>
+                                    selected ? (
+                                       (selected as React.ReactNode)
+                                    ) : openSem ? (
+                                       <span style={{ color: "#9aa0a6" }}>
+                                          Semester
+                                       </span>
+                                    ) : null
+                                 }
+                              >
+                                 <MenuItem value="">
+                                    <em>Any</em>
+                                 </MenuItem>
+                                 <MenuItem value="S1">S1</MenuItem>
+                                 <MenuItem value="S2">S2</MenuItem>
+                              </Select>
+                           </FormControl>
+                        </Stack>
                      </Stack>
-                     {/* Quick category chips removed by request */}
                   </Box>
 
                   {/* Separate toolbar and grid with a horizontal line */}
