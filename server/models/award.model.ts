@@ -16,26 +16,12 @@ const awardSchema = new mongoose.Schema(
          type: String,
          required: true,
       },
-      category: {
-         type: String,
-         required: true,
-         enum: [
-            "Innovation",
-            "Design",
-            "Technical Excellence",
-            "Social Impact",
-            "Best Overall",
-            "People's Choice",
-         ],
-      },
    },
    {
       timestamps: true,
    },
 );
 
-// Index for efficient queries
-awardSchema.index({ category: 1 });
 // enforce unique award names
 awardSchema.index({ name: 1 }, { unique: true });
 

@@ -5,7 +5,6 @@ import {
    createNewAward,
    updateAwardById,
    deleteAwardById,
-   getAwardsByCategory,
    assignAwardToProjectById,
    removeAwardFromProjectById,
 } from "@controllers";
@@ -16,8 +15,6 @@ const router = Router();
 router.get("/", getAllAwards);
 
 router.get("/:id", getAwardById);
-
-router.get("/category/:category", getAwardsByCategory);
 
 router.post(
    "/",

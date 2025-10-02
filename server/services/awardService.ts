@@ -12,16 +12,6 @@ export function validateAwardData(
       name: Joi.string().required(),
       iconUrl: Joi.string().optional(),
       description: Joi.string().required(),
-      category: Joi.string()
-         .valid(
-            "Innovation",
-            "Design",
-            "Technical Excellence",
-            "Social Impact",
-            "Best Overall",
-            "People's Choice",
-         )
-         .required(),
    });
 
    return schema.validate(awardData);
@@ -41,7 +31,6 @@ export const findAllAwards = async (): Promise<ServiceResult<AwardData[]>> => {
             name: award.name,
             iconUrl: award.iconUrl,
             description: award.description,
-            category: award.category,
             createdAt: award.createdAt,
             updatedAt: award.updatedAt,
          })),
@@ -77,7 +66,6 @@ export const findAwardById = async (
             name: award.name,
             iconUrl: award.iconUrl,
             description: award.description,
-            category: award.category,
             createdAt: award.createdAt,
             updatedAt: award.updatedAt,
          },
@@ -114,7 +102,6 @@ export const createAward = async (
             name: award.name,
             iconUrl: award.iconUrl,
             description: award.description,
-            category: award.category,
             createdAt: award.createdAt,
             updatedAt: award.updatedAt,
          },
@@ -160,7 +147,6 @@ export const updateAward = async (
             name: updatedAward.name,
             iconUrl: updatedAward.iconUrl,
             description: updatedAward.description,
-            category: updatedAward.category,
             createdAt: updatedAward.createdAt,
             updatedAt: updatedAward.updatedAt,
          },
@@ -208,35 +194,6 @@ export const deleteAward = async (awardId: string): Promise<ServiceResult> => {
       return {
          success: false,
          error: "Failed to delete award",
-      };
-   }
-};
-
-/**
- * Find awards by category
- */
-export const findAwardsByCategory = async (
-   category: string,
-): Promise<ServiceResult<AwardData[]>> => {
-   try {
-      const awards = await Award.find({ category }).sort({ createdAt: -1 });
-
-      return {
-         success: true,
-         data: awards.map((award) => ({
-            name: award.name,
-            iconUrl: award.iconUrl,
-            description: award.description,
-            category: award.category,
-            createdAt: award.createdAt,
-            updatedAt: award.updatedAt,
-         })),
-      };
-   } catch (error) {
-      console.error("Error finding awards by category:", error);
-      return {
-         success: false,
-         error: "Failed to fetch awards for category",
       };
    }
 };

@@ -6,7 +6,6 @@ import {
    createAward,
    updateAward,
    deleteAward,
-   findAwardsByCategory,
    assignAwardToProject,
    deleteAwardFromProject,
 } from "../services/awardService";
@@ -130,29 +129,6 @@ export const deleteAwardById = async (
       });
    } catch (error) {
       console.error("Error in deleteAwardById:", error);
-      res.status(500).json({ error: "Internal server error" });
-   }
-};
-
-/**
- * Get awards by category
- */
-export const getAwardsByCategory = async (
-   req: AuthRequest,
-   res: Response,
-): Promise<void> => {
-   try {
-      const { category } = req.params;
-      const result = await findAwardsByCategory(category);
-
-      if (!result.success) {
-         res.status(500).json({ error: result.error });
-         return;
-      }
-
-      res.status(200).json({ awards: result.data });
-   } catch (error) {
-      console.error("Error in getAwardsByCategory:", error);
       res.status(500).json({ error: "Internal server error" });
    }
 };
