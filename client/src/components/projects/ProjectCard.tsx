@@ -23,6 +23,7 @@ type Props = {
    token?: string;
    apiBase?: string;
    height?: number;
+   width?: number;
 };
 
 const DEFAULT_API_BASE = BASE_API_URL;
@@ -62,6 +63,7 @@ export default function ProjectCard({
    isAuthenticated,
    apiBase = DEFAULT_API_BASE,
    height = 380,
+   width = 408,
 }: Props) {
    const [user, setUser] = React.useState<UserSummary | null>(null);
    const [liked, setLiked] = React.useState<boolean>(false);
@@ -168,7 +170,7 @@ export default function ProjectCard({
       <Card
          onClick={() => onClick(project)}
          sx={{
-            width: 408,
+            width,
             height,
             borderRadius: 2,
             overflow: "hidden",

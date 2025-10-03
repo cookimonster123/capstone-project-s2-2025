@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate } from "react-router-dom";
 import RootLayout from "./layouts/RootLayout";
 import ProjectGalleryPage from "./pages/ProjectGalleryPage";
 import ProjectProfilePage from "./pages/ProjectProfile";
+import LandingPage from "./pages/LandingPage";
 import UploadProjectPage from "./pages/UploadProjectPage";
 import StudentDashboard from "./pages/StudentDashboard";
 import LoginPage from "./pages/LoginPage";
@@ -12,7 +13,7 @@ export const router = createBrowserRouter([
       path: "/",
       element: <RootLayout />,
       children: [
-         { index: true, element: <Navigate to="projects" replace /> },
+         { index: true, element: <LandingPage /> },
          { path: "projects", element: <ProjectGalleryPage /> },
          { path: "profile", element: <StudentDashboard /> },
          { path: "profile/:id", element: <ProjectProfilePage /> },

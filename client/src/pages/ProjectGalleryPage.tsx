@@ -13,7 +13,6 @@ import {
    OutlinedInput,
    Stack,
    Divider,
-   Button,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import { NAV_HEIGHT } from "../components/Navbar";
@@ -41,6 +40,15 @@ const ProjectGalleryPage: React.FC = () => {
    const [searchParams, setSearchParams] = useSearchParams();
    const navigate = useNavigate();
 
+   // Always start from top when entering the gallery
+   useEffect(() => {
+      try {
+         window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      } catch {
+         window.scrollTo(0, 0);
+      }
+   }, []);
+
    useEffect(() => {
       const tag = searchParams.get("tag");
       const q = searchParams.get("q");
@@ -50,6 +58,25 @@ const ProjectGalleryPage: React.FC = () => {
          setSearchInput(q);
       }
    }, [searchParams]);
+
+   // Initialize category from URL on load / when url changes
+   useEffect(() => {
+      const cat = searchParams.get("category") ?? "";
+      if (cat && cat !== category) {
+         setCategory(cat);
+      }
+   }, [searchParams]);
+
+   // Keep URL in sync when category changes (so clicking from landing passes through)
+   useEffect(() => {
+      const current = searchParams.get("category") ?? "";
+      if (current === (category || "")) return;
+      const params = new URLSearchParams(searchParams);
+      if (category) params.set("category", category);
+      else params.delete("category");
+      setSearchParams(params, { replace: true });
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+   }, [category]);
 
    // Fetch data
    useEffect(() => {
