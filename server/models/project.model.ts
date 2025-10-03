@@ -38,6 +38,11 @@ const projectSchema = new mongoose.Schema({
          }),
       },
    ],
+   imageUrl: [
+      {
+         type: String,
+      },
+   ],
    likeCounts: {
       type: Number,
       default: 0,

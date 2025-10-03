@@ -11,7 +11,9 @@ import {
 } from "@controllers";
 import { authenticateToken, authorizeRoles } from "../middleware/auth";
 import { requireTeamOwnership } from "../middleware/projects";
+import multer from "multer";
 
+const uploadImageSize = multer({ limits: { fileSize: 5 * 1024 * 1024 } }); //5MB max
 const router = Router();
 
 router.get("/", getAllProjects);
@@ -35,6 +37,7 @@ router.post(
    "/",
    authenticateToken,
    authorizeRoles(["admin", "staff", "capstoneStudent"]),
+   uploadImageSize.array("image", 5),
    createProject,
 );
 

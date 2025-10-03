@@ -13,6 +13,7 @@ export interface ProjectData {
       type: "github" | "deployedWebsite";
       value: string;
    }>;
+   imageUrl?: string[];
    tags?: string[];
    likeCounts: number;
    awards?: string[];
@@ -28,6 +29,7 @@ export interface CreateProjectData extends ProjectData {
 /**
  * Interface for project update data
  */
-export interface UpdateProjectData extends Partial<ProjectData> {
+export interface UpdateProjectData
+   extends Partial<Omit<ProjectData, "imageUrl">> {
    // Additional fields specific to project updates can go here
 }

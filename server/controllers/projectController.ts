@@ -127,8 +127,8 @@ export const createProject = async (
    try {
       const projectData: ProjectData = req.body;
       const teamId = projectData.teamId;
-
-      const result = await insertProject(projectData);
+      const files = req.files as Express.Multer.File[];
+      const result = await insertProject(projectData, files);
       if (!result.success) {
          res.status(400).json({ error: result.error });
          return;

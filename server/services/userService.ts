@@ -6,6 +6,7 @@ import {
    UserData,
    UpdateUserData,
 } from "../interfaces";
+import { deleteFileFromS3 } from "./fileService";
 import mongoose from "mongoose";
 
 /**
@@ -231,14 +232,23 @@ export async function removeUser(userId: string): Promise<ServiceResult> {
          };
       }
 
-      const deletedUser = await User.findByIdAndDelete(userId);
-
-      if (!deletedUser) {
+      const user = await User.findById(userId);
+      if (!user) {
          return {
             success: false,
             error: "User not found",
          };
       }
+
+      if (user.profilePicture) {
+         try {
+            await deleteFileFromS3(user.profilePicture);
+         } catch (error) {
+            console.warn("Failed to delete user avatar from S3:", error);
+         }
+      }
+
+      const deletedUser = await User.findByIdAndDelete(userId);
 
       return {
          success: true,

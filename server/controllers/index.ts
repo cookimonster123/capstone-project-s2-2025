@@ -1,6 +1,7 @@
 export * from "./projectController";
 export * from "./authController";
 export * from "./userController";
+export * from "./fileController";
 export * from "./tagController";
 export * from "./favoriteController";
 export * from "./categoryController";
