@@ -130,6 +130,13 @@ export async function findUserById(
          };
       }
 
+      //If user's team has project already, user shall use the team's project
+      let teamProject: string | undefined;
+      if (user.team) {
+         const team = await Team.findById(user.team._id);
+         teamProject = team?.project?.toString();
+      }
+
       return {
          success: true,
          data: {
@@ -143,7 +150,7 @@ export async function findUserById(
                   type: link.type,
                   value: link.value,
                })) || [],
-            project: user.project?.id?.toString(),
+            project: teamProject, //set the team project to the user project
             likedProjects:
                user.likedProjects?.map((likedProject) =>
                   likedProject._id.toString(),
