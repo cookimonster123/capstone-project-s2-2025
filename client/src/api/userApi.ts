@@ -66,3 +66,78 @@ export const fetchCurrentUserId = async (): Promise<string> => {
       throw error;
    }
 };
+
+export class ApiError extends Error {
+   status: number;
+   constructor(message: string, status: number) {
+      super(message);
+      this.name = "ApiError";
+      this.status = status;
+   }
+}
+
+export const fetchFavoriteProjectIds = async (
+   userId: string,
+): Promise<string[]> => {
+   const res = await fetch(`${BASE_API_URL}/users/${userId}/favorites`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+   });
+   if (!res.ok) {
+      let msg = `Failed to fetch favorites: ${res.status} ${res.statusText}`;
+      try {
+         const err = await res.json();
+         if (err?.error) msg = err.error;
+      } catch {}
+      throw new ApiError(msg, res.status);
+   }
+   const data = await res.json();
+   // API returns an array of populated projects; normalize to id list
+   const favorites: any[] = data?.favorites ?? [];
+   return favorites
+      .map((p) => (typeof p === "string" ? p : p?._id))
+      .filter((id: any) => typeof id === "string");
+};
+
+export const addProjectToFavorites = async (
+   userId: string,
+   projectId: string,
+): Promise<void> => {
+   const res = await fetch(`${BASE_API_URL}/users/${userId}/favorites`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ projectId }),
+   });
+   if (!res.ok) {
+      let msg = `Failed to add favorite: ${res.status} ${res.statusText}`;
+      try {
+         const err = await res.json();
+         if (err?.error) msg = err.error;
+      } catch {}
+      throw new ApiError(msg, res.status);
+   }
+};
+
+export const removeProjectFromFavorites = async (
+   userId: string,
+   projectId: string,
+): Promise<void> => {
+   const res = await fetch(
+      `${BASE_API_URL}/users/${userId}/favorites/${projectId}`,
+      {
+         method: "DELETE",
+         headers: { "Content-Type": "application/json" },
+         credentials: "include",
+      },
+   );
+   if (!res.ok) {
+      let msg = `Failed to remove favorite: ${res.status} ${res.statusText}`;
+      try {
+         const err = await res.json();
+         if (err?.error) msg = err.error;
+      } catch {}
+      throw new ApiError(msg, res.status);
+   }
+};

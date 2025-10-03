@@ -159,7 +159,13 @@ export async function findProjectById(
 ): Promise<ServiceResult> {
    try {
       const project = await Project.findById(projectId)
-         .populate("team")
+         .populate({
+            path: "team",
+            populate: {
+               path: "members",
+               select: "name email profilePicture",
+            },
+         })
          .populate("semester")
          .populate("category")
          .populate("tags", "name")

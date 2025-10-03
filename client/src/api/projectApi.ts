@@ -128,6 +128,15 @@ export interface LikeProjectResponse {
  * Toggles like state for a project for the current user.
  * Requires authentication (relies on cookie/session). Returns the new state and counts.
  */
+export class ApiError extends Error {
+   status: number;
+   constructor(message: string, status: number) {
+      super(message);
+      this.name = "ApiError";
+      this.status = status;
+   }
+}
+
 export const likeProject = async (
    projectId: string,
 ): Promise<LikeProjectResponse> => {
@@ -149,7 +158,7 @@ export const likeProject = async (
             const err = await response.json();
             if (err?.error) msg = err.error;
          } catch {}
-         throw new Error(msg);
+         throw new ApiError(msg, response.status);
       }
 
       const data: LikeProjectResponse = await response.json();

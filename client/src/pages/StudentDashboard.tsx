@@ -19,7 +19,7 @@ import { fetchProjectById, fetchProjects } from "../api/projectApi";
 import ProjectCard from "../components/projects/ProjectCard";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { fetchUserById } from "../api/userApi.ts";
+import { fetchUserById, fetchFavoriteProjectIds } from "../api/userApi.ts";
 
 /**
  * StudentDashboard
@@ -41,6 +41,9 @@ const StudentDashboard: React.FC = () => {
 
    // Projects feed for the Favorites tab (sample)
    const [allProjects, setAllProjects] = useState<Project[]>([]);
+   const [favoriteProjects, setFavoriteProjects] = useState<Project[]>([]);
+   const [favLoading, setFavLoading] = useState<boolean>(false);
+   const [favError, setFavError] = useState<string | null>(null);
 
    // Load my project for the logged-in user
 
@@ -124,6 +127,46 @@ const StudentDashboard: React.FC = () => {
          active = false;
       };
    }, []);
+
+   // Load favorites when switching to Favorites tab or user changes
+   useEffect(() => {
+      let cancelled = false;
+      const loadFavorites = async () => {
+         if (activeTab !== "favorites") return;
+         if (!user?.id) {
+            setFavoriteProjects([]);
+            return;
+         }
+         try {
+            setFavLoading(true);
+            setFavError(null);
+            const ids = await fetchFavoriteProjectIds(user.id);
+            const projects = await Promise.all(
+               ids.map(async (pid) => {
+                  try {
+                     return await fetchProjectById(pid);
+                  } catch {
+                     return null;
+                  }
+               }),
+            );
+            if (!cancelled) {
+               setFavoriteProjects(projects.filter((p): p is Project => !!p));
+            }
+         } catch (e) {
+            if (!cancelled)
+               setFavError(
+                  e instanceof Error ? e.message : "Failed to load favorites",
+               );
+         } finally {
+            if (!cancelled) setFavLoading(false);
+         }
+      };
+      loadFavorites();
+      return () => {
+         cancelled = true;
+      };
+   }, [activeTab, user?.id]);
 
    if (!isLoggedIn) {
       return (
@@ -345,6 +388,32 @@ const StudentDashboard: React.FC = () => {
                               </Typography>
                            }
                         />
+                        <CardContent>
+                           {favLoading ? (
+                              <Typography color="text.secondary">
+                                 Loading favorites…
+                              </Typography>
+                           ) : favError ? (
+                              <Typography color="error">{favError}</Typography>
+                           ) : favoriteProjects.length === 0 ? (
+                              <Typography color="text.secondary">
+                                 No favorites yet.
+                              </Typography>
+                           ) : (
+                              <Stack spacing={2}>
+                                 {favoriteProjects.map((p) => (
+                                    <ProjectCard
+                                       key={p._id}
+                                       project={p}
+                                       onClick={() =>
+                                          navigate(`/profile/${p._id}`)
+                                       }
+                                       isAuthenticated={isLoggedIn}
+                                    />
+                                 ))}
+                              </Stack>
+                           )}
+                        </CardContent>
                      </Card>
                   )}
                </Box>
