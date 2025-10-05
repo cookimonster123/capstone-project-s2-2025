@@ -106,6 +106,17 @@ export default function ProjectCard({
    const awardIcon = firstAward?.iconUrl?.trim() || medalIconDefault;
    const hasAward = Boolean(awardName);
 
+   // first project image (use first imageUrl if present)
+   const firstImageUrl =
+      Array.isArray((project as any).imageUrl) &&
+      (project as any).imageUrl.length
+         ? (project as any).imageUrl[0]
+         : undefined;
+   const [imageOk, setImageOk] = React.useState(true);
+   React.useEffect(() => {
+      setImageOk(true);
+   }, [firstImageUrl]);
+
    /** Like API */
    async function callLikeAPI(projectId: string) {
       const r = await fetch(
@@ -179,8 +190,29 @@ export default function ProjectCard({
             cursor: "pointer",
          }}
       >
-         {/* image placeholder */}
-         <Box sx={{ position: "relative", height: 210, bgcolor: "grey.200" }} />
+         {/* image (first of imageUrl) with grey fallback */}
+         <Box
+            sx={{
+               position: "relative",
+               height: 210,
+               bgcolor: !firstImageUrl || !imageOk ? "grey.200" : "transparent",
+               overflow: "hidden",
+            }}
+         >
+            {firstImageUrl && imageOk && (
+               <img
+                  src={firstImageUrl}
+                  alt={resolveTitle(project)}
+                  style={{
+                     display: "block",
+                     width: "100%",
+                     height: "100%",
+                     objectFit: "cover",
+                  }}
+                  onError={() => setImageOk(false)}
+               />
+            )}
+         </Box>
 
          <CardContent
             sx={{

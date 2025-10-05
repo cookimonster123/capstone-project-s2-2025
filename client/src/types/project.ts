@@ -47,6 +47,7 @@ export interface Project {
    tags?: TagInfo[];
    awards?: AwardInfo[];
    likeCounts?: number;
+   imageUrl?: string[];
 
    links: ProjectLink[];
    createdAt: string;

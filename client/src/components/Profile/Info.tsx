@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Box, Stack, Typography, IconButton } from "@mui/material";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
@@ -12,10 +12,22 @@ interface InfoProps {
 
 const Info: React.FC<InfoProps> = ({ project }) => {
    const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
-   const presentationSlides = useMemo(
-      () => ["Demo Slide 1", "Demo Slide 2", "Demo Slide 3", "Demo Slide 4"],
-      [],
-   );
+   // Use backend images if provided; otherwise fall back to a single grey slide
+   const imageSlides = useMemo(() => {
+      const arr = Array.isArray(project.imageUrl)
+         ? project.imageUrl.filter(
+              (u): u is string => typeof u === "string" && u.trim().length > 0,
+           )
+         : [];
+      return arr;
+   }, [project.imageUrl]);
+   const [brokenSlides, setBrokenSlides] = useState<Set<number>>(new Set());
+   const totalSlides = imageSlides.length > 0 ? imageSlides.length : 1;
+   useEffect(() => {
+      if (currentSlideIndex >= totalSlides) setCurrentSlideIndex(0);
+      // reset broken markers if slides change size
+      setBrokenSlides(new Set());
+   }, [totalSlides, currentSlideIndex]);
 
    // Derived content from API; no default filler
    const descriptionText = (project.description ?? "").trim();
@@ -27,40 +39,71 @@ const Info: React.FC<InfoProps> = ({ project }) => {
                sx={{
                   position: "relative",
                   borderRadius: 2,
-                  bgcolor: "grey.100",
+                  bgcolor:
+                     imageSlides.length === 0 ||
+                     brokenSlides.has(currentSlideIndex)
+                        ? "grey.100"
+                        : "transparent",
                   overflow: "hidden",
                   aspectRatio: "16 / 9",
                   width: { xs: "100%", md: "92%", lg: "88%" },
                   mr: "auto",
                }}
             >
-               <Box
-                  sx={{
-                     position: "absolute",
-                     inset: 0,
-                     display: "flex",
-                     alignItems: "center",
-                     justifyContent: "center",
-                     textAlign: "center",
-                     p: 2,
-                  }}
-               >
-                  <Stack alignItems="center" spacing={1}>
-                     <PlayArrowIcon
-                        sx={{ fontSize: 64, color: "text.disabled" }}
+               {imageSlides.length > 0 &&
+               !brokenSlides.has(currentSlideIndex) ? (
+                  <Box sx={{ position: "absolute", inset: 0 }}>
+                     <img
+                        src={imageSlides[currentSlideIndex]}
+                        alt={`Project image ${currentSlideIndex + 1}`}
+                        style={{
+                           width: "100%",
+                           height: "100%",
+                           objectFit: "cover",
+                           display: "block",
+                        }}
+                        onError={() =>
+                           setBrokenSlides((prev) => {
+                              const next = new Set(prev);
+                              next.add(currentSlideIndex);
+                              return next;
+                           })
+                        }
                      />
-                     <Typography variant="body2" color="text.secondary">
-                        {presentationSlides[currentSlideIndex]}
-                     </Typography>
-                  </Stack>
-               </Box>
+                  </Box>
+               ) : (
+                  <Box
+                     sx={{
+                        position: "absolute",
+                        inset: 0,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        textAlign: "center",
+                        p: 2,
+                     }}
+                  >
+                     <Stack alignItems="center" spacing={1}>
+                        <PlayArrowIcon
+                           sx={{ fontSize: 64, color: "text.disabled" }}
+                        />
+                        <Typography variant="body2" color="text.secondary">
+                           Demo Slide
+                        </Typography>
+                     </Stack>
+                  </Box>
+               )}
 
                {/* Navigation */}
                <IconButton
                   aria-label="Previous"
                   onClick={() =>
                      setCurrentSlideIndex((prev) =>
-                        prev > 0 ? prev - 1 : presentationSlides.length - 1,
+                        totalSlides > 1
+                           ? prev > 0
+                              ? prev - 1
+                              : totalSlides - 1
+                           : 0,
                      )
                   }
                   sx={{
@@ -79,7 +122,11 @@ const Info: React.FC<InfoProps> = ({ project }) => {
                   aria-label="Next"
                   onClick={() =>
                      setCurrentSlideIndex((prev) =>
-                        prev < presentationSlides.length - 1 ? prev + 1 : 0,
+                        totalSlides > 1
+                           ? prev < totalSlides - 1
+                              ? prev + 1
+                              : 0
+                           : 0,
                      )
                   }
                   sx={{
@@ -105,7 +152,7 @@ const Info: React.FC<InfoProps> = ({ project }) => {
                }}
             >
                <Stack direction="row" spacing={1} justifyContent="center">
-                  {presentationSlides.map((_, i) => (
+                  {Array.from({ length: totalSlides }).map((_, i) => (
                      <Box
                         key={i}
                         onClick={() => setCurrentSlideIndex(i)}
