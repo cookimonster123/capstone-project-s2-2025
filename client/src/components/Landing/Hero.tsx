@@ -29,13 +29,13 @@ const Hero: React.FC<HeroProps> = ({
    handleHeroCardClick,
 }) => {
    const { isLoggedIn } = useAuth();
-   // Hero slider logic: prefer projects with awards; fallback to first 3
+   // Hero slider logic: prefer projects with awards; fallback to all awarded projects
    const heroProjects = React.useMemo(() => {
       const awarded = projects.filter(
          (p) => Array.isArray(p.awards) && p.awards.length > 0,
       );
       const source = awarded.length > 0 ? awarded : projects;
-      return source.slice(0, 3);
+      return source;
    }, [projects]);
    const [heroIndex, setHeroIndex] = React.useState(0);
    const [fadeState, setFadeState] = React.useState<"visible" | "fading">(
@@ -50,7 +50,7 @@ const Hero: React.FC<HeroProps> = ({
                setHeroIndex((i) => (i + 1) % heroProjects.length);
                setFadeState("visible");
             }, 500);
-         }, 8000);
+         }, 6000);
          return () => clearInterval(interval);
       }
    }, [heroProjects.length]);

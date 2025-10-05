@@ -23,9 +23,9 @@ const LandingPage: React.FC = () => {
       }
    }, []);
    React.useEffect(() => {
-      // Load projects and keep only first 6 for winners showcase
+      // Load all awarded projects
       fetchProjects()
-         .then((p) => setProjects(p.slice(0, 6)))
+         .then((p) => setProjects(p))
          .catch(() => setProjects([]));
    }, []);
    const winners = projects; // first 6 already
