@@ -33,7 +33,7 @@ const projectSchema = new mongoose.Schema({
             },
             type: {
                type: String,
-               enum: ["github", "deployedWebsite"],
+               enum: ["github", "deployedWebsite", "videoDemoUrl"],
             },
          }),
       },

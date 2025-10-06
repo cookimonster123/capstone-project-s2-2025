@@ -125,9 +125,74 @@ export const createProject = async (
    res: Response,
 ): Promise<void> => {
    try {
-      const projectData: ProjectData = req.body;
+      console.log("Request body:", req.body);
+      console.log("Request files:", req.files);
+      console.log("Content-Type:", req.get("Content-Type"));
+
+      // Files (may be undefined)
+      const files = (req.files as Express.Multer.File[]) || undefined;
+
+      // Detect multipart/form-data (prefer req.is if available)
+      const isMultipart =
+         typeof req.is === "function"
+            ? req.is("multipart/form-data")
+            : typeof req.headers["content-type"] === "string" &&
+              req.headers["content-type"].includes("multipart/form-data");
+
+      // Helper: only JSON.parse when value is a string (form-data)
+      const safeParseArray = <T>(val: unknown): T[] => {
+         if (typeof val === "string") {
+            try {
+               const parsed = JSON.parse(val);
+               return Array.isArray(parsed) ? parsed : [];
+            } catch (err) {
+               console.warn("Failed to parse stringified array:", err);
+               return [];
+            }
+         }
+         if (Array.isArray(val)) return val as T[];
+         return [];
+      };
+
+      // Normalize links/tags regardless of incoming content-type
+      const links = safeParseArray<any>(req.body?.links);
+      const tags = safeParseArray<string>(req.body?.tags);
+
+      // Normalize category: empty string => undefined
+      const category =
+         typeof req.body?.category === "string" && req.body.category !== ""
+            ? req.body.category
+            : undefined;
+
+      // Build ProjectData depending on request type
+      let projectData: ProjectData;
+      if (isMultipart) {
+         // form-data fields are strings (we parsed links/tags above)
+         projectData = {
+            name: req.body?.name,
+            description: req.body?.description || "",
+            teamId: req.body?.teamId,
+            semester: req.body?.semester,
+            category,
+            links,
+            tags,
+            likeCounts: 0,
+         } as ProjectData;
+      } else {
+         // JSON body (Express already parsed it). Merge normalized links/tags to be safe.
+         projectData = {
+            ...(req.body as Partial<ProjectData>),
+            category,
+            links: links.length ? links : (req.body?.links ?? []),
+            tags: tags.length ? tags : (req.body?.tags ?? []),
+            likeCounts: 0,
+         } as ProjectData;
+      }
+
+      console.log("Parsed project data:", projectData);
+
+      // Insert project (service will validate)
       const teamId = projectData.teamId;
-      const files = req.files as Express.Multer.File[];
       const result = await insertProject(projectData, files);
       if (!result.success) {
          res.status(400).json({ error: result.error });
@@ -135,6 +200,7 @@ export const createProject = async (
       }
       const projectId = result.data?._id;
 
+      // Link project to team and team members
       await linkProjectToTeam(projectId, teamId);
       await linkProjectToTeamMembers(projectId, teamId);
 

@@ -69,7 +69,7 @@ export type CreateProjectRequest = {
    semester: string;
    category?: string;
    links?: Array<{
-      type: "github" | "deployedWebsite";
+      type: "github" | "deployedWebsite" | "videoDemoUrl";
       value: string;
    }>;
    /** Up to 5 tags; server will slice and bind */
@@ -105,6 +105,65 @@ export const createProject = async (
       return data.project as Project;
    } catch (error) {
       console.error("Error creating project:", error);
+      throw error;
+   }
+};
+
+/**
+ * Create a new project with images using form-data
+ * @param payload - Project data
+ * @param images - Array of image files (max 5)
+ * @returns Promise<Project> - The created project
+ */
+export const createProjectWithImages = async (
+   payload: CreateProjectRequest,
+   images: File[],
+): Promise<Project> => {
+   try {
+      const formData = new FormData();
+
+      // Add project data as JSON string or individual fields
+      formData.append("name", payload.name);
+      formData.append("description", payload.description || "");
+      formData.append("teamId", payload.teamId);
+      formData.append("semester", payload.semester);
+
+      if (payload.category) {
+         formData.append("category", payload.category);
+      }
+
+      if (payload.links && payload.links.length > 0) {
+         formData.append("links", JSON.stringify(payload.links));
+      }
+
+      if (payload.tags && payload.tags.length > 0) {
+         formData.append("tags", JSON.stringify(payload.tags));
+      }
+
+      // Add image files
+      images.forEach((image) => {
+         formData.append("image", image);
+      });
+
+      const response = await fetch(`${BASE_API_URL}/projects`, {
+         method: "POST",
+         credentials: "include",
+         body: formData,
+      });
+
+      if (!response.ok) {
+         let msg = `Failed to create project: ${response.status} ${response.statusText}`;
+         try {
+            const err = await response.json();
+            if (err?.error) msg = err.error;
+         } catch {}
+         throw new Error(msg);
+      }
+
+      const data = await response.json();
+      return data.project as Project;
+   } catch (error) {
+      console.error("Error creating project with images:", error);
       throw error;
    }
 };

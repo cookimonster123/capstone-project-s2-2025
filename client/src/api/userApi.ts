@@ -8,7 +8,7 @@ export interface UserLink {
 }
 
 export interface UserSummary {
-   _id: string;
+   _id?: string;
    name: string;
    email: string;
    role: "visitor" | "admin" | "staff" | "capstoneStudent";
@@ -16,7 +16,7 @@ export interface UserSummary {
    links?: UserLink[];
    project?: string;
    likedProjects: string[];
-   team?: string;
+   team?: string | { _id: string; name: string };
 }
 
 export interface UserByIdResponse {
@@ -98,6 +98,29 @@ export const fetchFavoriteProjectIds = async (
    return favorites
       .map((p) => (typeof p === "string" ? p : p?._id))
       .filter((id: any) => typeof id === "string");
+};
+
+/**
+ * Fetch full favorite projects for a user
+ * @param userId - The user's ID
+ * @returns Promise<Project[]> - Array of favorite project objects
+ */
+export const fetchFavoriteProjects = async (userId: string): Promise<any[]> => {
+   const res = await fetch(`${BASE_API_URL}/users/${userId}/favorites`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+   });
+   if (!res.ok) {
+      let msg = `Failed to fetch favorite projects: ${res.status} ${res.statusText}`;
+      try {
+         const err = await res.json();
+         if (err?.error) msg = err.error;
+      } catch {}
+      throw new ApiError(msg, res.status);
+   }
+   const data = await res.json();
+   return data?.favorites ?? [];
 };
 
 export const addProjectToFavorites = async (

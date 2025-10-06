@@ -86,12 +86,30 @@ const LoginForm: React.FC = () => {
          try {
             if (result.data?.user) {
                // Persist user into global auth context/localStorage
+               const serverUser = result.data.user;
+               const pic =
+                  typeof serverUser.profilePicture === "string" &&
+                  serverUser.profilePicture.trim() !== ""
+                     ? serverUser.profilePicture.trim()
+                     : undefined;
                signIn({
                   id: result.data.user.id,
                   name: result.data.user.name,
                   email: result.data.user.email,
                   role: result.data.user.role,
+                  ...(pic ? { profilePicture: pic } : {}),
                });
+
+               // Role-based navigation
+               const userRole = result.data.user.role;
+
+               if (userRole === "admin") {
+                  nav("/admin");
+               } else if (userRole === "staff") {
+                  nav("/staff");
+               } else {
+                  nav("/");
+               }
             } else {
                setMessage(
                   "Login succeeded but missing user data. Please refresh.",
@@ -113,7 +131,6 @@ const LoginForm: React.FC = () => {
                "Unable to save your email preference. Please check your browser settings.",
             );
          }
-         nav("/");
       } else {
          const errorMessage = result.error || "Login failed";
          // Clear success message for error cases

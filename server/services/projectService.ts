@@ -1,5 +1,5 @@
 import Joi from "joi";
-import { Project, Team, User, Tag } from "@models";
+import { Project, Team, User, Tag, Comment } from "@models";
 import {
    ServiceResult,
    ValidationResult,
@@ -28,12 +28,16 @@ export function validateProjectData(
       description: Joi.string().allow(""),
       semester: Joi.string().required(),
       category: Joi.string().allow(""),
-      links: Joi.array().items(
-         Joi.object({
-            type: Joi.string().valid("github", "deployedWebsite").required(),
-            value: Joi.string().uri().required(),
-         }),
-      ),
+      links: Joi.array()
+         .items(
+            Joi.object({
+               type: Joi.string()
+                  .valid("github", "deployedWebsite", "videoDemoUrl")
+                  .required(),
+               value: Joi.string().uri().required(),
+            }),
+         )
+         .optional(),
       imageUrl: Joi.array().items(Joi.string()).optional(),
       tags: Joi.array().items(Joi.string()).optional(),
       likeCounts: Joi.number().integer().min(0).optional(),
@@ -60,7 +64,9 @@ export function validateUpdateProjectData(
       links: Joi.array()
          .items(
             Joi.object({
-               type: Joi.string().valid("github", "deployedWebsite").required(),
+               type: Joi.string()
+                  .valid("github", "deployedWebsite", "videoDemoUrl")
+                  .required(),
                value: Joi.string().uri().required(),
             }),
          )
@@ -117,20 +123,38 @@ export async function insertProject(
          team: teamId, // Map teamId to team field required by the schema
       });
 
-      //add at most first five tags from tags array to the project
+      // Persist the bare project first so tag-binding (and other services) can find it.
+      // This ensures calls like Project.findById(projectId) inside tagService succeed.
+      await project.save();
       const projectId = project._id.toString();
+
+      // add at most first five tags from tags array to the project (create/bind)
       if (tags?.length) {
          const slicedTags = tags.slice(0, 5);
          for (const tagName of slicedTags) {
-            await addTagToProject(tagName.trim(), projectId);
+            try {
+               const result = await addTagToProject(tagName.trim(), projectId);
+               if (!result.success) {
+                  // Non-fatal: log and continue (project creation should still succeed)
+                  console.warn(
+                     `Failed to bind tag "${tagName}" to project ${projectId}: ${result.error}`,
+                  );
+               }
+            } catch (err) {
+               console.warn(
+                  `Error binding tag "${tagName}" to project ${projectId}:`,
+                  err,
+               );
+            }
          }
       }
 
-      //add at most five images or randomize one image by default
-      console.log(imageFiles);
+      // add at most five images or randomize one image by default
       await (imageFiles?.length
          ? HandleProjectImageUpload(project, imageFiles)
          : HandleProjectImageDefault(project));
+
+      // Save again to persist any imageUrl changes made by HandleProjectImageUpload
       await project.save();
 
       const updatedProject = await Project.findById(projectId);
@@ -295,6 +319,24 @@ export async function removeProject(projectId: string): Promise<ServiceResult> {
          });
       }
 
+      // unset project references from teams and users
+      await Team.updateMany(
+         { project: projectId },
+         { $unset: { project: null } },
+      );
+
+      await User.updateMany(
+         { project: projectId },
+         { $unset: { project: null } },
+      );
+
+      // COMMENTS cleanup: remove comments associated with this project
+      try {
+         await Comment.deleteMany({ project: projectId });
+      } catch (error) {
+         console.error("Error deleting comments:", error);
+      }
+
       await Project.findByIdAndDelete(projectId);
       return {
          success: true,
@@ -390,6 +432,15 @@ export async function HandleProjectImageUpload(
    imageFiles: Express.Multer.File[],
 ): Promise<void> {
    try {
+      // Skip if AWS is not configured
+      if (
+         !process.env.AWS_ACCESS_KEY_ID ||
+         !process.env.AWS_SECRET_ACCESS_KEY
+      ) {
+         console.log("AWS credentials not configured, skipping image upload");
+         return;
+      }
+
       const projectId = project._id.toString();
 
       for (const imageFile of imageFiles) {
@@ -408,7 +459,8 @@ export async function HandleProjectImageUpload(
       }
    } catch (error) {
       console.error("Handle Upload Project Image Error: ", error);
-      throw error;
+      // Don't throw error, just log it so project creation can continue
+      console.log("Continuing without uploaded images");
    }
 }
 
@@ -422,6 +474,17 @@ export async function HandleProjectImageDefault(
    project: InstanceType<typeof Project>,
 ): Promise<void> {
    try {
+      // Skip if AWS is not configured
+      if (
+         !process.env.AWS_ACCESS_KEY_ID ||
+         !process.env.AWS_SECRET_ACCESS_KEY
+      ) {
+         console.log(
+            "AWS credentials not configured, skipping default image upload",
+         );
+         return;
+      }
+
       if (project.imageUrl.length === 0) {
          const prefix = "assets/projectImages/defaultImages/";
          const url = await randomFileFromS3(prefix);
@@ -429,7 +492,8 @@ export async function HandleProjectImageDefault(
       }
    } catch (error) {
       console.error("Handle default Project Image Error: ", error);
-      throw error;
+      // Don't throw error, just log it so project creation can continue
+      console.log("Continuing without default image");
    }
 }
 

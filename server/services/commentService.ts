@@ -31,12 +31,51 @@ export function validateCommentData(
  * @returns CommentData - comment data result
  */
 export const mapCommentToData = (comment: CommentDoc): CommentData => {
+   // Handle populated author
+   let author: CommentData["author"];
+   if (
+      comment.author &&
+      typeof comment.author === "object" &&
+      "name" in comment.author
+   ) {
+      // Author is populated
+      author = {
+         _id: comment.author._id.toString(),
+         name: comment.author.name,
+         email: comment.author.email,
+         profilePicture: comment.author.profilePicture,
+      };
+   } else if (comment.author) {
+      // Author is just an ObjectId
+      author = comment.author.toString();
+   } else {
+      author = "";
+   }
+
+   // Handle populated project
+   let project: CommentData["project"];
+   if (
+      comment.project &&
+      typeof comment.project === "object" &&
+      "name" in comment.project
+   ) {
+      // Project is populated
+      project = {
+         _id: comment.project._id.toString(),
+         name: comment.project.name,
+      };
+   } else if (comment.project) {
+      // Project is just an ObjectId
+      project = comment.project.toString();
+   } else {
+      project = "";
+   }
+
    return {
       _id: comment._id.toString(),
       content: comment.content,
-      author: comment.author instanceof Object ? comment.author.toString() : "",
-      project:
-         comment.project instanceof Object ? comment.project.toString() : "",
+      author,
+      project,
       createdAt: comment.createdAt,
       updatedAt: comment.updatedAt,
    };
@@ -52,6 +91,7 @@ export const findAllComments = async (): Promise<
 > => {
    try {
       const comments = await Comment.find()
+         .populate("author", "name email role")
          .populate("project", "name")
          .sort({ createdAt: -1 });
 
@@ -93,7 +133,9 @@ export const findCommentsByProject = async (
          project: projectId,
       };
 
-      const comments = await Comment.find(query).sort({ createdAt: -1 });
+      const comments = await Comment.find(query)
+         .populate("author", "name email role")
+         .sort({ createdAt: -1 });
 
       const commentsData = comments.map(mapCommentToData);
 
@@ -124,10 +166,9 @@ export const findCommentById = async (
          };
       }
 
-      const comment = await Comment.findById(commentId).populate(
-         "project",
-         "name",
-      );
+      const comment = await Comment.findById(commentId)
+         .populate("author", "name email role")
+         .populate("project", "name");
 
       if (!comment) {
          return {
@@ -172,6 +213,7 @@ export const findCommentsByUser = async (
       const query: QueryComment = { author: userId };
 
       const comments = await Comment.find(query)
+         .populate("author", "name email role")
          .populate("project", "name")
          .sort({ createdAt: -1 });
 

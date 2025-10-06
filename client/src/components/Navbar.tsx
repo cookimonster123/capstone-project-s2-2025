@@ -11,6 +11,7 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import { useAuth } from "../context/AuthContext";
+import { fetchUserById } from "../api/userApi";
 
 // Adjust these imports to your real asset names if needed.
 import logo from "../assets/capstone.svg";
@@ -26,8 +27,55 @@ const links = [
 ];
 
 const Navbar: React.FC = () => {
-   const { isLoggedIn, signIn, signOut } = useAuth();
+   const { isLoggedIn, signIn, signOut, user } = useAuth();
    const [menuEl, setMenuEl] = React.useState<null | HTMLElement>(null);
+   const [fullUser, setFullUser] = React.useState<any>(null);
+
+   React.useEffect(() => {
+      const loadUserDetails = async () => {
+         if (!user?.id) return;
+         try {
+            const data = await fetchUserById(user.id);
+            setFullUser(data);
+         } catch (error) {
+            console.error("Failed to fetch user details:", error);
+         }
+      };
+      loadUserDetails();
+   }, [user?.id]);
+
+   // Determine dashboard path based on user role
+   const getDashboardPath = () => {
+      if (!user) return "/profile";
+      switch (user.role) {
+         case "admin":
+            return "/admin";
+         case "staff":
+            return "/staff";
+         default:
+            return "/profile";
+      }
+   };
+
+   const avatarSrc = (() => {
+      if (
+         user &&
+         Object.prototype.hasOwnProperty.call(user, "profilePicture")
+      ) {
+         return user.profilePicture && user.profilePicture.trim() !== ""
+            ? user.profilePicture
+            : defaultAvatar; // explicit cleared -> default
+      }
+
+      if (
+         fullUser?.user?.profilePicture &&
+         fullUser.user.profilePicture.trim() !== ""
+      ) {
+         return fullUser.user.profilePicture;
+      }
+
+      return defaultAvatar;
+   })();
 
    return (
       <AppBar
@@ -124,10 +172,18 @@ const Navbar: React.FC = () => {
                   </Button>
                ) : (
                   <>
-                     <Tooltip title="Account menu">
+                     <Tooltip
+                        title={
+                           user?.name
+                              ? `${user.name} · Account`
+                              : "Account menu"
+                        }
+                     >
                         <Avatar
-                           src={defaultAvatar}
-                           alt="User avatar"
+                           src={avatarSrc}
+                           alt={
+                              user?.name ? `${user.name} avatar` : "User avatar"
+                           }
                            onClick={(e) => setMenuEl(e.currentTarget)}
                            sx={{
                               width: 44,
@@ -140,7 +196,6 @@ const Navbar: React.FC = () => {
                            }}
                         />
                      </Tooltip>
-
                      <Menu
                         id="account-menu"
                         anchorEl={menuEl}
@@ -159,11 +214,14 @@ const Navbar: React.FC = () => {
                            sx: { mt: 1.5, borderRadius: 2, minWidth: 180 },
                         }}
                      >
-                        <MenuItem component={NavLink} to="/profile">
-                           <Typography variant="body2">Profile</Typography>
-                        </MenuItem>
-                        <MenuItem component={NavLink} to="/favorites">
-                           <Typography variant="body2">My Favorites</Typography>
+                        <MenuItem component={NavLink} to={getDashboardPath()}>
+                           <Typography variant="body2">
+                              {user?.role === "admin"
+                                 ? "Admin Dashboard"
+                                 : user?.role === "staff"
+                                   ? "Staff Dashboard"
+                                   : "Profile"}
+                           </Typography>
                         </MenuItem>
                         <Divider />
                         <MenuItem

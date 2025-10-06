@@ -5,8 +5,21 @@ import { Document, Types } from "mongoose";
 export interface CommentData {
    _id?: string;
    content: string;
-   author: string;
-   project: string;
+   author:
+      | string
+      | {
+           _id?: string;
+           name: string;
+           email: string;
+           profilePicture?: string;
+           role?: string;
+        };
+   project:
+      | string
+      | {
+           _id?: string;
+           name: string;
+        };
    createdAt: Date;
    updatedAt: Date;
 }

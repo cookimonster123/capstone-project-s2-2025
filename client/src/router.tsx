@@ -7,6 +7,9 @@ import UploadProjectPage from "./pages/UploadProjectPage";
 import StudentDashboard from "./pages/StudentDashboard";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
+import StaffDashboard from "./pages/StaffDashboard";
+import AdminDashboard from "./pages/AdminDashboard";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
 import AboutPage from "./pages/AboutPage";
 
 export const router = createBrowserRouter([
@@ -22,6 +25,22 @@ export const router = createBrowserRouter([
          { path: "sign-in", element: <LoginPage /> },
          { path: "register", element: <RegisterPage /> },
          { path: "login", element: <Navigate to="/sign-in" replace /> },
+         {
+            path: "staff",
+            element: (
+               <ProtectedRoute roles={["staff"]}>
+                  <StaffDashboard />
+               </ProtectedRoute>
+            ),
+         },
+         {
+            path: "admin",
+            element: (
+               <ProtectedRoute roles={["admin"]}>
+                  <AdminDashboard />
+               </ProtectedRoute>
+            ),
+         },
          { path: "/about", element: <AboutPage /> },
       ],
    },

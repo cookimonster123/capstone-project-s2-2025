@@ -88,7 +88,13 @@ export async function getFavoritesByUserId(
       const user = await User.findById(userId)
          .populate({
             path: "favorites",
-            populate: { path: "tags", select: "name" },
+            populate: [
+               { path: "tags", select: "name" },
+               { path: "team", select: "name" },
+               { path: "semester", select: "semester year" },
+               { path: "category", select: "name" },
+               { path: "awards", select: "_id iconUrl name" },
+            ],
          })
          .lean();
 

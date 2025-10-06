@@ -11,6 +11,7 @@ import tags from "./routes/tags";
 import categories from "./routes/categories";
 import awards from "./routes/awards";
 import comments from "./routes/comments";
+import teams from "./routes/teams";
 import { loggingMiddleware } from "./middleware/loggingMiddleware";
 
 // Import models to ensure they are registered with Mongoose
@@ -43,5 +44,6 @@ app.use("/api/tags", tags);
 app.use("/api/categories", categories);
 app.use("/api/awards", awards);
 app.use("/api/comments", comments);
+app.use("/api/teams", teams);
 
 export default app;

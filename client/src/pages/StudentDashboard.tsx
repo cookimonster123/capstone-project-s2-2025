@@ -9,17 +9,21 @@ import {
    Divider,
    Stack,
    Typography,
+   Pagination,
+   IconButton,
+   CircularProgress,
 } from "@mui/material";
-import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
-import FavoriteIcon from "@mui/icons-material/Favorite";
 import UploadIcon from "@mui/icons-material/Upload";
+import PhotoCamera from "@mui/icons-material/PhotoCamera";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 import type { Project } from "../types/project";
-import { fetchProjectById, fetchProjects } from "../api/projectApi";
+import { fetchProjectById } from "../api/projectApi";
 import ProjectCard from "../components/projects/ProjectCard";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { fetchUserById, fetchFavoriteProjectIds } from "../api/userApi.ts";
+import { fetchUserById, fetchFavoriteProjects } from "../api/userApi.ts";
+import { uploadAvatar, removeAvatar } from "../api/fileApi";
 
 /**
  * StudentDashboard
@@ -27,7 +31,7 @@ import { fetchUserById, fetchFavoriteProjectIds } from "../api/userApi.ts";
  * - Supports Like and Favorite toggles
  */
 const StudentDashboard: React.FC = () => {
-   const { isLoggedIn, user } = useAuth();
+   const { isLoggedIn, user, signIn } = useAuth();
    const navigate = useNavigate();
 
    const [activeTab, setActiveTab] = useState<"overview" | "favorites">(
@@ -41,9 +45,14 @@ const StudentDashboard: React.FC = () => {
 
    // Projects feed for the Favorites tab (sample)
    const [allProjects, setAllProjects] = useState<Project[]>([]);
-   const [favoriteProjects, setFavoriteProjects] = useState<Project[]>([]);
-   const [favLoading, setFavLoading] = useState<boolean>(false);
-   const [favError, setFavError] = useState<string | null>(null);
+
+   // Pagination state for Favorites
+   const [favPage, setFavPage] = useState(1);
+   const itemsPerPage = 6;
+
+   // Avatar upload state
+   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+   const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
    // Load my project for the logged-in user
 
@@ -67,6 +76,12 @@ const StudentDashboard: React.FC = () => {
             try {
                const u = await fetchUserById(uid);
                const pid = (u.user.project as string | null) || null;
+
+               // Load user's profile picture
+               if (u.user.profilePicture) {
+                  if (active) setAvatarUrl(u.user.profilePicture);
+               }
+
                if (pid) {
                   try {
                      localStorage.setItem(storageKey, pid);
@@ -109,64 +124,126 @@ const StudentDashboard: React.FC = () => {
       };
    }, [user?.id]);
 
-   // Load projects once for the Favorites tab
+   // Load favorite projects for the Favorites tab
    useEffect(() => {
       let active = true;
-      const ensureProjects = async () => {
-         try {
-            const items = await fetchProjects();
-            if (active) setAllProjects(items);
-         } catch (e) {
-            // Ignore list fetch errors for the Favorites sample view
-         } finally {
-            // no-op
-         }
-      };
-      ensureProjects();
-      return () => {
-         active = false;
-      };
-   }, []);
-
-   // Load favorites when switching to Favorites tab or user changes
-   useEffect(() => {
-      let cancelled = false;
       const loadFavorites = async () => {
-         if (activeTab !== "favorites") return;
-         if (!user?.id) {
-            setFavoriteProjects([]);
-            return;
-         }
          try {
-            setFavLoading(true);
-            setFavError(null);
-            const ids = await fetchFavoriteProjectIds(user.id);
-            const projects = await Promise.all(
-               ids.map(async (pid) => {
-                  try {
-                     return await fetchProjectById(pid);
-                  } catch {
-                     return null;
-                  }
-               }),
-            );
-            if (!cancelled) {
-               setFavoriteProjects(projects.filter((p): p is Project => !!p));
+            if (!user?.id) {
+               if (active) setAllProjects([]);
+               return;
             }
+            const favoriteProjects = await fetchFavoriteProjects(user.id);
+            if (active) setAllProjects(favoriteProjects);
          } catch (e) {
-            if (!cancelled)
-               setFavError(
-                  e instanceof Error ? e.message : "Failed to load favorites",
-               );
-         } finally {
-            if (!cancelled) setFavLoading(false);
+            console.error("Error loading favorite projects:", e);
+            if (active) setAllProjects([]);
          }
       };
       loadFavorites();
       return () => {
-         cancelled = true;
+         active = false;
       };
-   }, [activeTab, user?.id]);
+   }, [user?.id]);
+
+   // Handle avatar upload
+   const handleAvatarUpload = async (
+      event: React.ChangeEvent<HTMLInputElement>,
+   ) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+
+      // Validate file type
+      const validTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+      if (!validTypes.includes(file.type)) {
+         alert("Please select a valid image file (JPEG, PNG, GIF, or WebP)");
+         return;
+      }
+
+      // Validate file size (3MB)
+      if (file.size > 3 * 1024 * 1024) {
+         alert("Image size must be less than 3MB");
+         return;
+      }
+
+      try {
+         setUploadingAvatar(true);
+         const result = await uploadAvatar(file);
+
+         if (result.success) {
+            if (result.url) {
+               setAvatarUrl(result.url);
+
+               if (user && signIn) {
+                  signIn({
+                     id: user.id,
+                     name: user.name,
+                     email: user.email,
+                     role: user.role,
+                     profilePicture: result.url,
+                  });
+               }
+               alert("Avatar uploaded successfully!");
+               // Refresh user data to get updated avatar
+               if (user?.id) {
+                  const userData = await fetchUserById(user.id);
+                  if (userData.user.profilePicture) {
+                     setAvatarUrl(userData.user.profilePicture);
+                  }
+               }
+            } else {
+               // AWS not configured
+               alert(
+                  "Avatar upload skipped: AWS S3 is not configured. Please configure AWS credentials to enable image uploads.",
+               );
+            }
+         } else {
+            alert(result.error || "Failed to upload avatar");
+         }
+      } catch (error) {
+         console.error("Error uploading avatar:", error);
+         alert("Failed to upload avatar");
+      } finally {
+         setUploadingAvatar(false);
+      }
+   };
+
+   // Handle avatar removal
+   const handleAvatarRemove = async () => {
+      if (!window.confirm("Are you sure you want to remove your avatar?"))
+         return;
+
+      try {
+         setUploadingAvatar(true);
+         const result = await removeAvatar();
+
+         if (result.success) {
+            setAvatarUrl(null);
+
+            if (user && signIn) {
+               signIn({
+                  id: user.id,
+                  name: user.name,
+                  email: user.email,
+                  role: user.role,
+                  profilePicture: "",
+               });
+            }
+            alert("Avatar removed successfully!");
+            // Refresh user data
+            if (user?.id) {
+               await fetchUserById(user.id);
+            }
+         } else {
+            alert(result.error || "Failed to remove avatar");
+         }
+      } catch (error) {
+         console.error("Error removing avatar:", error);
+         alert("Failed to remove avatar");
+      } finally {
+         setUploadingAvatar(false);
+      }
+   };
 
    if (!isLoggedIn) {
       return (
@@ -195,27 +272,48 @@ const StudentDashboard: React.FC = () => {
    return (
       <Box
          sx={{
-            py: 1,
+            bgcolor: "#f5f7fa",
+            minHeight: "100vh",
+            py: 4,
             width: "100%",
             display: "flex",
             justifyContent: "center",
          }}
       >
-         <Box sx={{ width: "100%", maxWidth: 980, ml: 10 }}>
-            <Typography
-               component="h1"
+         <Box sx={{ width: "100%", maxWidth: 980, px: 2 }}>
+            {/* Header Card - Clean Apple/Meta Style */}
+            <Card
+               elevation={0}
                sx={{
-                  typography: { xs: "h5", md: "h4" },
-                  fontWeight: 700,
-                  letterSpacing: "0.2px",
-                  textAlign: "center",
-                  mb: 1,
+                  mb: 4,
+                  bgcolor: "white",
+                  border: "1px solid",
+                  borderColor: "divider",
+                  borderRadius: 2,
                }}
             >
-               {user?.name
-                  ? `${user.name} · Student Dashboard`
-                  : "Student Dashboard"}
-            </Typography>
+               <CardContent sx={{ py: 4 }}>
+                  <Typography
+                     component="h1"
+                     variant="h4"
+                     fontWeight={600}
+                     textAlign="center"
+                     color="text.primary"
+                     sx={{ mb: 1 }}
+                  >
+                     {user?.name
+                        ? `${user.name} · Student Dashboard`
+                        : "Student Dashboard"}
+                  </Typography>
+                  <Typography
+                     textAlign="center"
+                     variant="body1"
+                     color="text.secondary"
+                  >
+                     Manage your capstone project and track your progress
+                  </Typography>
+               </CardContent>
+            </Card>
 
             <Box
                sx={{
@@ -228,24 +326,98 @@ const StudentDashboard: React.FC = () => {
                }}
             >
                {/* Left profile panel */}
-               <Stack spacing={3} mx={2} mt={6}>
-                  <Card elevation={1}>
-                     <CardHeader title="Profile" />
+               <Stack spacing={3}>
+                  <Card
+                     elevation={0}
+                     sx={{
+                        border: "1px solid",
+                        borderColor: "divider",
+                        borderRadius: 2,
+                     }}
+                  >
+                     <CardHeader
+                        title="Profile"
+                        sx={{
+                           borderBottom: "1px solid",
+                           borderColor: "divider",
+                           "& .MuiCardHeader-title": {
+                              fontWeight: 600,
+                              fontSize: "1.1rem",
+                           },
+                        }}
+                     />
                      <CardContent>
                         <Stack
                            spacing={2}
                            alignItems="center"
                            textAlign="center"
                         >
-                           <Avatar sx={{ width: 96, height: 96 }}>
-                              {user?.name
-                                 ? user.name
-                                      .split(" ")
-                                      .map((s: string) => s[0])
-                                      .join("")
-                                      .slice(0, 2)
-                                 : "U"}
-                           </Avatar>
+                           <Box sx={{ position: "relative" }}>
+                              <Avatar
+                                 src={
+                                    avatarUrl ||
+                                    (user as any)?.profilePicture ||
+                                    undefined
+                                 }
+                                 sx={{
+                                    width: 96,
+                                    height: 96,
+                                    bgcolor: "primary.main",
+                                    fontSize: "2rem",
+                                    fontWeight: 700,
+                                 }}
+                              >
+                                 {!avatarUrl && !(user as any)?.profilePicture
+                                    ? user?.name
+                                       ? user.name
+                                            .split(" ")
+                                            .map((s: string) => s[0])
+                                            .join("")
+                                            .slice(0, 2)
+                                       : "U"
+                                    : null}
+                              </Avatar>
+                              {uploadingAvatar && (
+                                 <CircularProgress
+                                    size={96}
+                                    sx={{
+                                       position: "absolute",
+                                       top: 0,
+                                       left: 0,
+                                    }}
+                                 />
+                              )}
+                           </Box>
+
+                           {/* Avatar upload/remove buttons */}
+                           <Stack direction="row" spacing={1}>
+                              <Button
+                                 component="label"
+                                 variant="outlined"
+                                 size="small"
+                                 startIcon={<PhotoCamera />}
+                                 disabled={uploadingAvatar}
+                              >
+                                 Upload
+                                 <input
+                                    type="file"
+                                    hidden
+                                    accept="image/jpeg,image/png,image/gif,image/webp"
+                                    onChange={handleAvatarUpload}
+                                 />
+                              </Button>
+                              {(avatarUrl || (user as any)?.profilePicture) && (
+                                 <IconButton
+                                    size="small"
+                                    color="error"
+                                    onClick={handleAvatarRemove}
+                                    disabled={uploadingAvatar}
+                                 >
+                                    <DeleteIcon fontSize="small" />
+                                 </IconButton>
+                              )}
+                           </Stack>
+
                            <Box>
                               <Typography variant="subtitle1" fontWeight={700}>
                                  {user?.name || "—"}
@@ -276,14 +448,18 @@ const StudentDashboard: React.FC = () => {
                   <Stack
                      direction="row"
                      spacing={2}
-                     sx={{ mb: 2, alignItems: "center", ml: 11 }}
+                     sx={{ mb: 3, alignItems: "center" }}
                   >
                      <Button
-                        variant="text"
+                        variant="outlined"
                         size="small"
                         onClick={() => navigate("/")}
+                        sx={{
+                           textTransform: "none",
+                           fontWeight: 600,
+                        }}
                      >
-                        Back
+                        ← Back
                      </Button>
                      {(
                         [
@@ -294,9 +470,15 @@ const StudentDashboard: React.FC = () => {
                         <Button
                            key={t.key}
                            onClick={() => setActiveTab(t.key)}
-                           variant={activeTab === t.key ? "contained" : "text"}
+                           variant={
+                              activeTab === t.key ? "contained" : "outlined"
+                           }
                            size="small"
-                           sx={{ textTransform: "none" }}
+                           sx={{
+                              textTransform: "none",
+                              fontWeight: 600,
+                              minWidth: 100,
+                           }}
                         >
                            {t.label}
                         </Button>
@@ -305,27 +487,36 @@ const StudentDashboard: React.FC = () => {
 
                   {activeTab === "overview" && (
                      <Card
-                        elevation={1}
+                        elevation={0}
                         sx={{
-                           width: "73%",
+                           border: "1px solid",
+                           borderColor: "divider",
+                           borderRadius: 2,
                         }}
                      >
                         <CardHeader
+                           sx={{
+                              borderBottom: "1px solid",
+                              borderColor: "divider",
+                           }}
                            title={
                               <Stack
                                  direction="row"
                                  alignItems="center"
                                  justifyContent="space-between"
                               >
-                                 <Typography variant="h6" fontWeight={700}>
+                                 <Typography variant="h6" fontWeight={600}>
                                     My Projects
                                  </Typography>
                                  <Stack direction="row" spacing={1}>
                                     <Button
                                        variant="outlined"
-                                       size="medium"
+                                       size="small"
                                        startIcon={<UploadIcon />}
                                        onClick={() => navigate("/upload")}
+                                       sx={{
+                                          borderRadius: 2,
+                                       }}
                                     >
                                        Upload
                                     </Button>
@@ -343,14 +534,13 @@ const StudentDashboard: React.FC = () => {
                            ) : error ? (
                               <Typography color="error">{error}</Typography>
                            ) : myProject ? (
-                              <Stack spacing={2}>
-                                 {/* Project card uses same component as gallery; clicking opens profile */}
-                                 <ProjectCard
-                                    project={myProject}
-                                    onClick={() => navigate("/profile")}
-                                    isAuthenticated={isLoggedIn}
-                                 />
-                              </Stack>
+                              <ProjectCard
+                                 project={myProject}
+                                 onClick={() =>
+                                    navigate(`/profile/${myProject._id}`)
+                                 }
+                                 isAuthenticated={isLoggedIn}
+                              />
                            ) : (
                               <Stack
                                  spacing={2}
@@ -380,39 +570,87 @@ const StudentDashboard: React.FC = () => {
                   )}
 
                   {activeTab === "favorites" && (
-                     <Card elevation={1}>
+                     <Card
+                        elevation={0}
+                        sx={{
+                           border: "1px solid",
+                           borderColor: "divider",
+                           borderRadius: 2,
+                        }}
+                     >
                         <CardHeader
+                           sx={{
+                              borderBottom: "1px solid",
+                              borderColor: "divider",
+                           }}
                            title={
-                              <Typography variant="h6" fontWeight={700}>
+                              <Typography variant="h6" fontWeight={600}>
                                  My Favorites
                               </Typography>
                            }
                         />
                         <CardContent>
-                           {favLoading ? (
-                              <Typography color="text.secondary">
-                                 Loading favorites…
-                              </Typography>
-                           ) : favError ? (
-                              <Typography color="error">{favError}</Typography>
-                           ) : favoriteProjects.length === 0 ? (
-                              <Typography color="text.secondary">
-                                 No favorites yet.
-                              </Typography>
-                           ) : (
-                              <Stack spacing={2}>
-                                 {favoriteProjects.map((p) => (
-                                    <ProjectCard
-                                       key={p._id}
-                                       project={p}
-                                       onClick={() =>
-                                          navigate(`/profile/${p._id}`)
-                                       }
-                                       isAuthenticated={isLoggedIn}
-                                    />
-                                 ))}
-                              </Stack>
-                           )}
+                           <Stack spacing={2}>
+                              {(() => {
+                                 if (!allProjects || allProjects.length === 0) {
+                                    return (
+                                       <Typography color="text.secondary">
+                                          No favorite projects yet. Start
+                                          exploring and save your favorites!
+                                       </Typography>
+                                    );
+                                 }
+
+                                 // Calculate pagination (no need to sort, API returns in order)
+                                 const totalPages = Math.ceil(
+                                    allProjects.length / itemsPerPage,
+                                 );
+                                 const startIndex =
+                                    (favPage - 1) * itemsPerPage;
+                                 const endIndex = startIndex + itemsPerPage;
+                                 const paginatedProjects = allProjects.slice(
+                                    startIndex,
+                                    endIndex,
+                                 );
+
+                                 return (
+                                    <>
+                                       {paginatedProjects.map((p) => (
+                                          <ProjectCard
+                                             key={p._id}
+                                             project={p}
+                                             onClick={() =>
+                                                navigate(`/profile/${p._id}`)
+                                             }
+                                             isAuthenticated={isLoggedIn}
+                                          />
+                                       ))}
+
+                                       {totalPages > 1 && (
+                                          <Box
+                                             sx={{
+                                                display: "flex",
+                                                justifyContent: "center",
+                                                mt: 3,
+                                             }}
+                                          >
+                                             <Pagination
+                                                count={totalPages}
+                                                page={favPage}
+                                                onChange={(_, page) =>
+                                                   setFavPage(page)
+                                                }
+                                                color="primary"
+                                                size="large"
+                                                showFirstButton
+                                                showLastButton
+                                             />
+                                          </Box>
+                                       )}
+                                    </>
+                                 );
+                              })()}
+                           </Stack>
                         </CardContent>
                      </Card>
                   )}

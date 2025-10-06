@@ -15,13 +15,22 @@ import {
    MenuItem,
    Chip,
    IconButton,
+   LinearProgress,
+   Alert,
 } from "@mui/material";
-import { CloudUpload as UploadIcon, Add as AddIcon } from "@mui/icons-material";
+import {
+   CloudUpload as UploadIcon,
+   Add as AddIcon,
+   Close as CloseIcon,
+} from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { createProject, fetchProjects } from "../api/projectApi";
+import {
+   createProject,
+   createProjectWithImages,
+   fetchProjects,
+} from "../api/projectApi";
 import { fetchCategories } from "../api/categoryApi";
-
 import { fetchUserById } from "../api/userApi";
 
 const UploadProjectPage: React.FC = () => {
@@ -39,9 +48,16 @@ const UploadProjectPage: React.FC = () => {
 
    const [tagInput, setTagInput] = useState<string>("");
    const [selectedTags, setSelectedTags] = useState<string[]>([]);
-   const [categoryOptions, setCategoryOptions] = useState<string[]>([]);
+   // changed: store full category objects so we can use the _id when submitting
+   const [categoryOptions, setCategoryOptions] = useState<
+      { _id: string; name: string }[]
+   >([]);
    const [categoryLoading, setCategoryLoading] = useState(false);
    const [submitting, setSubmitting] = useState(false);
+   const [selectedImages, setSelectedImages] = useState<File[]>([]);
+   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+   const [uploadProgress, setUploadProgress] = useState(false);
+   const [uploadError, setUploadError] = useState<string | null>(null);
 
    // Load categories on mount
    React.useEffect(() => {
@@ -51,7 +67,8 @@ const UploadProjectPage: React.FC = () => {
             setCategoryLoading(true);
             const categories = await fetchCategories();
             if (!active) return;
-            setCategoryOptions(categories.map((c) => c.name));
+            // keep full category objects; fetchCategories should return [{ _id, name }, ...]
+            setCategoryOptions(categories);
          } catch (e) {
             console.warn("Failed to fetch categories", e);
          } finally {
@@ -76,6 +93,69 @@ const UploadProjectPage: React.FC = () => {
       } catch {
          return null;
       }
+   };
+
+   const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+      const files = event.target.files;
+      if (!files) return;
+
+      const fileArray = Array.from(files);
+
+      if (fileArray.length > 5) {
+         setUploadError("Maximum 5 images allowed");
+         return;
+      }
+
+      if (selectedImages.length + fileArray.length > 5) {
+         setUploadError(
+            `You can only upload ${5 - selectedImages.length} more image(s)`,
+         );
+         return;
+      }
+
+      // Validate file types
+      const validTypes = [
+         "image/jpeg",
+         "image/jpg",
+         "image/png",
+         "image/gif",
+         "image/webp",
+      ];
+      const invalidFiles = fileArray.filter(
+         (file) => !validTypes.includes(file.type),
+      );
+
+      if (invalidFiles.length > 0) {
+         setUploadError("Only JPEG, PNG, GIF, and WebP images are allowed");
+         return;
+      }
+
+      // Validate file sizes (max 5MB per image)
+      const oversizedFiles = fileArray.filter(
+         (file) => file.size > 5 * 1024 * 1024,
+      );
+      if (oversizedFiles.length > 0) {
+         setUploadError("Each image must be less than 5MB");
+         return;
+      }
+
+      setUploadError(null);
+      setSelectedImages((prev) => [...prev, ...fileArray]);
+
+      // Create previews
+      fileArray.forEach((file) => {
+         const reader = new FileReader();
+         reader.onloadend = () => {
+            setImagePreviews((prev) => [...prev, reader.result as string]);
+         };
+         reader.readAsDataURL(file);
+      });
+   };
+
+   const handleRemoveImage = (index: number) => {
+      setSelectedImages((prev) => prev.filter((_, i) => i !== index));
+      setImagePreviews((prev) => prev.filter((_, i) => i !== index));
+      setUploadError(null);
    };
 
    const handleSubmit = async (e: React.FormEvent) => {
@@ -120,12 +200,18 @@ const UploadProjectPage: React.FC = () => {
          const liveDemoUrlNormalized = formData.liveDemoUrl
             ? normalizeUrl(formData.liveDemoUrl)
             : null;
+         const videoDemoUrlNormalized = formData.videoDemoUrl
+            ? normalizeUrl(formData.videoDemoUrl)
+            : null;
 
          if (formData.githubRepo && !githubUrlNormalized) {
             throw new Error("Please enter a valid GitHub URL (http/https).");
          }
          if (formData.liveDemoUrl && !liveDemoUrlNormalized) {
             throw new Error("Please enter a valid Live Demo URL (http/https).");
+         }
+         if (formData.videoDemoUrl && !videoDemoUrlNormalized) {
+            throw new Error("Please enter a valid Video URL (http/https).");
          }
 
          const links = [
@@ -137,12 +223,16 @@ const UploadProjectPage: React.FC = () => {
                type: "deployedWebsite" as const,
                value: liveDemoUrlNormalized,
             },
+            videoDemoUrlNormalized && {
+               type: "videoDemoUrl" as const,
+               value: videoDemoUrlNormalized,
+            },
          ].filter(Boolean) as Array<{
-            type: "github" | "deployedWebsite";
+            type: "github" | "deployedWebsite" | "videoDemoUrl";
             value: string;
          }>;
 
-         const created = await createProject({
+         const projectPayload = {
             name: formData.title.trim(),
             description: formData.description.trim(),
             teamId,
@@ -153,7 +243,24 @@ const UploadProjectPage: React.FC = () => {
                .filter(Boolean)
                .filter((v, i, arr) => arr.indexOf(v) === i)
                .slice(0, 5),
-         });
+            // this will now be the category _id (string) — server expects ObjectId
+            category: formData.category,
+         };
+
+         let created;
+
+         // If images are selected, use form-data approach
+         if (selectedImages.length > 0) {
+            setUploadProgress(true);
+            created = await createProjectWithImages(
+               projectPayload,
+               selectedImages,
+            );
+            setUploadProgress(false);
+         } else {
+            // No images, use JSON approach
+            created = await createProject(projectPayload);
+         }
 
          try {
             if (created?._id && user?.id) {
@@ -257,8 +364,8 @@ const UploadProjectPage: React.FC = () => {
                               <em>None</em>
                            </MenuItem>
                            {categoryOptions.map((cat) => (
-                              <MenuItem key={cat} value={cat}>
-                                 {cat}
+                              <MenuItem key={cat._id} value={cat._id}>
+                                 {cat.name}
                               </MenuItem>
                            ))}
                            {categoryOptions.length === 0 && (
@@ -365,29 +472,132 @@ const UploadProjectPage: React.FC = () => {
 
                      <Box>
                         <Typography variant="subtitle1" sx={{ mb: 1 }}>
-                           Project Images
+                           Project Images (Optional, max 5)
                         </Typography>
-                        <Paper
-                           sx={{
-                              p: 4,
-                              textAlign: "center",
-                              border: "2px dashed #ccc",
-                              bgcolor: "#f9f9f9",
-                              cursor: "pointer",
-                              "&:hover": { bgcolor: "#f0f0f0" },
-                           }}
-                        >
-                           <UploadIcon
-                              sx={{ fontSize: 48, color: "#ccc", mb: 1 }}
-                           />
-                           <Typography color="text.secondary" sx={{ mb: 1 }}>
-                              Image upload functionality would be implemented
-                              with real backend
-                           </Typography>
-                           <Typography variant="body2" color="text.secondary">
-                              For now you can add image URLs in the description
-                           </Typography>
-                        </Paper>
+
+                        {uploadError && (
+                           <Alert severity="error" sx={{ mb: 2 }}>
+                              {uploadError}
+                           </Alert>
+                        )}
+
+                        {uploadProgress && (
+                           <Box sx={{ mb: 2 }}>
+                              <LinearProgress />
+                              <Typography
+                                 variant="caption"
+                                 color="text.secondary"
+                                 sx={{ mt: 1 }}
+                              >
+                                 Uploading images...
+                              </Typography>
+                           </Box>
+                        )}
+
+                        <input
+                           accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                           style={{ display: "none" }}
+                           id="image-upload-input"
+                           type="file"
+                           multiple
+                           onChange={handleImageSelect}
+                           disabled={selectedImages.length >= 5}
+                        />
+
+                        <label htmlFor="image-upload-input">
+                           <Paper
+                              sx={{
+                                 p: 4,
+                                 textAlign: "center",
+                                 border: "2px dashed #ccc",
+                                 bgcolor:
+                                    selectedImages.length >= 5
+                                       ? "#f5f5f5"
+                                       : "#f9f9f9",
+                                 cursor:
+                                    selectedImages.length >= 5
+                                       ? "not-allowed"
+                                       : "pointer",
+                                 "&:hover":
+                                    selectedImages.length < 5
+                                       ? { bgcolor: "#f0f0f0" }
+                                       : {},
+                              }}
+                              component="div"
+                           >
+                              <UploadIcon
+                                 sx={{ fontSize: 48, color: "#ccc", mb: 1 }}
+                              />
+                              <Typography color="text.secondary" sx={{ mb: 1 }}>
+                                 {selectedImages.length >= 5
+                                    ? "Maximum 5 images reached"
+                                    : "Click to upload images (JPEG, PNG, GIF, WebP)"}
+                              </Typography>
+                              <Typography
+                                 variant="body2"
+                                 color="text.secondary"
+                              >
+                                 {selectedImages.length > 0
+                                    ? `${selectedImages.length} of 5 images selected`
+                                    : "Max 5 images, 5MB each"}
+                              </Typography>
+                           </Paper>
+                        </label>
+
+                        {imagePreviews.length > 0 && (
+                           <Box
+                              sx={{
+                                 mt: 2,
+                                 display: "grid",
+                                 gridTemplateColumns:
+                                    "repeat(auto-fill, minmax(120px, 1fr))",
+                                 gap: 2,
+                              }}
+                           >
+                              {imagePreviews.map((preview, index) => (
+                                 <Box
+                                    key={index}
+                                    sx={{
+                                       position: "relative",
+                                       paddingTop: "100%",
+                                       borderRadius: 2,
+                                       overflow: "hidden",
+                                       border: "1px solid #e0e0e0",
+                                    }}
+                                 >
+                                    <Box
+                                       component="img"
+                                       src={preview}
+                                       alt={`Preview ${index + 1}`}
+                                       sx={{
+                                          position: "absolute",
+                                          top: 0,
+                                          left: 0,
+                                          width: "100%",
+                                          height: "100%",
+                                          objectFit: "cover",
+                                       }}
+                                    />
+                                    <IconButton
+                                       size="small"
+                                       onClick={() => handleRemoveImage(index)}
+                                       sx={{
+                                          position: "absolute",
+                                          top: 4,
+                                          right: 4,
+                                          bgcolor: "rgba(0,0,0,0.6)",
+                                          color: "white",
+                                          "&:hover": {
+                                             bgcolor: "rgba(0,0,0,0.8)",
+                                          },
+                                       }}
+                                    >
+                                       <CloseIcon fontSize="small" />
+                                    </IconButton>
+                                 </Box>
+                              ))}
+                           </Box>
+                        )}
                      </Box>
 
                      <Button

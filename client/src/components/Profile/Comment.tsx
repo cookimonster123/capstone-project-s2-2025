@@ -26,7 +26,12 @@ import type { Comment as ProjectComment } from "../../types/comment";
 import { fetchUserById } from "../../api/userApi";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 
-type AuthorInfo = { id: string; name: string; email?: string };
+type AuthorInfo = {
+   id: string;
+   name: string;
+   email?: string;
+   profilePicture?: string;
+};
 
 interface CommentProps {
    projectId: string;
@@ -156,7 +161,12 @@ const CommentSection: React.FC<CommentProps> = ({ projectId }) => {
       if (user?.id && user.name) {
          setAuthorMap((prev) => ({
             ...prev,
-            [user.id]: { id: user.id, name: user.name, email: user.email },
+            [user.id]: {
+               id: user.id,
+               name: user.name,
+               email: user.email,
+               profilePicture: user.profilePicture,
+            },
          }));
       }
       const missing = Array.from(ids).filter(
@@ -173,10 +183,12 @@ const CommentSection: React.FC<CommentProps> = ({ projectId }) => {
             results.forEach((res) => {
                if (res.status === "fulfilled") {
                   const info = res.value.user;
+                  if (!info._id) return;
                   next[info._id] = {
                      id: info._id,
                      name: info.name,
                      email: info.email,
+                     profilePicture: info?.profilePicture,
                   };
                }
             });
@@ -208,7 +220,12 @@ const CommentSection: React.FC<CommentProps> = ({ projectId }) => {
          if (user?.id && user.name) {
             setAuthorMap((prev) => ({
                ...prev,
-               [user.id]: { id: user.id, name: user.name, email: user.email },
+               [user.id]: {
+                  id: user.id,
+                  name: user.name,
+                  email: user.email,
+                  profilePicture: (user as any)?.profilePicture,
+               },
             }));
          }
          setComments((prev) => [normalized, ...prev]);
@@ -280,9 +297,13 @@ const CommentSection: React.FC<CommentProps> = ({ projectId }) => {
                         );
                         return (
                            <Stack key={c._id} direction="row" spacing={2}>
-                              <Avatar sx={{ width: 40, height: 40 }}>
-                                 {initials}
-                              </Avatar>
+                              <Avatar
+                                 src={
+                                    authorMap[authorId]?.profilePicture ||
+                                    initials
+                                 }
+                                 sx={{ width: 40, height: 40 }}
+                              />
                               <Box
                                  sx={{
                                     flex: 1,

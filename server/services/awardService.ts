@@ -99,6 +99,7 @@ export const createAward = async (
       return {
          success: true,
          data: {
+            _id: award._id.toString(),
             name: award.name,
             iconUrl: award.iconUrl,
             description: award.description,
