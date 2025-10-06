@@ -172,7 +172,14 @@ const LoginForm: React.FC = () => {
             <Button
                variant="text"
                size="medium"
-               startIcon={<ArrowBack sx={{ fontSize: "1.35rem" }} />}
+               startIcon={
+                  <ArrowBack
+                     sx={{
+                        fontSize: "1.35rem",
+                        "@media (min-width: 2560px)": { fontSize: "1.75rem" },
+                     }}
+                  />
+               }
                component={RouterLink}
                to="/"
                sx={{
@@ -181,6 +188,11 @@ const LoginForm: React.FC = () => {
                   px: 1.25,
                   py: 0.75,
                   borderRadius: 9999,
+                  "@media (min-width: 2560px)": {
+                     fontSize: "1.4rem",
+                     px: 2.25,
+                     py: 1.25,
+                  },
                }}
             >
                Back
@@ -188,13 +200,33 @@ const LoginForm: React.FC = () => {
             {/* Move this to LoginPage */}
          </Box>
 
-         <Box sx={{ width: "100%", maxWidth: 840, px: 2 }}>
+         <Box
+            sx={{
+               width: "100%",
+               maxWidth: 380,
+               px: 2,
+               "@media (min-width: 768px)": { maxWidth: 560 },
+               "@media (min-width: 1024px)": { maxWidth: 680 },
+               "@media (min-width: 1440px)": { maxWidth: 820 },
+               "@media (min-width: 2560px)": { maxWidth: 1040 },
+            }}
+         >
             <Typography
                component="h1"
                variant="h3"
                align="center"
                fontWeight={700}
                gutterBottom
+               sx={{
+                  fontSize: {
+                     xs: 28,
+                     sm: 30,
+                     md: 34,
+                     lg: 38,
+                  },
+                  "@media (min-width: 1440px)": { fontSize: 40 },
+                  "@media (min-width: 2560px)": { fontSize: 48 },
+               }}
             >
                Welcome Back
             </Typography>
@@ -225,7 +257,12 @@ const LoginForm: React.FC = () => {
                   required
                   InputLabelProps={{
                      sx: {
-                        fontSize: "1.15rem",
+                        fontSize: {
+                           xs: "1rem",
+                           sm: "1.05rem",
+                           md: "1.1rem",
+                           lg: "1.15rem",
+                        },
                         "&.MuiInputLabel-shrink": {
                            backgroundColor: "#eaf2ff",
                            px: 0.5,
@@ -233,14 +270,25 @@ const LoginForm: React.FC = () => {
                         "&:not(.MuiInputLabel-shrink)": {
                            transform: "translate(14px, 24px) scale(1)",
                         },
+                        "@media (min-width: 2560px)": { fontSize: "1.25rem" },
                      },
                   }}
                   sx={{
                      width: "100%",
                      "& .MuiInputBase-input": {
-                        fontSize: "1.4rem",
-                        py: 3,
-                        px: 2.5,
+                        fontSize: {
+                           xs: "1rem",
+                           sm: "1.05rem",
+                           md: "1.15rem",
+                           lg: "1.2rem",
+                        },
+                        py: { xs: 2, sm: 2.25, md: 2.5 },
+                        px: { xs: 2, sm: 2.25, md: 2.5 },
+                        "@media (min-width: 2560px)": {
+                           fontSize: "1.3rem",
+                           py: 2.75,
+                           px: 2.75,
+                        },
                      },
                      "& .MuiFormHelperText-root": { fontSize: "1rem" },
                   }}
@@ -259,7 +307,12 @@ const LoginForm: React.FC = () => {
                   required
                   InputLabelProps={{
                      sx: {
-                        fontSize: "1.15rem",
+                        fontSize: {
+                           xs: "1rem",
+                           sm: "1.05rem",
+                           md: "1.1rem",
+                           lg: "1.15rem",
+                        },
                         "&.MuiInputLabel-shrink": {
                            backgroundColor: "#eaf2ff",
                            px: 0.5,
@@ -267,6 +320,7 @@ const LoginForm: React.FC = () => {
                         "&:not(.MuiInputLabel-shrink)": {
                            transform: "translate(14px, 24px) scale(1)",
                         },
+                        "@media (min-width: 2560px)": { fontSize: "1.25rem" },
                      },
                   }}
                   InputProps={{
@@ -305,9 +359,19 @@ const LoginForm: React.FC = () => {
                      ),
                      sx: {
                         "& .MuiInputBase-input": {
-                           fontSize: "1.4rem",
-                           py: 3,
-                           px: 2.5,
+                           fontSize: {
+                              xs: "1rem",
+                              sm: "1.05rem",
+                              md: "1.15rem",
+                              lg: "1.2rem",
+                           },
+                           py: { xs: 2, sm: 2.25, md: 2.5 },
+                           px: { xs: 2, sm: 2.25, md: 2.5 },
+                           "@media (min-width: 2560px)": {
+                              fontSize: "1.3rem",
+                              py: 2.75,
+                              px: 2.75,
+                           },
                         },
                      },
                   }}
@@ -342,8 +406,17 @@ const LoginForm: React.FC = () => {
                   disableElevation
                   sx={{
                      mt: 3,
-                     py: 1.9,
-                     fontSize: "1.15rem",
+                     py: { xs: 1.25, sm: 1.5, md: 1.75 },
+                     fontSize: {
+                        xs: "1rem",
+                        sm: "1.05rem",
+                        md: "1.1rem",
+                        lg: "1.15rem",
+                     },
+                     "@media (min-width: 2560px)": {
+                        py: 2,
+                        fontSize: "1.25rem",
+                     },
                      borderRadius: 9999,
                      backgroundColor: "#1976d2",
                      color: "#fff",

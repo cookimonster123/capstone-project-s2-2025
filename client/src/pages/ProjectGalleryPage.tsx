@@ -225,8 +225,11 @@ const ProjectGalleryPage: React.FC = () => {
       <Box
          sx={{
             bgcolor: "#fff",
-            mx: -3, // cover RootLayout's horizontal padding
+            // Extend white background edge-to-edge to cover RootLayout's px:3
+            // Clip horizontally to avoid any scrollbar even when sticky elements exist
+            mx: -3,
             px: 3,
+            overflowX: "clip",
             // stretch to bottom and cover RootLayout's main bottom padding
             minHeight: `calc(100dvh - ${NAV_HEIGHT}px)`,
             pb: 6,
@@ -239,7 +242,10 @@ const ProjectGalleryPage: React.FC = () => {
                   width: "100%",
                   maxWidth: 1750,
                   mx: "auto",
-                  px: { xs: 2, sm: 3, md: 4 },
+                  // Slightly reduce side paddings to make content visually wider
+                  pl: { xs: 1, sm: 1.5, md: 2 },
+                  pr: { xs: 2, sm: 2.5, md: 3 },
+                  boxSizing: "border-box",
                }}
             >
                <Stack spacing={2} sx={{ width: "100%" }}>
@@ -388,6 +394,16 @@ const ProjectGalleryPage: React.FC = () => {
                                  <MenuItem value="">
                                     <em>Any</em>
                                  </MenuItem>
+                                 {/* Ensure controlled Select always has a matching option even before options load */}
+                                 {category &&
+                                    !categoryOptions.includes(category) && (
+                                       <MenuItem
+                                          value={category}
+                                          sx={{ display: "none" }}
+                                       >
+                                          {category}
+                                       </MenuItem>
+                                    )}
                                  {categoryOptions.map((c) => (
                                     <MenuItem key={c} value={c}>
                                        {c}

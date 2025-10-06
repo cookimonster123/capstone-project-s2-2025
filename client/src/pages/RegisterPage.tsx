@@ -6,14 +6,20 @@ const RegisterPage: React.FC = () => {
       <div
          style={{
             minHeight: "100dvh",
-            width: "100vw",
+            width: "auto",
             backgroundColor: "#ffffff",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            padding: 24,
+            paddingTop: 24,
+            paddingBottom: 24,
+            paddingLeft: 24,
+            paddingRight: 24,
+            marginLeft: -24,
+            marginRight: -24,
+            marginBottom: -48,
             boxSizing: "border-box",
-            overflowX: "hidden",
+            overflowX: "clip",
             overflowY: "auto",
          }}
       >

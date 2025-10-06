@@ -6,7 +6,13 @@ import { Outlet, useLocation } from "react-router-dom";
 /** Layout that renders Navbar once and pages below it. */
 const RootLayout: React.FC = () => {
    const { pathname } = useLocation();
-   const HIDE_NAV_PATHS = new Set(["/sign-up"]);
+   // Hide the global navbar on auth pages so they use in-page Back buttons
+   const HIDE_NAV_PATHS = new Set([
+      "/sign-up",
+      "/sign-in",
+      "/register",
+      "/login",
+   ]);
    const showNavbar = !HIDE_NAV_PATHS.has(pathname);
 
    return (

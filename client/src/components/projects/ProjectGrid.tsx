@@ -118,12 +118,14 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({
                                  timeout={300 + idx * 40}
                                  key={project._id}
                               >
-                                 <Box>
+                                 <Box sx={{ width: "100%" }}>
                                     <ProjectCard
                                        project={project}
                                        onClick={onProjectClick}
                                        // Pass auth state down so the card can block likes when not logged in
                                        isAuthenticated={isLoggedIn}
+                                       width={"100%"}
+                                       hoverLift
                                     />
                                  </Box>
                               </Grow>

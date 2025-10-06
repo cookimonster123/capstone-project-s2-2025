@@ -12,6 +12,8 @@
    text-rendering: optimizeLegibility;
    -webkit-font-smoothing: antialiased;
    -moz-osx-font-smoothing: grayscale;
+   /* Avoid reserving permanent scrollbar gutter to prevent right-side color strips */
+   /* scrollbar-gutter: stable; */
 }
 
 body {
@@ -21,6 +23,14 @@ body {
    /* ensure body inherits the soft blue as well */
    background-color: #eaf2ff;
    color: #213547;
+}
+
+/* Prevent accidental horizontal scroll from any child overflow */
+html,
+body,
+#root {
+   max-width: 100%;
+   overflow-x: clip; /* avoids showing blue gutter on the right */
 }
 
 h1 {

@@ -8,6 +8,8 @@ import {
    InputAdornment,
    TextField,
    Typography,
+   useMediaQuery,
+   useTheme,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import ProjectCard from "../projects/ProjectCard";
@@ -28,6 +30,9 @@ const Hero: React.FC<HeroProps> = ({
    projects,
    handleHeroCardClick,
 }) => {
+   const theme = useTheme();
+   const isSmOnly = useMediaQuery(theme.breakpoints.between("sm", "md"));
+   const isMdOnly = useMediaQuery(theme.breakpoints.between("md", "lg"));
    const { isLoggedIn } = useAuth();
    // Hero slider logic: prefer projects with awards; fallback to all awarded projects
    const heroProjects = React.useMemo(() => {
@@ -60,8 +65,8 @@ const Hero: React.FC<HeroProps> = ({
          sx={{
             bgcolor: "#ecf9ffff",
             mx: -3,
-            pt: { xs: 8, md: 10 },
-            pb: { xs: 11, md: 12 },
+            pt: { xs: 5, md: 7 },
+            pb: { xs: 8, md: 9 },
             display: "flex",
             alignItems: "flex-start",
          }}
@@ -70,22 +75,26 @@ const Hero: React.FC<HeroProps> = ({
             maxWidth={false}
             sx={{
                height: 1,
-               pl: { xs: 2, sm: 3, md: 6 },
-               pr: { xs: 3, sm: 4, md: 6 },
+               // Constrain and center the content for wide screens
+               maxWidth: 1850,
+               mx: "auto",
+               pl: { xs: 2, sm: 3, md: 6, lg: 8, xl: 10 },
+               pr: { xs: 3, sm: 4, md: 6, lg: 8, xl: 10 },
             }}
          >
             <Box
                sx={{
-                  display: "flex",
+                  display: "grid",
+                  gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
                   alignItems: "center",
-                  gap: { xs: 3, sm: 4, md: 8, lg: 10, xl: 12 },
-                  flexWrap: "nowrap",
+                  justifyContent: "center",
+                  gap: { xs: 2, sm: 2.5, md: 5, lg: 7, xl: 8 },
                }}
             >
                {/* Left text */}
                <Box
                   sx={{
-                     width: { xs: "100%", md: "48%", lg: "44%" },
+                     width: "100%",
                      pl: { xs: 0, sm: 1, md: 2 },
                   }}
                >
@@ -96,9 +105,10 @@ const Hero: React.FC<HeroProps> = ({
                         fontWeight: 800,
                         letterSpacing: "-0.3px",
                         mb: 4,
-                        fontSize: { xs: 30, sm: 36, md: 44, lg: 50 },
+                        fontSize: { xs: 20, sm: 24, md: 34, lg: 40, xl: 46 },
                         lineHeight: 1.15,
                         color: "primary.main",
+                        "@media (min-width: 1920px)": { fontSize: 48 },
                      }}
                   >
                      Showcase Capstone Projects
@@ -110,7 +120,8 @@ const Hero: React.FC<HeroProps> = ({
                         mb: 5.5,
                         maxWidth: 640,
                         fontWeight: 400,
-                        fontSize: { xs: 18, sm: 20, md: 22 },
+                        fontSize: { xs: 13, sm: 15, md: 18, lg: 19, xl: 20 },
+                        "@media (min-width: 1920px)": { fontSize: 21 },
                         lineHeight: 1.8,
                      }}
                   >
@@ -120,7 +131,12 @@ const Hero: React.FC<HeroProps> = ({
                   <Box
                      component="form"
                      onSubmit={handleSearchSubmit}
-                     sx={{ width: "100%", maxWidth: 900, mt: 9 }}
+                     sx={{
+                        width: "100%",
+                        maxWidth: { xs: 760, xl: 900 },
+                        mt: 6,
+                        "@media (min-width: 1920px)": { maxWidth: 960 },
+                     }}
                   >
                      <TextField
                         size="medium"
@@ -144,8 +160,8 @@ const Hero: React.FC<HeroProps> = ({
                                        ml: 1,
                                        textTransform: "none",
                                        borderRadius: 2,
-                                       px: 2.5,
-                                       py: 1,
+                                       px: 2,
+                                       py: 0.75,
                                     }}
                                  >
                                     Search
@@ -157,13 +173,13 @@ const Hero: React.FC<HeroProps> = ({
                            "& .MuiOutlinedInput-root": {
                               borderRadius: 2,
                               bgcolor: "#E3F2FD",
-                              height: 64,
+                              height: 48,
                            },
                            "& .MuiOutlinedInput-notchedOutline": {
                               borderColor: "divider",
                            },
                            "& .MuiInputBase-input": {
-                              fontSize: { xs: 14, sm: 15, md: 16 },
+                              fontSize: { xs: 12.5, sm: 13, md: 14 },
                            },
                         }}
                      />
@@ -172,7 +188,7 @@ const Hero: React.FC<HeroProps> = ({
                {/* Right visual slider */}
                <Box
                   sx={{
-                     width: { xs: "100%", md: "44%", lg: "50%" },
+                     width: "100%",
                      minWidth: 0,
                   }}
                >
@@ -183,19 +199,26 @@ const Hero: React.FC<HeroProps> = ({
                         display: "flex",
                         justifyContent: "center",
                         alignItems: "center",
-                        overflow: "hidden",
+                        overflow: {
+                           xs: "visible",
+                           md: "visible",
+                           lg: "hidden",
+                        },
                      }}
                   >
                      {heroProjects.length > 0 ? (
                         <Box
                            sx={{
-                              width: { xs: 620, md: 800, lg: 900 },
+                              // Fill the right column (1fr) so left/right are 50/50 visually
+                              width: "100%",
                               maxWidth: "100%",
                               position: "relative",
-                              height: { xs: 410, md: 470, lg: 530 },
+                              height: { xs: 340, md: 400, lg: 460, xl: 500 },
                               display: "flex",
                               alignItems: "center",
                               justifyContent: "center",
+                              "@media (min-width: 1920px)": { height: 540 },
+                              "@media (min-width: 2560px)": { height: 580 },
                            }}
                         >
                            <Box
@@ -220,32 +243,64 @@ const Hero: React.FC<HeroProps> = ({
                                  sx={{
                                     transform: {
                                        xs: "scale(1)",
-                                       md: "scale(1.15)",
-                                       lg: "scale(1.25)",
+                                       md: "scale(1)",
+                                       lg: "scale(1)",
+                                       xl: "scale(1.06)",
                                     },
                                     transformOrigin: "center",
                                     transition: "transform 300ms ease",
+                                    "@media (min-width: 1920px)": {
+                                       transform: "scale(1.08)",
+                                    },
+                                    "@media (min-width: 2560px)": {
+                                       transform: "scale(1.14)",
+                                    },
                                  }}
                               >
-                                 <ProjectCard
-                                    project={heroProjects[heroIndex]}
-                                    onClick={handleHeroCardClick}
-                                    isAuthenticated={isLoggedIn}
-                                    width={470}
-                                 />
+                                 <Box
+                                    sx={{
+                                       width: {
+                                          xs: "clamp(300px, 96%, 520px)",
+                                          sm: 320,
+                                          md: 400,
+                                          lg: 460,
+                                          xl: 520,
+                                       },
+                                       maxWidth: "100%",
+                                       "@media (min-width: 1920px)": {
+                                          width: 500,
+                                       },
+                                       "@media (min-width: 2560px)": {
+                                          width: 540,
+                                       },
+                                    }}
+                                 >
+                                    <ProjectCard
+                                       project={heroProjects[heroIndex]}
+                                       onClick={handleHeroCardClick}
+                                       isAuthenticated={isLoggedIn}
+                                       width={"100%"}
+                                       height={
+                                          isSmOnly ? 320 : isMdOnly ? 340 : 380
+                                       }
+                                       dense={isSmOnly || isMdOnly}
+                                    />
+                                 </Box>
                               </Box>
                            </Box>
                         </Box>
                      ) : (
                         <Box
                            sx={{
-                              width: { xs: 620, md: 800, lg: 900 },
+                              width: "100%",
                               maxWidth: "100%",
                               position: "relative",
-                              height: { xs: 410, md: 470, lg: 530 },
+                              height: { xs: 340, md: 400, lg: 460, xl: 500 },
                               display: "flex",
                               alignItems: "center",
                               justifyContent: "center",
+                              "@media (min-width: 1920px)": { height: 540 },
+                              "@media (min-width: 2560px)": { height: 580 },
                            }}
                         >
                            <Box
@@ -264,37 +319,67 @@ const Hero: React.FC<HeroProps> = ({
                                  sx={{
                                     transform: {
                                        xs: "scale(1)",
-                                       md: "scale(1.15)",
-                                       lg: "scale(1.25)",
+                                       md: "scale(1)",
+                                       lg: "scale(1)",
+                                       xl: "scale(1.06)",
                                     },
                                     transformOrigin: "center",
                                     transition: "transform 300ms ease",
+                                    "@media (min-width: 1920px)": {
+                                       transform: "scale(1.08)",
+                                    },
+                                    "@media (min-width: 2560px)": {
+                                       transform: "scale(1.14)",
+                                    },
                                  }}
                               >
-                                 <Card
+                                 <Box
                                     sx={{
-                                       width: 448,
-                                       height: 380,
-                                       borderRadius: 2,
-                                       display: "flex",
-                                       alignItems: "center",
-                                       justifyContent: "center",
+                                       width: {
+                                          xs: "clamp(300px, 96%, 520px)",
+                                          sm: 320,
+                                          md: 400,
+                                          lg: 460,
+                                          xl: 520,
+                                       },
+                                       maxWidth: "100%",
+                                       "@media (min-width: 1920px)": {
+                                          width: 500,
+                                       },
+                                       "@media (min-width: 2560px)": {
+                                          width: 540,
+                                       },
                                     }}
                                  >
-                                    <CardContent
+                                    <Card
                                        sx={{
                                           width: "100%",
-                                          height: "100%",
+                                          height: { xs: 300, sm: 320, md: 380 },
+                                          borderRadius: 2,
                                           display: "flex",
                                           alignItems: "center",
                                           justifyContent: "center",
-                                          color: "text.secondary",
-                                          fontSize: { xs: 18, md: 20 },
                                        }}
                                     >
-                                       Loading projects...
-                                    </CardContent>
-                                 </Card>
+                                       <CardContent
+                                          sx={{
+                                             width: "100%",
+                                             height: "100%",
+                                             display: "flex",
+                                             alignItems: "center",
+                                             justifyContent: "center",
+                                             color: "text.secondary",
+                                             fontSize: {
+                                                xs: 14,
+                                                sm: 15,
+                                                md: 16,
+                                             },
+                                          }}
+                                       >
+                                          Loading projects...
+                                       </CardContent>
+                                    </Card>
+                                 </Box>
                               </Box>
                            </Box>
                         </Box>

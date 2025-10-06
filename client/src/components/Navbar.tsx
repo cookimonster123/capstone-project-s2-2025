@@ -201,6 +201,7 @@ const Navbar: React.FC = () => {
                         anchorEl={menuEl}
                         open={Boolean(menuEl)}
                         onClose={() => setMenuEl(null)}
+                        disableScrollLock
                         transformOrigin={{
                            horizontal: "right",
                            vertical: "top",

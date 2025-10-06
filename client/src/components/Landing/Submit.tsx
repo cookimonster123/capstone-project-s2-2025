@@ -18,10 +18,10 @@ const SubmitSection: React.FC = () => {
             sx={{
                bgcolor: "#fff",
                mx: -3,
-               py: { xs: 8, md: 12 },
+               py: { xs: 6, md: 10 },
                mt: { xs: -4, md: -6 },
                // extend white background further to cover global light-blue strip
-               pb: { xs: 11, md: 18 },
+               pb: { xs: 9, md: 14 },
             }}
          >
             <Container
@@ -34,7 +34,8 @@ const SubmitSection: React.FC = () => {
                   sx={{
                      fontWeight: 700,
                      mb: 2,
-                     fontSize: { xs: 28, md: 36, lg: 42 },
+                     fontSize: { xs: 24, md: 32, lg: 38, xl: 42 },
+                     "@media (min-width: 1920px)": { fontSize: 46 },
                   }}
                >
                   Everything you need to showcase your work
@@ -43,7 +44,7 @@ const SubmitSection: React.FC = () => {
                   variant="body1"
                   align="center"
                   color="text.secondary"
-                  sx={{ mb: 6, fontSize: { xs: 22, md: 24 } }}
+                  sx={{ mb: 5, fontSize: { xs: 18, md: 20, xl: 22 } }}
                >
                   From project submission to community discovery, we've got you
                   covered.
@@ -51,8 +52,12 @@ const SubmitSection: React.FC = () => {
                <Box
                   sx={{
                      display: "grid",
-                     gridTemplateColumns: { xs: "1fr", sm: "repeat(3, 1fr)" },
-                     gap: 9,
+                     gridTemplateColumns: {
+                        xs: "1fr",
+                        sm: "repeat(2, 1fr)",
+                        md: "repeat(3, 1fr)",
+                     },
+                     gap: 6,
                   }}
                >
                   {[
@@ -71,7 +76,7 @@ const SubmitSection: React.FC = () => {
                         title: "Professional Showcase",
                         desc: "Present your work professionally with project details, live demos, and source code links.",
                      },
-                  ].map((f) => (
+                  ].map((f, i) => (
                      <Card
                         key={f.title}
                         sx={{
@@ -79,6 +84,13 @@ const SubmitSection: React.FC = () => {
                            border: "none",
                            bgcolor: "transparent",
                            boxShadow: "none",
+                           // Center the third card on small screens to form a triangle layout
+                           gridColumn: {
+                              sm: i === 2 ? "1 / -1" : "auto",
+                              md: "auto",
+                           },
+                           justifySelf: { sm: i === 2 ? "center" : "stretch" },
+                           maxWidth: { sm: i === 2 ? 460 : "none" },
                         }}
                      >
                         <CardContent
@@ -86,8 +98,8 @@ const SubmitSection: React.FC = () => {
                         >
                            <Box
                               sx={{
-                                 width: { xs: 64, md: 72 },
-                                 height: { xs: 64, md: 72 },
+                                 width: { xs: 52, md: 60, xl: 72 },
+                                 height: { xs: 52, md: 60, xl: 72 },
                                  borderRadius: "50%",
                                  bgcolor: "#EAF2FF",
                                  display: "flex",
@@ -96,7 +108,9 @@ const SubmitSection: React.FC = () => {
                                  mx: "auto",
                                  mb: 2.5,
                                  opacity: 1,
-                                 "& svg": { fontSize: { xs: 32, md: 36 } },
+                                 "& svg": {
+                                    fontSize: { xs: 26, md: 32, xl: 36 },
+                                 },
                               }}
                            >
                               {f.icon}
@@ -106,7 +120,7 @@ const SubmitSection: React.FC = () => {
                               sx={{
                                  fontWeight: 700,
                                  mb: 1.25,
-                                 fontSize: { xs: 22, md: 24 },
+                                 fontSize: { xs: 18, md: 20, xl: 22 },
                               }}
                            >
                               {f.title}
@@ -115,7 +129,7 @@ const SubmitSection: React.FC = () => {
                               variant="body2"
                               color="text.secondary"
                               sx={{
-                                 fontSize: { xs: 17.5, md: 18.5 },
+                                 fontSize: { xs: 15, md: 16.5, xl: 17 },
                                  lineHeight: 1.8,
                               }}
                            >

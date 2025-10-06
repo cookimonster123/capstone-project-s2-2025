@@ -9,6 +9,10 @@ import {
    Tooltip,
 } from "@mui/material";
 import { ThumbUpOffAlt, ThumbUp } from "@mui/icons-material";
+import WebIcon from "@mui/icons-material/Web";
+import SmartToyIcon from "@mui/icons-material/SmartToy";
+import PhoneIphoneIcon from "@mui/icons-material/PhoneIphone";
+import SportsEsportsIcon from "@mui/icons-material/SportsEsports";
 import type { Project } from "../../types/project";
 import { fetchUserById, fetchCurrentUserId } from "../../api/userApi";
 import type { UserSummary } from "../../api/userApi";
@@ -22,8 +26,10 @@ type Props = {
    isAuthenticated?: boolean;
    token?: string;
    apiBase?: string;
-   height?: number;
-   width?: number;
+   height?: number | string;
+   width?: number | string;
+   dense?: boolean; // compact typography/layout
+   hoverLift?: boolean; // raise on hover (for gallery)
 };
 
 const DEFAULT_API_BASE = BASE_API_URL;
@@ -64,6 +70,8 @@ export default function ProjectCard({
    apiBase = DEFAULT_API_BASE,
    height = 380,
    width = 408,
+   dense = false,
+   hoverLift = false,
 }: Props) {
    const [user, setUser] = React.useState<UserSummary | null>(null);
    const [liked, setLiked] = React.useState<boolean>(false);
@@ -188,13 +196,36 @@ export default function ProjectCard({
             display: "flex",
             flexDirection: "column",
             cursor: "pointer",
+            transition: hoverLift
+               ? "transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease"
+               : undefined,
+            boxShadow: hoverLift ? 1 : undefined,
+            "&:hover": hoverLift
+               ? {
+                    transform: "translateY(-6px)",
+                    boxShadow: 6,
+                 }
+               : undefined,
+            "&:active": hoverLift
+               ? {
+                    transform: "translateY(-2px)",
+                    boxShadow: 4,
+                 }
+               : undefined,
+            "&:focus-visible": hoverLift
+               ? {
+                    outline: "2px solid",
+                    outlineColor: "primary.main",
+                    outlineOffset: 2,
+                 }
+               : undefined,
          }}
       >
          {/* image (first of imageUrl) with grey fallback */}
          <Box
             sx={{
                position: "relative",
-               height: 210,
+               height: dense ? 180 : 210,
                bgcolor: !firstImageUrl || !imageOk ? "grey.200" : "transparent",
                overflow: "hidden",
             }}
@@ -218,11 +249,11 @@ export default function ProjectCard({
             sx={{
                display: "flex",
                flexDirection: "column",
-               gap: 1.25,
+               gap: dense ? 1 : 1.25,
                flexGrow: 1,
-               p: 2,
-               pb: 0.5,
-               "&:last-child": { pb: 0.5 },
+               p: dense ? 1.5 : 2,
+               pb: dense ? 0.25 : 0.5,
+               "&:last-child": { pb: dense ? 0.25 : 0.5 },
             }}
          >
             {/* Title (left) + Award block (right in the red area) */}
@@ -245,7 +276,8 @@ export default function ProjectCard({
                      WebkitBoxOrient: "vertical",
                      overflow: "hidden",
                      lineHeight: 1.2,
-                     minHeight: 40,
+                     minHeight: dense ? 34 : 40,
+                     fontSize: dense ? 16 : undefined,
                   }}
                >
                   {resolveTitle(project)}
@@ -293,12 +325,20 @@ export default function ProjectCard({
             {/* Meta row: semester first, then team (as requested) */}
             <Stack direction="row" spacing={2} alignItems="center">
                {when && (
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography
+                     variant="body2"
+                     color="text.secondary"
+                     sx={{ fontSize: dense ? 12.5 : undefined }}
+                  >
                      {when}
                   </Typography>
                )}
                {teamName && (
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography
+                     variant="body2"
+                     color="text.secondary"
+                     sx={{ fontSize: dense ? 12.5 : undefined }}
+                  >
                      {teamName}
                   </Typography>
                )}
@@ -311,11 +351,22 @@ export default function ProjectCard({
                justifyContent="space-between"
                sx={{ mt: "auto", pb: 0.25, mb: 0 }}
             >
-               <Stack direction="row" alignItems="center" spacing={1.25}>
+               <Stack direction="row" alignItems="center" spacing={0.5}>
                   {!!categoryName && (
-                     <Typography variant="body2" color="text.secondary">
-                        {categoryName}
-                     </Typography>
+                     <>
+                        <Typography
+                           variant="body2"
+                           color="text.secondary"
+                           sx={{
+                              fontSize: dense
+                                 ? { xs: 12, sm: 12.5, md: 13 }
+                                 : { xs: 13, md: 14 },
+                           }}
+                        >
+                           {categoryName}
+                        </Typography>
+                        {renderCategoryIcon(categoryName, dense)}
+                     </>
                   )}
                </Stack>
 
@@ -366,6 +417,7 @@ export default function ProjectCard({
                            liked && isAuthenticated
                               ? "error.main"
                               : "text.primary",
+                        fontSize: dense ? 12.5 : undefined,
                      }}
                   >
                      {Number.isFinite(likes) ? likes : 0}
@@ -375,4 +427,25 @@ export default function ProjectCard({
          </CardContent>
       </Card>
    );
+}
+// Choose an icon based on category name (receive values via args)
+function renderCategoryIcon(nameRaw: string, isDense: boolean) {
+   const name = (nameRaw || "").toLowerCase();
+   const iconSx = isDense
+      ? {
+           ml: 0.5,
+           color: "text.secondary",
+           fontSize: { xs: "1.05em", md: "1.1em" },
+        }
+      : {
+           ml: 0.5,
+           color: "text.secondary",
+           fontSize: { xs: "1.1em", md: "1.15em", lg: "1.2em" },
+        };
+   if (name.includes("web")) return <WebIcon sx={iconSx} />;
+   if (name.includes("mobile")) return <PhoneIphoneIcon sx={iconSx} />;
+   if (name.includes("game")) return <SportsEsportsIcon sx={iconSx} />;
+   if (name.includes("ai") || name.includes("ml"))
+      return <SmartToyIcon sx={iconSx} />;
+   return null;
 }

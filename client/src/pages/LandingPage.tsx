@@ -54,7 +54,7 @@ const LandingPage: React.FC = () => {
          sx={{
             display: "flex",
             flexDirection: "column",
-            gap: { xs: 4, md: 6 },
+            gap: { xs: 3, md: 5 },
             bgcolor: "#fff", // ensure white background fills the page area
             minHeight: "100vh", // cover viewport height so no base blue shows
             mx: -3, // stretch to full width (RootLayout adds px:3)
