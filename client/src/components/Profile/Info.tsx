@@ -6,6 +6,106 @@ import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import type { Project } from "../../types/project";
 
+/**
+ * VideoArea fallback component for demo video display.
+ * Shows a placeholder if no video URL is provided.
+ */
+interface VideoAreaProps {
+   videoUrl?: string;
+}
+
+const VideoArea: React.FC<VideoAreaProps> = ({ videoUrl }) => {
+   if (!videoUrl || typeof videoUrl !== "string" || videoUrl.trim() === "") {
+      return (
+         <Stack alignItems="center" spacing={1}>
+            <PlayArrowIcon sx={{ fontSize: 64, color: "text.disabled" }} />
+            <Typography variant="body2" color="text.secondary">
+               No demo video available
+            </Typography>
+         </Stack>
+      );
+   }
+
+   // Basic video embed (supports YouTube, Vimeo, direct MP4 links)
+   // For YouTube/Vimeo, use iframe; for direct links, use <video>
+   const isYouTube =
+      videoUrl.includes("youtube.com") || videoUrl.includes("youtu.be");
+   const isVideoFile = /\.(mp4|webm|ogg|m3u8|mpd)(\?.*)?$/i.test(videoUrl);
+
+   if (isYouTube) {
+      // Extract video ID for embedding
+      let videoId = "";
+      const ytMatch = videoUrl.match(
+         /(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]+)/,
+      );
+      if (ytMatch) videoId = ytMatch[1];
+      return (
+         <iframe
+            title="Demo Video"
+            width="100%"
+            height="100%"
+            src={`https://www.youtube.com/embed/${videoId}`}
+            frameBorder={0}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            style={{ borderRadius: 8 }}
+         />
+      );
+   }
+
+   if (isVideoFile) {
+      // get extension to set a reasonable mime type
+      const extMatch = videoUrl.match(/\.(mp4|webm|ogg|m3u8|mpd)(\?.*)?$/i);
+      const ext = extMatch ? extMatch[1].toLowerCase() : null;
+      const mimeMap: Record<string, string> = {
+         mp4: "video/mp4",
+         webm: "video/webm",
+         ogg: "video/ogg",
+         m3u8: "application/vnd.apple.mpegurl",
+         mpd: "application/dash+xml",
+      };
+      const mime = (ext && mimeMap[ext]) || "video/mp4";
+      // Note: HLS (.m3u8) plays natively on Safari; other browsers may need HLS.js.
+      return (
+         <video
+            controls
+            playsInline
+            preload="metadata"
+            style={{ width: "100%", height: "100%", borderRadius: 8 }}
+            crossOrigin="anonymous"
+            aria-label="Demo video"
+         >
+            <source src={videoUrl} type={mime} />
+            {/* Fallback content if <video> isn't supported */}
+            <div style={{ padding: 12, textAlign: "center" }}>
+               Your browser does not support embedded video.
+               <br />
+               <a href={videoUrl} target="_blank" rel="noopener noreferrer">
+                  Open video in new tab
+               </a>
+            </div>
+         </video>
+      );
+   }
+
+   // Fallback: open link in new tab
+   return (
+      <Stack alignItems="center" spacing={1}>
+         <IconButton
+            aria-label="Open demo video"
+            href={videoUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+         >
+            <OpenInNewIcon />
+         </IconButton>
+         <Typography variant="body2" color="text.secondary">
+            Open demo video in new tab
+         </Typography>
+      </Stack>
+   );
+};
+
 interface InfoProps {
    project: Project;
 }
@@ -23,6 +123,7 @@ const Info: React.FC<InfoProps> = ({ project }) => {
    }, [project.imageUrl]);
    const [brokenSlides, setBrokenSlides] = useState<Set<number>>(new Set());
    const totalSlides = imageSlides.length > 0 ? imageSlides.length : 1;
+   const videoUrl = project.links.find((l) => l.type === "videoDemoUrl")?.value;
    useEffect(() => {
       if (currentSlideIndex >= totalSlides) setCurrentSlideIndex(0);
       // reset broken markers if slides change size
@@ -208,15 +309,7 @@ const Info: React.FC<InfoProps> = ({ project }) => {
                   mr: "auto",
                }}
             >
-               <Stack alignItems="center" spacing={1}>
-                  <OpenInNewIcon sx={{ color: "text.disabled" }} />
-                  <Typography variant="body2" color="text.secondary">
-                     Demo Video
-                  </Typography>
-                  <Typography variant="caption" color="text.disabled">
-                     Would link to actual video
-                  </Typography>
-               </Stack>
+               <VideoArea videoUrl={videoUrl ?? undefined} />
             </Box>
          </Box>
       </>

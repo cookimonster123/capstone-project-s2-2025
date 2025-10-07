@@ -1,6 +1,6 @@
 export interface ProjectLink {
    value: string;
-   type: "github" | "deployedWebsite";
+   type: "github" | "deployedWebsite" | "videoDemoUrl";
 }
 
 export interface TeamMember {
