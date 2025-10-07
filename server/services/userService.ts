@@ -67,7 +67,7 @@ export function validateUpdateUserData(updateData: UpdateUserData) {
          )
          .optional(),
       project: Joi.string().allow("").optional(),
-      team: Joi.string().allow("").optional(),
+      team: Joi.string().allow("").allow(null).optional(),
       lastLogin: Joi.date().optional(),
    }).min(1); // Ensure at least one field is provided for update
 
@@ -193,18 +193,33 @@ export async function updateUser(
             error: error.details[0].message,
          };
       }
-
-      const updatedUser = await User.findByIdAndUpdate(userId, updateData, {
-         new: true,
-         runValidators: true,
-      });
-
-      if (!updatedUser) {
+      const user = await User.findById(userId);
+      if (!user) {
          return {
             success: false,
             error: "User not found",
          };
       }
+      if (!updateData.team) {
+         await Team.updateMany(
+            { members: userId },
+            { $pull: { members: userId } },
+         );
+      } else {
+         await Team.updateMany(
+            { members: userId },
+            { $pull: { members: userId } },
+         );
+         await Team.updateOne(
+            { _id: updateData.team },
+            { $addToSet: { members: userId } },
+         );
+      }
+
+      const updatedUser = await User.findByIdAndUpdate(userId, updateData, {
+         new: true,
+         runValidators: true,
+      });
 
       return {
          success: true,
@@ -247,6 +262,11 @@ export async function removeUser(userId: string): Promise<ServiceResult> {
             console.warn("Failed to delete user avatar from S3:", error);
          }
       }
+      // Remove user from any teams they belong to
+      await Team.updateMany(
+         { members: userId },
+         { $pull: { members: userId } },
+      );
 
       const deletedUser = await User.findByIdAndDelete(userId);
 

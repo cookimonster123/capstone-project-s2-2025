@@ -193,6 +193,7 @@ const StaffDashboard: React.FC = () => {
       name: "",
       email: "",
       role: "",
+      team: "",
    });
 
    // Load all data
@@ -281,10 +282,23 @@ const StaffDashboard: React.FC = () => {
 
    const handleEditUser = (user: UserSummary) => {
       setSelectedUser(user);
+      let teamValue = "";
+      if (user.team) {
+         if (typeof user.team === "string") {
+            teamValue = user.team;
+         } else if ((user.team as any)._id) {
+            teamValue = (user.team as any)._id;
+         } else if ((user.team as any).name) {
+            // defensive fallback, though backend should return _id
+            teamValue = (user.team as any).name;
+         }
+      }
+
       setEditUserForm({
          name: user.name,
          email: user.email,
          role: user.role,
+         team: teamValue,
       });
       setOpenEditUserDialog(true);
    };
@@ -292,7 +306,13 @@ const StaffDashboard: React.FC = () => {
    const handleUpdateUser = async () => {
       if (!selectedUser?._id) return;
 
-      const success = await updateUser(selectedUser._id, editUserForm);
+      const payload = {
+         ...editUserForm,
+         // Send null to unassign; otherwise send team id string
+         team: editUserForm.team === "" ? null : editUserForm.team,
+      };
+
+      const success = await updateUser(selectedUser._id, payload);
       if (success) {
          showSnackbar("User updated successfully", "success");
          setOpenEditUserDialog(false);
@@ -1331,6 +1351,29 @@ const StaffDashboard: React.FC = () => {
                            <MenuItem value="capstoneStudent">
                               Capstone Student
                            </MenuItem>
+                        </Select>
+                     </FormControl>
+                     <FormControl fullWidth>
+                        <InputLabel>team</InputLabel>
+                        <Select
+                           value={editUserForm.team}
+                           label="Team"
+                           onChange={(e) =>
+                              setEditUserForm({
+                                 ...editUserForm,
+                                 team: e.target.value,
+                              })
+                           }
+                           MenuProps={{
+                              PaperProps: { style: { maxHeight: 200 } },
+                           }}
+                        >
+                           <MenuItem value="">None</MenuItem>
+                           {teams.map((team) => (
+                              <MenuItem key={team._id} value={team._id}>
+                                 {team.name}
+                              </MenuItem>
+                           ))}
                         </Select>
                      </FormControl>
                   </Stack>
