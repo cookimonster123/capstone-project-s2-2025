@@ -72,6 +72,7 @@ import {
    createAward,
    assignAwardToProject,
    removeAwardFromProject,
+   createTeam,
    uploadTeamsCSV,
    type Team,
    type Award,
@@ -186,6 +187,8 @@ const AdminDashboard: React.FC = () => {
    const [openAwardDialog, setOpenAwardDialog] = useState(false);
    const [openAssignDialog, setOpenAssignDialog] = useState(false);
    const [openEditUserDialog, setOpenEditUserDialog] = useState(false);
+   const [openCreateTeamDialog, setOpenCreateTeamDialog] = useState(false);
+   const [newTeamName, setNewTeamName] = useState("");
    const [selectedAward, setSelectedAward] = useState<Award | null>(null);
    const [selectedUser, setSelectedUser] = useState<UserSummary | null>(null);
    const [selectedItem, setSelectedItem] = useState<any>(null);
@@ -334,6 +337,27 @@ const AdminDashboard: React.FC = () => {
          } else {
             showSnackbar("Failed to delete team", "error");
          }
+      }
+   };
+
+   const handleCreateTeam = async () => {
+      if (!newTeamName.trim()) {
+         showSnackbar("Team name cannot be empty", "error");
+         return;
+      }
+      try {
+         const result = await createTeam({ name: newTeamName.trim() });
+         if (result && result._id) {
+            setTeams([...teams, result]);
+            showSnackbar("Team created successfully", "success");
+            setOpenCreateTeamDialog(false);
+            setNewTeamName("");
+         } else {
+            showSnackbar("Failed to create team", "error");
+         }
+      } catch (error) {
+         console.error("Error creating team:", error);
+         showSnackbar("Failed to create team", "error");
       }
    };
 
@@ -840,13 +864,22 @@ const AdminDashboard: React.FC = () => {
                      <Stack spacing={3}>
                         <Stack direction="row" justifyContent="space-between">
                            <Typography variant="h6">Team Management</Typography>
-                           <Button
-                              variant="contained"
-                              startIcon={<UploadIcon />}
-                              onClick={() => setOpenTeamDialog(true)}
-                           >
-                              Upload CSV
-                           </Button>
+                           <Stack direction="row" spacing={1}>
+                              <Button
+                                 variant="contained"
+                                 startIcon={<AddIcon />}
+                                 onClick={() => setOpenCreateTeamDialog(true)}
+                              >
+                                 Create Team
+                              </Button>
+                              <Button
+                                 variant="contained"
+                                 startIcon={<UploadIcon />}
+                                 onClick={() => setOpenTeamDialog(true)}
+                              >
+                                 Upload CSV
+                              </Button>
+                           </Stack>
                         </Stack>
 
                         <TableContainer component={Paper} variant="outlined">
@@ -1215,7 +1248,39 @@ const AdminDashboard: React.FC = () => {
                   {snackbar.message}
                </Alert>
             </Snackbar>
-
+            {/* Create Team Dialog */}
+            <Dialog
+               open={openCreateTeamDialog}
+               onClose={() => setOpenCreateTeamDialog(false)}
+               maxWidth="sm"
+               fullWidth
+            >
+               <DialogTitle>Create New Team</DialogTitle>
+               <DialogContent>
+                  <Stack spacing={2} sx={{ mt: 2 }}>
+                     <TextField
+                        label="Team Name"
+                        fullWidth
+                        variant="outlined"
+                        value={newTeamName}
+                        onChange={(e) => setNewTeamName(e.target.value)}
+                        required
+                     />
+                  </Stack>
+               </DialogContent>
+               <DialogActions>
+                  <Button onClick={() => setOpenCreateTeamDialog(false)}>
+                     Cancel
+                  </Button>
+                  <Button
+                     variant="contained"
+                     disabled={!newTeamName.trim()}
+                     onClick={handleCreateTeam}
+                  >
+                     Create
+                  </Button>
+               </DialogActions>
+            </Dialog>
             {/* Team Dialog - Upload CSV */}
             <Dialog
                open={openTeamDialog}

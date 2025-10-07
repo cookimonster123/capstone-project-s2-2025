@@ -60,17 +60,15 @@ export const getTeamById = async (
    }
 };
 
-/**
- * Create a new team
- */
+// create a new team with empty members and no project
 export const createTeam = async (
    req: Request,
    res: Response,
 ): Promise<void> => {
    try {
-      const { name, members, project } = req.body;
+      const { name } = req.body;
 
-      if (!name) {
+      if (!name || String(name).trim() === "") {
          res.status(400).json({
             success: false,
             message: "Team name is required",
@@ -78,17 +76,20 @@ export const createTeam = async (
          return;
       }
 
+      // Create team with empty members and no project.
+      // Members will be assigned later via the user management flows.
       const team = await Team.create({
-         name,
-         members: members || [],
-         project: project || null,
+         name: String(name).trim(),
+         members: [],
+         project: null,
       });
 
-      await team.populate("members", "name email");
+      // Return an explicit, consistent shape without an extra DB query
+      const teamObj = team.toObject();
 
       res.status(201).json({
          success: true,
-         team,
+         team: teamObj,
       });
    } catch (error) {
       console.error("Error creating team:", error);

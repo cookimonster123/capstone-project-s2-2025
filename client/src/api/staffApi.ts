@@ -365,3 +365,29 @@ export const deleteComment = async (commentId: string): Promise<boolean> => {
       return false;
    }
 };
+
+// Create a new team
+export const createTeam = async (teamData: {
+   name: string;
+}): Promise<Team | null> => {
+   try {
+      const response = await fetch(`${BASE_API_URL}/teams`, {
+         method: "POST",
+         headers: {
+            "Content-Type": "application/json",
+         },
+         credentials: "include",
+         body: JSON.stringify(teamData),
+      });
+
+      if (!response.ok) {
+         throw new Error(`Failed to create team: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.team || null;
+   } catch (error) {
+      console.error("Error creating team:", error);
+      return null;
+   }
+};
