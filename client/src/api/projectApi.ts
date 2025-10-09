@@ -35,7 +35,7 @@ export const fetchProjects = async (): Promise<Project[]> => {
  * @returns Promise<Project> - Single project
  * @throws Error if the API request fails
  */
-export const fetchProjectById = async (id: string): Promise<Project> => {
+export const fetchProjectById = async (id: string): Promise<Project | null> => {
    try {
       const response = await fetch(`${BASE_API_URL}/projects/${id}`, {
          method: "GET",
@@ -43,6 +43,11 @@ export const fetchProjectById = async (id: string): Promise<Project> => {
             "Content-Type": "application/json",
          },
       });
+
+      if (response.status === 404) {
+         // Project not found → return null instead of throwing
+         return null;
+      }
 
       if (!response.ok) {
          throw new Error(
