@@ -5,7 +5,6 @@ import {
    Button,
    Card,
    CardContent,
-   Chip,
    Container,
    Typography,
 } from "@mui/material";
@@ -59,24 +58,37 @@ const Category: React.FC<CategoryProps> = ({ goToProjects }) => {
    return (
       <Box
          sx={{
-            bgcolor: "#fff",
+            bgcolor: "transparent", // Changed from background.paper to transparent
             mx: -3,
-            pt: { xs: 5, md: 7 },
+            pt: { xs: 8, md: 10 },
             pb: { xs: 8, md: 12 },
-            mt: { xs: -4, md: -6 },
+            mt: { xs: 0, md: 0 },
+            position: "relative",
+            overflow: "hidden",
          }}
       >
          <Container
             maxWidth={false}
-            sx={{ maxWidth: 1850, px: { xs: 3, sm: 5, md: 8 } }}
+            sx={{
+               maxWidth: 1850,
+               px: { xs: 3, sm: 5, md: 8 },
+               position: "relative",
+               zIndex: 1,
+            }}
          >
-            <Box sx={{ mb: 2 }}>
+            <Box sx={{ mb: 6 }}>
                <Typography
                   variant="h4"
                   sx={{
-                     fontWeight: 700,
-                     fontSize: { xs: 28, md: 32, lg: 36, xl: 40 },
-                     "@media (min-width: 1920px)": { fontSize: 44 },
+                     fontWeight: 600,
+                     fontSize: { xs: 32, md: 40, lg: 48, xl: 56 },
+                     "@media (min-width: 1920px)": { fontSize: 64 },
+                     color: (theme) =>
+                        theme.palette.mode === "dark"
+                           ? "#ffffff"
+                           : "text.primary",
+                     letterSpacing: "-0.02em",
+                     mb: 2,
                   }}
                >
                   Explore by category
@@ -93,30 +105,37 @@ const Category: React.FC<CategoryProps> = ({ goToProjects }) => {
                >
                   <Typography
                      variant="body2"
-                     color="text.secondary"
                      sx={{
-                        fontSize: { xs: 14.5, md: 16, lg: 18, xl: 18 },
-                        lineHeight: 1.75,
+                        fontSize: { xs: 17, md: 19, lg: 21 },
+                        lineHeight: 1.5,
                         flex: "1 1 auto",
+                        color: "text.secondary",
+                        letterSpacing: "-0.01em",
                      }}
                   >
-                     Quickly find projects you care about. Browse by focus and
-                     dive into curated student work.
+                     Quickly find projects you care about.
                   </Typography>
                   <Button
-                     variant="contained"
-                     color="primary"
+                     variant="text"
                      onClick={goToProjects}
                      sx={{
                         textTransform: "none",
                         borderRadius: 2,
-                        px: 1.75,
-                        py: 0.6,
-                        fontSize: { xs: 12.5, md: 14, xl: 15 },
+                        px: 2.5,
+                        py: 1,
+                        fontSize: { xs: 15, md: 17 },
                         ml: "auto",
+                        color: "primary.main",
+                        fontWeight: 400,
+                        "&:hover": {
+                           bgcolor: (theme) =>
+                              theme.palette.mode === "dark"
+                                 ? "rgba(0,153,255,0.12)"
+                                 : "rgba(0,113,227,0.08)",
+                        },
                      }}
                   >
-                     View all
+                     View all →
                   </Button>
                </Box>
             </Box>
@@ -156,69 +175,96 @@ const Category: React.FC<CategoryProps> = ({ goToProjects }) => {
                         sx={{
                            width: "100%",
                            height: "100%",
-                           borderRadius: "12px",
+                           borderRadius: 3,
                            overflow: "hidden",
-                           border: "1px solid",
-                           borderColor: "divider",
+                           border: (theme) =>
+                              theme.palette.mode === "dark"
+                                 ? "1px solid #2d3548"
+                                 : "1px solid #e5e5e7",
+                           bgcolor: (theme) =>
+                              theme.palette.mode === "dark"
+                                 ? "#141824"
+                                 : "#fafafa",
                            cursor: "pointer",
-                           transition:
-                              "box-shadow 160ms ease, border-color 160ms ease, transform 120ms ease",
+                           position: "relative",
+                           transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                           // 添加光泽效果
+                           "&::before": {
+                              content: '""',
+                              position: "absolute",
+                              top: 0,
+                              left: "-100%",
+                              width: "100%",
+                              height: "100%",
+                              background: (theme) =>
+                                 theme.palette.mode === "dark"
+                                    ? "linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)"
+                                    : "linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent)",
+                              transition: "left 0.5s ease",
+                           },
                            "&:hover": {
-                              boxShadow: 3,
-                              borderColor: "primary.light",
-                              transform: "translateY(-2px)",
+                              bgcolor: (theme) =>
+                                 theme.palette.mode === "dark"
+                                    ? "#1a1f2e"
+                                    : "#ffffff",
+                              borderColor: (theme) =>
+                                 theme.palette.mode === "dark"
+                                    ? "#3d4657"
+                                    : "#d2d2d7",
+                              boxShadow: (theme) =>
+                                 theme.palette.mode === "dark"
+                                    ? "0 8px 24px rgba(0,0,0,0.5)"
+                                    : "0 8px 24px rgba(0,0,0,0.12)",
+                              transform: "translateY(-8px) scale(1.02)",
+                              "&::before": {
+                                 left: "100%",
+                              },
                            },
                            "&:focus-visible": {
-                              outline: "2px solid",
-                              outlineColor: "primary.main",
+                              outline: (theme) =>
+                                 theme.palette.mode === "dark"
+                                    ? "2px solid #0099ff"
+                                    : "2px solid #06c",
+                              outlineOffset: 2,
                            },
                         }}
                      >
-                        <CardContent sx={{ p: { xs: 2, md: 2, lg: 2.5 } }}>
+                        <CardContent
+                           sx={{
+                              p: { xs: 3, md: 3.5 },
+                              position: "relative",
+                              zIndex: 1,
+                           }}
+                        >
                            <Box
                               sx={{
-                                 display: "flex",
-                                 justifyContent: "space-between",
-                                 alignItems: "center",
-                                 mb: 1.5,
-                              }}
-                           >
-                              <Chip
-                                 label={c.tag}
-                                 size="small"
-                                 variant="filled"
-                                 sx={{
-                                    borderRadius: 999,
-                                    bgcolor: "grey.200",
-                                    color: "text.primary",
-                                    height: { xs: 22, md: 20 },
-                                    "& .MuiChip-label": {
-                                       px: 1,
-                                       fontSize: { xs: 11, md: 10 },
-                                    },
-                                 }}
-                              />
-                              <Box
-                                 sx={{
-                                    width: { xs: 20, md: 18 },
-                                    height: { xs: 20, md: 18 },
-                                    borderRadius: "50%",
-                                    bgcolor: "grey.200",
-                                 }}
-                              />
-                           </Box>
-                           <Box
-                              sx={{
-                                 borderRadius: 2,
-                                 bgcolor: "grey.100",
-                                 aspectRatio: "16 / 9",
-                                 width: "100%",
+                                 width: 56,
+                                 height: 56,
+                                 borderRadius: 2.5,
+                                 bgcolor: (theme) =>
+                                    theme.palette.mode === "dark"
+                                       ? "#1a1f2e"
+                                       : "#f5f5f7",
                                  display: "flex",
                                  alignItems: "center",
                                  justifyContent: "center",
                                  mb: 3,
-                                 fontSize: { xs: 30, md: 34, lg: 46, xl: 54 },
+                                 fontSize: 30,
+                                 color: "primary.main",
+                                 transition:
+                                    "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                                 boxShadow: (theme) =>
+                                    theme.palette.mode === "dark"
+                                       ? "0 2px 8px rgba(0,153,255,0.15)"
+                                       : "0 2px 8px rgba(0,102,204,0.08)",
                                  "& svg": { fontSize: "inherit" },
+                                 ".MuiCard-root:hover &": {
+                                    transform: "scale(1.1) rotate(5deg)",
+                                    boxShadow: (theme) =>
+                                       theme.palette.mode === "dark"
+                                          ? "0 4px 16px rgba(0,153,255,0.3)"
+                                          : "0 4px 16px rgba(0,102,204,0.2)",
+                                 },
                               }}
                            >
                               {c.icon}
@@ -227,18 +273,27 @@ const Category: React.FC<CategoryProps> = ({ goToProjects }) => {
                               variant="subtitle1"
                               sx={{
                                  fontWeight: 600,
-                                 fontSize: { xs: 16, md: 16, xl: 20 },
+                                 fontSize: { xs: 19, md: 21 },
+                                 mb: 1,
+                                 color: (theme) =>
+                                    theme.palette.mode === "dark"
+                                       ? "#ffffff"
+                                       : "#1d1d1f",
+                                 letterSpacing: "-0.01em",
                               }}
                            >
                               {c.title}
                            </Typography>
                            <Typography
                               variant="body2"
-                              color="text.secondary"
                               sx={{
-                                 mb: 1,
-                                 fontSize: { xs: 14, md: 14, lg: 16, xl: 16 },
-                                 lineHeight: 1.7,
+                                 fontSize: { xs: 15, md: 16 },
+                                 lineHeight: 1.5,
+                                 color: (theme) =>
+                                    theme.palette.mode === "dark"
+                                       ? "#b0b0b5"
+                                       : "#6e6e73",
+                                 letterSpacing: "-0.01em",
                               }}
                            >
                               {c.description}

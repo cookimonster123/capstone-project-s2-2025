@@ -6,6 +6,7 @@ import {
    Card,
    CardContent,
    CardHeader,
+   Container,
    Divider,
    Stack,
    Typography,
@@ -24,6 +25,9 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { fetchUserById, fetchFavoriteProjects } from "../api/userApi.ts";
 import { uploadAvatar, removeAvatar } from "../api/fileApi";
+import { motion } from "framer-motion";
+import GradientBackground from "../components/animations/GradientBackground";
+import FloatingElements from "../components/animations/FloatingElements";
 
 /**
  * StudentDashboard
@@ -43,14 +47,11 @@ const StudentDashboard: React.FC = () => {
    const [loading, setLoading] = useState<boolean>(!!myProjectId);
    const [error, setError] = useState<string | null>(null);
 
-   // Projects feed for the Favorites tab (sample)
    const [allProjects, setAllProjects] = useState<Project[]>([]);
 
-   // Pagination state for Favorites
    const [favPage, setFavPage] = useState(1);
-   const itemsPerPage = 6;
+   const itemsPerPage = 3;
 
-   // Avatar upload state
    const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
    const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
@@ -91,7 +92,8 @@ const StudentDashboard: React.FC = () => {
                   const p = await fetchProjectById(pid);
                   if (!active) return;
                   setMyProject(p);
-                  return; // done
+
+                  return;
                }
             } catch (e) {}
 
@@ -102,10 +104,10 @@ const StudentDashboard: React.FC = () => {
                const p = await fetchProjectById(cached);
                if (!active) return;
                setMyProject(p);
+
                return;
             }
 
-            // 3) No project
             if (active) {
                setMyProject(null);
             }
@@ -270,185 +272,98 @@ const StudentDashboard: React.FC = () => {
    }
 
    return (
-      <Box
-         sx={{
-            bgcolor: "#f5f7fa",
-            minHeight: "100vh",
-            py: 4,
-            width: "100%",
-            display: "flex",
-            justifyContent: "center",
-         }}
-      >
-         <Box sx={{ width: "100%", maxWidth: 980, px: 2 }}>
-            {/* Header Card - Clean Apple/Meta Style */}
-            <Card
-               elevation={0}
-               sx={{
-                  mb: 4,
-                  bgcolor: "white",
-                  border: "1px solid",
-                  borderColor: "divider",
-                  borderRadius: 2,
-               }}
-            >
-               <CardContent sx={{ py: 4 }}>
-                  <Typography
-                     component="h1"
-                     variant="h4"
-                     fontWeight={600}
-                     textAlign="center"
-                     color="text.primary"
-                     sx={{ mb: 1 }}
-                  >
-                     {user?.name
-                        ? `${user.name} · Student Dashboard`
-                        : "Student Dashboard"}
-                  </Typography>
-                  <Typography
-                     textAlign="center"
-                     variant="body1"
-                     color="text.secondary"
-                  >
-                     Manage your capstone project and track your progress
-                  </Typography>
-               </CardContent>
-            </Card>
-
+      <>
+         <GradientBackground />
+         <FloatingElements />
+         <Container
+            maxWidth={false}
+            disableGutters
+            sx={{
+               minHeight: "100vh",
+               position: "relative",
+               display: "flex",
+               justifyContent: "center",
+               pt: { xs: 4, sm: 8 },
+            }}
+         >
             <Box
                sx={{
-                  display: "grid",
-                  gridTemplateColumns: { xs: "1fr", md: "300px 600px" },
-                  gap: { xs: 2, md: 4 },
-                  alignItems: "start",
-                  width: "fit-content",
-                  mx: "auto",
+                  width: "100%",
+                  maxWidth: 1600,
+                  px: 2,
+                  position: "relative",
+                  zIndex: 1,
                }}
             >
-               {/* Left profile panel */}
-               <Stack spacing={3}>
+               {/* Header Card - Clean Apple/Meta Style */}
+               <motion.div
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6 }}
+               >
                   <Card
                      elevation={0}
                      sx={{
-                        border: "1px solid",
-                        borderColor: "divider",
-                        borderRadius: 2,
+                        mb: 4,
+                        bgcolor: (theme) =>
+                           theme.palette.mode === "dark"
+                              ? "#1a2332"
+                              : "#ffffff",
+                        border: (theme) =>
+                           theme.palette.mode === "dark"
+                              ? "1px solid #2a3142"
+                              : "1px solid #e5e5e7",
+                        borderRadius: 2.5,
+                        boxShadow: (theme) =>
+                           theme.palette.mode === "dark"
+                              ? "0 4px 16px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.3)"
+                              : "0 4px 16px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02)",
+                        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                        "&:hover": {
+                           boxShadow: (theme) =>
+                              theme.palette.mode === "dark"
+                                 ? "0 8px 24px rgba(0, 153, 255, 0.15), 0 2px 6px rgba(0, 0, 0, 0.4)"
+                                 : "0 8px 24px rgba(0, 0, 0, 0.06), 0 2px 6px rgba(0, 0, 0, 0.03)",
+                        },
                      }}
                   >
-                     <CardHeader
-                        title="Profile"
-                        sx={{
-                           borderBottom: "1px solid",
-                           borderColor: "divider",
-                           "& .MuiCardHeader-title": {
-                              fontWeight: 600,
-                              fontSize: "1.1rem",
-                           },
-                        }}
-                     />
-                     <CardContent>
-                        <Stack
-                           spacing={2}
-                           alignItems="center"
+                     <CardContent sx={{ py: 4 }}>
+                        <Typography
+                           component="h1"
+                           variant="h4"
+                           fontWeight={600}
                            textAlign="center"
+                           color="text.primary"
+                           sx={{ mb: 1 }}
                         >
-                           <Box sx={{ position: "relative" }}>
-                              <Avatar
-                                 src={
-                                    avatarUrl ||
-                                    (user as any)?.profilePicture ||
-                                    undefined
-                                 }
-                                 sx={{
-                                    width: 96,
-                                    height: 96,
-                                    bgcolor: "primary.main",
-                                    fontSize: "2rem",
-                                    fontWeight: 700,
-                                 }}
-                              >
-                                 {!avatarUrl && !(user as any)?.profilePicture
-                                    ? user?.name
-                                       ? user.name
-                                            .split(" ")
-                                            .map((s: string) => s[0])
-                                            .join("")
-                                            .slice(0, 2)
-                                       : "U"
-                                    : null}
-                              </Avatar>
-                              {uploadingAvatar && (
-                                 <CircularProgress
-                                    size={96}
-                                    sx={{
-                                       position: "absolute",
-                                       top: 0,
-                                       left: 0,
-                                    }}
-                                 />
-                              )}
-                           </Box>
-
-                           {/* Avatar upload/remove buttons */}
-                           <Stack direction="row" spacing={1}>
-                              <Button
-                                 component="label"
-                                 variant="outlined"
-                                 size="small"
-                                 startIcon={<PhotoCamera />}
-                                 disabled={uploadingAvatar}
-                              >
-                                 Upload
-                                 <input
-                                    type="file"
-                                    hidden
-                                    accept="image/jpeg,image/png,image/gif,image/webp"
-                                    onChange={handleAvatarUpload}
-                                 />
-                              </Button>
-                              {(avatarUrl || (user as any)?.profilePicture) && (
-                                 <IconButton
-                                    size="small"
-                                    color="error"
-                                    onClick={handleAvatarRemove}
-                                    disabled={uploadingAvatar}
-                                 >
-                                    <DeleteIcon fontSize="small" />
-                                 </IconButton>
-                              )}
-                           </Stack>
-
-                           <Box>
-                              <Typography variant="subtitle1" fontWeight={700}>
-                                 {user?.name || "—"}
-                              </Typography>
-                              <Typography
-                                 variant="body2"
-                                 color="text.secondary"
-                              >
-                                 Computer Science
-                              </Typography>
-                              <Typography
-                                 variant="body2"
-                                 color="text.secondary"
-                              >
-                                 {user?.email || "—"}
-                              </Typography>
-                           </Box>
-                           <Divider flexItem />
-                           {/* Skills/tags could render here when API is available */}
-                        </Stack>
+                           {user?.name
+                              ? `${user.name} · Student Dashboard`
+                              : "Student Dashboard"}
+                        </Typography>
+                        <Typography
+                           textAlign="center"
+                           variant="body1"
+                           color="text.secondary"
+                        >
+                           Manage your capstone project and track your progress
+                        </Typography>
                      </CardContent>
                   </Card>
-               </Stack>
+               </motion.div>
 
-               {/* Right: Tabs + Content */}
-               <Box sx={{ minWidth: 0 }}>
+               {/* Main Content Area */}
+               <Box
+                  sx={{
+                     maxWidth: "1200px",
+                     mx: "auto",
+                     px: { xs: 2, sm: 3 },
+                  }}
+               >
                   {/* Tabs */}
                   <Stack
                      direction="row"
                      spacing={2}
-                     sx={{ mb: 3, alignItems: "center" }}
+                     sx={{ mb: 4, alignItems: "center" }}
                   >
                      <Button
                         variant="outlined"
@@ -486,87 +401,246 @@ const StudentDashboard: React.FC = () => {
                   </Stack>
 
                   {activeTab === "overview" && (
-                     <Card
-                        elevation={0}
-                        sx={{
-                           border: "1px solid",
-                           borderColor: "divider",
-                           borderRadius: 2,
-                        }}
-                     >
-                        <CardHeader
+                     <Stack spacing={4}>
+                        {/* Profile and Stats Row */}
+                        <Box
                            sx={{
-                              borderBottom: "1px solid",
-                              borderColor: "divider",
+                              display: "grid",
+                              gridTemplateColumns: {
+                                 xs: "1fr",
+                                 md: "320px 1fr",
+                              },
+                              gap: 3,
                            }}
-                           title={
-                              <Stack
-                                 direction="row"
-                                 alignItems="center"
-                                 justifyContent="space-between"
+                        >
+                           {/* Profile Card */}
+                           <motion.div
+                              initial={{ opacity: 0, x: -30 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ duration: 0.5 }}
+                           >
+                              <Card
+                                 elevation={0}
+                                 sx={{
+                                    border: "1px solid",
+                                    borderColor: "divider",
+                                    borderRadius: 2,
+                                 }}
                               >
-                                 <Typography variant="h6" fontWeight={600}>
-                                    My Projects
-                                 </Typography>
-                                 <Stack direction="row" spacing={1}>
-                                    <Button
-                                       variant="outlined"
-                                       size="small"
-                                       startIcon={<UploadIcon />}
-                                       onClick={() => navigate("/upload")}
-                                       sx={{
-                                          borderRadius: 2,
-                                       }}
+                                 <CardHeader
+                                    title="Profile"
+                                    sx={{
+                                       borderBottom: "1px solid",
+                                       borderColor: "divider",
+                                       "& .MuiCardHeader-title": {
+                                          fontWeight: 600,
+                                          fontSize: "1.1rem",
+                                       },
+                                    }}
+                                 />
+                                 <CardContent>
+                                    <Stack
+                                       spacing={2}
+                                       alignItems="center"
+                                       textAlign="center"
                                     >
-                                       Upload
-                                    </Button>
-                                 </Stack>
-                              </Stack>
-                           }
-                        />
+                                       <Box sx={{ position: "relative" }}>
+                                          <Avatar
+                                             src={
+                                                avatarUrl ||
+                                                (user as any)?.profilePicture ||
+                                                undefined
+                                             }
+                                             sx={{
+                                                width: 96,
+                                                height: 96,
+                                                bgcolor: "primary.main",
+                                                fontSize: "2rem",
+                                                fontWeight: 700,
+                                             }}
+                                          >
+                                             {!avatarUrl &&
+                                             !(user as any)?.profilePicture
+                                                ? user?.name
+                                                   ? user.name
+                                                        .split(" ")
+                                                        .map(
+                                                           (s: string) => s[0],
+                                                        )
+                                                        .join("")
+                                                        .slice(0, 2)
+                                                   : "U"
+                                                : null}
+                                          </Avatar>
+                                          {uploadingAvatar && (
+                                             <CircularProgress
+                                                size={96}
+                                                sx={{
+                                                   position: "absolute",
+                                                   top: 0,
+                                                   left: 0,
+                                                }}
+                                             />
+                                          )}
+                                       </Box>
 
-                        <CardContent>
-                           {/* Loading / Error / Content */}
-                           {loading ? (
-                              <Typography color="text.secondary">
-                                 Loading…
-                              </Typography>
-                           ) : error ? (
-                              <Typography color="error">{error}</Typography>
-                           ) : myProject ? (
-                              <ProjectCard
-                                 project={myProject}
-                                 onClick={() =>
-                                    navigate(`/profile/${myProject._id}`)
-                                 }
-                                 isAuthenticated={isLoggedIn}
-                              />
-                           ) : (
-                              <Stack
-                                 spacing={2}
-                                 alignItems="center"
-                                 sx={{ py: 6 }}
+                                       <Stack direction="row" spacing={1}>
+                                          <Button
+                                             component="label"
+                                             variant="outlined"
+                                             size="small"
+                                             startIcon={<PhotoCamera />}
+                                             disabled={uploadingAvatar}
+                                          >
+                                             Upload
+                                             <input
+                                                type="file"
+                                                hidden
+                                                accept="image/jpeg,image/png,image/gif,image/webp"
+                                                onChange={handleAvatarUpload}
+                                             />
+                                          </Button>
+                                          {(avatarUrl ||
+                                             (user as any)?.profilePicture) && (
+                                             <IconButton
+                                                size="small"
+                                                color="error"
+                                                onClick={handleAvatarRemove}
+                                                disabled={uploadingAvatar}
+                                             >
+                                                <DeleteIcon fontSize="small" />
+                                             </IconButton>
+                                          )}
+                                       </Stack>
+
+                                       <Box>
+                                          <Typography
+                                             variant="subtitle1"
+                                             fontWeight={700}
+                                          >
+                                             {user?.name || "—"}
+                                          </Typography>
+                                          <Typography
+                                             variant="body2"
+                                             color="text.secondary"
+                                          >
+                                             Computer Science
+                                          </Typography>
+                                          <Typography
+                                             variant="body2"
+                                             color="text.secondary"
+                                          >
+                                             {user?.email || "—"}
+                                          </Typography>
+                                       </Box>
+                                       <Divider flexItem />
+                                    </Stack>
+                                 </CardContent>
+                              </Card>
+                           </motion.div>
+
+                           {/* My Project Card */}
+                           <motion.div
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ duration: 0.6, delay: 0.5 }}
+                           >
+                              <Card
+                                 elevation={0}
+                                 sx={{
+                                    border: "1px solid",
+                                    borderColor: "divider",
+                                    borderRadius: 2,
+                                    height: "100%",
+                                 }}
                               >
-                                 <Typography color="text.secondary">
-                                    No Projects yet
-                                 </Typography>
-                                 <Typography
-                                    color="text.secondary"
-                                    variant="body2"
+                                 <CardHeader
+                                    sx={{
+                                       borderBottom: "1px solid",
+                                       borderColor: "divider",
+                                    }}
+                                    title={
+                                       <Stack
+                                          direction="row"
+                                          alignItems="center"
+                                          justifyContent="space-between"
+                                       >
+                                          <Typography
+                                             variant="h6"
+                                             fontWeight={600}
+                                          >
+                                             My Projects
+                                          </Typography>
+                                          <Button
+                                             variant="outlined"
+                                             size="small"
+                                             startIcon={<UploadIcon />}
+                                             onClick={() => navigate("/upload")}
+                                             sx={{
+                                                borderRadius: 2,
+                                             }}
+                                          >
+                                             Upload
+                                          </Button>
+                                       </Stack>
+                                    }
+                                 />
+
+                                 <CardContent
+                                    sx={{
+                                       display: "flex",
+                                       alignItems: "center", // vertical center
+                                       justifyContent: "center", // horizontal center
+                                       minHeight: 300, // optional: gives space so centering is visible
+                                    }}
                                  >
-                                    Get started by submitting your first
-                                    capstone project.
-                                 </Typography>
-                                 <Button
-                                    variant="contained"
-                                    onClick={() => navigate("/upload")}
-                                 >
-                                    Submit your first project!
-                                 </Button>
-                              </Stack>
-                           )}
-                        </CardContent>
-                     </Card>
+                                    {loading ? (
+                                       <Typography color="text.secondary">
+                                          Loading…
+                                       </Typography>
+                                    ) : error ? (
+                                       <Typography color="error">
+                                          {error}
+                                       </Typography>
+                                    ) : myProject ? (
+                                       <ProjectCard
+                                          project={myProject}
+                                          onClick={() =>
+                                             navigate(
+                                                `/profile/${myProject._id}`,
+                                             )
+                                          }
+                                          isAuthenticated={isLoggedIn}
+                                       />
+                                    ) : (
+                                       <Stack
+                                          spacing={2}
+                                          alignItems="center"
+                                          sx={{ py: 6 }}
+                                       >
+                                          <Typography color="text.secondary">
+                                             No Projects yet
+                                          </Typography>
+                                          <Typography
+                                             color="text.secondary"
+                                             variant="body2"
+                                          >
+                                             Get started by submitting your
+                                             first capstone project.
+                                          </Typography>
+                                          <Button
+                                             variant="contained"
+                                             onClick={() => navigate("/upload")}
+                                          >
+                                             Submit your first project!
+                                          </Button>
+                                       </Stack>
+                                    )}
+                                 </CardContent>
+                              </Card>
+                           </motion.div>
+                        </Box>
+                     </Stack>
                   )}
 
                   {activeTab === "favorites" && (
@@ -615,36 +689,183 @@ const StudentDashboard: React.FC = () => {
 
                                  return (
                                     <>
-                                       {paginatedProjects.map((p) => (
-                                          <ProjectCard
-                                             key={p._id}
-                                             project={p}
-                                             onClick={() =>
-                                                navigate(`/profile/${p._id}`)
-                                             }
-                                             isAuthenticated={isLoggedIn}
-                                          />
-                                       ))}
+                                       <Box
+                                          sx={{
+                                             display: "grid",
+                                             gridTemplateColumns: {
+                                                xs: "1fr", // phones
+                                                sm: "repeat(2, 1fr)", // small tablets
+                                                md: "repeat(3, 1fr)", // desktops
+                                             },
+                                             gap: 2,
+                                          }}
+                                       >
+                                          {paginatedProjects.map((p) => (
+                                             <Box
+                                                key={p._id}
+                                                sx={{
+                                                   minWidth: 0,
+                                                   display: "flex",
+                                                   justifyContent: "center", // center the wrapper in the grid cell
+                                                }}
+                                             >
+                                                <Box
+                                                   sx={{
+                                                      width: "100%",
+                                                      maxWidth: {
+                                                         xs: 300,
+                                                         sm: 320,
+                                                         md: 340,
+                                                      }, // slightly smaller card
+                                                      "& > *": {
+                                                         width: "100%",
+                                                      }, // make ProjectCard fill wrapper
+                                                      "& .MuiCard-root": {
+                                                         width: "100%",
+                                                         maxWidth: "inherit",
+                                                      }, // if ProjectCard uses MUI Card
+                                                   }}
+                                                >
+                                                   <ProjectCard
+                                                      project={p}
+                                                      onClick={() =>
+                                                         navigate(
+                                                            `/profile/${p._id}`,
+                                                         )
+                                                      }
+                                                      isAuthenticated={
+                                                         isLoggedIn
+                                                      }
+                                                   />
+                                                </Box>
+                                             </Box>
+                                          ))}
+                                       </Box>
 
                                        {totalPages > 1 && (
                                           <Box
                                              sx={{
                                                 display: "flex",
                                                 justifyContent: "center",
+                                                flexWrap: "wrap",
+                                                gap: 1,
                                                 mt: 3,
                                              }}
                                           >
-                                             <Pagination
-                                                count={totalPages}
-                                                page={favPage}
-                                                onChange={(_, page) =>
-                                                   setFavPage(page)
-                                                }
-                                                color="primary"
+                                             {/* First / Prev */}
+                                             <Button
+                                                variant="outlined"
                                                 size="large"
-                                                showFirstButton
-                                                showLastButton
-                                             />
+                                                disabled={favPage === 1}
+                                                onClick={() => setFavPage(1)}
+                                             >
+                                                First
+                                             </Button>
+                                             <Button
+                                                variant="outlined"
+                                                size="large"
+                                                disabled={favPage === 1}
+                                                onClick={() =>
+                                                   setFavPage(
+                                                      Math.max(1, favPage - 1),
+                                                   )
+                                                }
+                                             >
+                                                Prev
+                                             </Button>
+
+                                             {(() => {
+                                                const PAGE_WINDOW = 4;
+                                                const start = Math.max(
+                                                   1,
+                                                   Math.min(
+                                                      favPage,
+                                                      totalPages -
+                                                         PAGE_WINDOW +
+                                                         1,
+                                                   ),
+                                                );
+                                                const end = Math.min(
+                                                   totalPages,
+                                                   start + PAGE_WINDOW - 1,
+                                                );
+                                                const pages = Array.from(
+                                                   { length: end - start + 1 },
+                                                   (_, i) => start + i,
+                                                );
+
+                                                return (
+                                                   <>
+                                                      {start > 1 && (
+                                                         <Button
+                                                            variant="text"
+                                                            size="large"
+                                                            disabled
+                                                         >
+                                                            …
+                                                         </Button>
+                                                      )}
+
+                                                      {pages.map((p) => (
+                                                         <Button
+                                                            key={p}
+                                                            variant={
+                                                               p === favPage
+                                                                  ? "contained"
+                                                                  : "outlined"
+                                                            }
+                                                            size="large"
+                                                            onClick={() =>
+                                                               setFavPage(p)
+                                                            }
+                                                         >
+                                                            {p}
+                                                         </Button>
+                                                      ))}
+
+                                                      {end < totalPages && (
+                                                         <Button
+                                                            variant="text"
+                                                            size="large"
+                                                            disabled
+                                                         >
+                                                            …
+                                                         </Button>
+                                                      )}
+                                                   </>
+                                                );
+                                             })()}
+
+                                             {/* Next / Last */}
+                                             <Button
+                                                variant="outlined"
+                                                size="large"
+                                                disabled={
+                                                   favPage === totalPages
+                                                }
+                                                onClick={() =>
+                                                   setFavPage(
+                                                      Math.min(
+                                                         totalPages,
+                                                         favPage + 1,
+                                                      ),
+                                                   )
+                                                }
+                                             >
+                                                Next
+                                             </Button>
+                                             <Button
+                                                variant="outlined"
+                                                size="large"
+                                                disabled={
+                                                   favPage === totalPages
+                                                }
+                                                onClick={() =>
+                                                   setFavPage(totalPages)
+                                                }
+                                             >
+                                                Last
+                                             </Button>
                                           </Box>
                                        )}
                                     </>
@@ -656,8 +877,8 @@ const StudentDashboard: React.FC = () => {
                   )}
                </Box>
             </Box>
-         </Box>
-      </Box>
+         </Container>
+      </>
    );
 };
 

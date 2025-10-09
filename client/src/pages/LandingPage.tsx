@@ -7,6 +7,10 @@ import { fetchProjects } from "../api/projectApi";
 import type { Project } from "../types/project";
 import CapstoneWinner from "../components/Landing/CapstoneWinner";
 import SubmitSection from "../components/Landing/Submit";
+import ParticlesBackground from "../components/animations/ParticlesBackground";
+import GradientBackground from "../components/animations/GradientBackground";
+import FloatingElements from "../components/animations/FloatingElements";
+import { motion } from "framer-motion";
 
 const LandingPage: React.FC = () => {
    const navigate = useNavigate();
@@ -50,41 +54,56 @@ const LandingPage: React.FC = () => {
    };
 
    return (
-      <Box
-         sx={{
-            display: "flex",
-            flexDirection: "column",
-            gap: { xs: 3, md: 5 },
-            bgcolor: "#fff", // ensure white background fills the page area
-            minHeight: "100vh", // cover viewport height so no base blue shows
-            mx: -3, // stretch to full width (RootLayout adds px:3)
-            px: 3, // restore inner padding visually
-            mb: -6, // offset RootLayout pb:6 so no base background shows below
-         }}
-      >
-         {/* Hero */}
-         <Hero
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            handleSearchSubmit={handleSearchSubmit}
-            projects={projects}
-            handleHeroCardClick={handleHeroCardClick}
-         />
+      <>
+         {/* Epic Background Layers */}
+         <GradientBackground />
+         <ParticlesBackground />
 
-         {/* Explore by category */}
-         <Category goToProjects={goToProjects} />
+         <Box
+            sx={{
+               display: "flex",
+               flexDirection: "column",
+               gap: { xs: 3, md: 5 },
+               minHeight: "100vh",
+               mx: -3,
+               px: 3,
+               mb: -6,
+               position: "relative",
+            }}
+         >
+            {/* Floating geometric shapes */}
+            <FloatingElements />
 
-         {/* Capstone Winners */}
-         <CapstoneWinner
-            winners={winners}
-            winnersIndex={winnersIndex}
-            setWinnersIndex={setWinnersIndex}
-            handleWinnerCardClick={handleWinnerCardClick}
-         />
+            <motion.div
+               initial={{ opacity: 0 }}
+               animate={{ opacity: 1 }}
+               transition={{ duration: 1 }}
+               style={{ position: "relative", zIndex: 1 }}
+            >
+               <Hero
+                  searchQuery={searchQuery}
+                  setSearchQuery={setSearchQuery}
+                  handleSearchSubmit={handleSearchSubmit}
+                  projects={projects}
+                  handleHeroCardClick={handleHeroCardClick}
+               />
 
-         {/* Everything you need */}
-         <SubmitSection />
-      </Box>
+               {/* Explore by category */}
+               <Category goToProjects={goToProjects} />
+
+               {/* Capstone Winners */}
+               <CapstoneWinner
+                  winners={winners}
+                  winnersIndex={winnersIndex}
+                  setWinnersIndex={setWinnersIndex}
+                  handleWinnerCardClick={handleWinnerCardClick}
+               />
+
+               {/* Everything you need */}
+               <SubmitSection />
+            </motion.div>
+         </Box>
+      </>
    );
 };
 

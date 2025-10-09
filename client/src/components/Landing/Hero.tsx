@@ -63,14 +63,86 @@ const Hero: React.FC<HeroProps> = ({
    return (
       <Box
          sx={{
-            bgcolor: "#ecf9ffff",
+            bgcolor: "background.default",
             mx: -3,
-            pt: { xs: 5, md: 7 },
-            pb: { xs: 8, md: 9 },
+            pt: { xs: 8, md: 12 },
+            pb: { xs: 10, md: 14 },
             display: "flex",
             alignItems: "flex-start",
+            position: "relative",
+            overflow: "hidden",
+            transition: "background-color 0.3s ease",
+            "&::before": {
+               content: '""',
+               position: "absolute",
+               top: -200,
+               right: -200,
+               width: 700,
+               height: 700,
+               background: (theme) =>
+                  theme.palette.mode === "dark"
+                     ? "radial-gradient(circle, rgba(0,153,255,0.15) 0%, rgba(0,153,255,0.06) 50%, transparent 70%)"
+                     : "radial-gradient(circle, rgba(0,102,204,0.12) 0%, rgba(0,102,204,0.04) 50%, transparent 70%)",
+               borderRadius: "50%",
+               pointerEvents: "none",
+               animation: "pulse 8s ease-in-out infinite",
+            },
+            "&::after": {
+               content: '""',
+               position: "absolute",
+               bottom: -150,
+               left: -150,
+               width: 600,
+               height: 600,
+               background: (theme) =>
+                  theme.palette.mode === "dark"
+                     ? "radial-gradient(circle, rgba(0,153,255,0.1) 0%, transparent 70%)"
+                     : "radial-gradient(circle, rgba(0,102,204,0.08) 0%, transparent 70%)",
+               borderRadius: "50%",
+               pointerEvents: "none",
+               animation: "pulse 8s ease-in-out infinite reverse",
+            },
+            "@keyframes pulse": {
+               "0%, 100%": { transform: "scale(1)", opacity: 1 },
+               "50%": { transform: "scale(1.1)", opacity: 0.8 },
+            },
+            // 添加更多装饰圆点
+            "& .decorative-dots": {
+               position: "absolute",
+               width: "100%",
+               height: "100%",
+               top: 0,
+               left: 0,
+               pointerEvents: "none",
+               opacity: 0.3,
+            },
          }}
       >
+         {/* 装饰性圆点 */}
+         <Box className="decorative-dots">
+            {[...Array(20)].map((_, i) => (
+               <Box
+                  key={i}
+                  sx={{
+                     position: "absolute",
+                     width: Math.random() * 6 + 2,
+                     height: Math.random() * 6 + 2,
+                     borderRadius: "50%",
+                     bgcolor: "primary.main",
+                     opacity: Math.random() * 0.3 + 0.1,
+                     top: `${Math.random() * 100}%`,
+                     left: `${Math.random() * 100}%`,
+                     animation: `float ${Math.random() * 10 + 10}s ease-in-out infinite`,
+                     animationDelay: `${Math.random() * 5}s`,
+                     "@keyframes float": {
+                        "0%, 100%": { transform: "translateY(0px)" },
+                        "50%": { transform: "translateY(-20px)" },
+                     },
+                  }}
+               />
+            ))}
+         </Box>
+
          <Container
             maxWidth={false}
             sx={{
@@ -78,6 +150,8 @@ const Hero: React.FC<HeroProps> = ({
                // Constrain and center the content for wide screens
                maxWidth: 1850,
                mx: "auto",
+               position: "relative",
+               zIndex: 1,
                pl: { xs: 2, sm: 3, md: 6, lg: 8, xl: 10 },
                pr: { xs: 3, sm: 4, md: 6, lg: 8, xl: 10 },
             }}
@@ -102,31 +176,52 @@ const Hero: React.FC<HeroProps> = ({
                      variant="h3"
                      component="h1"
                      sx={{
-                        fontWeight: 800,
-                        letterSpacing: "-0.3px",
-                        mb: 4,
-                        fontSize: { xs: 20, sm: 24, md: 34, lg: 40, xl: 46 },
-                        lineHeight: 1.15,
-                        color: "primary.main",
-                        "@media (min-width: 1920px)": { fontSize: 48 },
+                        fontWeight: 700,
+                        letterSpacing: "-0.02em",
+                        mb: 2.5,
+                        fontSize: { xs: 40, sm: 48, md: 56, lg: 64, xl: 72 },
+                        lineHeight: 1.08,
+                        color: "text.primary",
+                        "@media (min-width: 1920px)": { fontSize: 80 },
+                        // 文字渐变效果
+                        background: (theme) =>
+                           theme.palette.mode === "dark"
+                              ? "linear-gradient(135deg, #e8eaf0 0%, #0099ff 100%)"
+                              : "linear-gradient(135deg, #1d1d1f 0%, #06c 100%)",
+                        WebkitBackgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                        backgroundClip: "text",
+                        position: "relative",
+                        "&::after": {
+                           content: '"Showcase."',
+                           position: "absolute",
+                           left: 0,
+                           top: 0,
+                           zIndex: -1,
+                           color: "text.primary",
+                           opacity: 0.03,
+                           transform: "translate(4px, 4px)",
+                        },
                      }}
                   >
-                     Showcase Capstone Projects
+                     Showcase.
                   </Typography>
                   <Typography
                      variant="h6"
-                     color="text.primary"
                      sx={{
-                        mb: 5.5,
-                        maxWidth: 640,
+                        mb: 6,
+                        maxWidth: 580,
                         fontWeight: 400,
-                        fontSize: { xs: 13, sm: 15, md: 18, lg: 19, xl: 20 },
-                        "@media (min-width: 1920px)": { fontSize: 21 },
-                        lineHeight: 1.8,
+                        fontSize: { xs: 19, sm: 21, md: 24, lg: 28 },
+                        "@media (min-width: 1920px)": { fontSize: 32 },
+                        lineHeight: 1.4,
+                        color: "text.secondary",
+                        letterSpacing: "-0.01em",
                      }}
                   >
-                     Explore real-world projects by UoA Computer Science
-                     students. Search, filter, and shortlist the teams you love.
+                     Discover exceptional student projects.
+                     <br />
+                     Innovation starts here.
                   </Typography>
                   <Box
                      component="form"
@@ -134,7 +229,7 @@ const Hero: React.FC<HeroProps> = ({
                      sx={{
                         width: "100%",
                         maxWidth: { xs: 760, xl: 900 },
-                        mt: 6,
+                        mt: 4,
                         "@media (min-width: 1920px)": { maxWidth: 960 },
                      }}
                   >
@@ -143,25 +238,49 @@ const Hero: React.FC<HeroProps> = ({
                         fullWidth
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Search projects, tech, or teams"
+                        placeholder="Search for projects..."
                         InputProps={{
                            startAdornment: (
                               <InputAdornment position="start">
-                                 <SearchIcon color="action" />
+                                 <SearchIcon
+                                    sx={{
+                                       color: "text.secondary",
+                                       fontSize: 20,
+                                    }}
+                                 />
                               </InputAdornment>
                            ),
                            endAdornment: (
                               <InputAdornment position="end">
                                  <Button
                                     type="submit"
-                                    variant="contained"
-                                    color="primary"
+                                    variant="text"
                                     sx={{
                                        ml: 1,
                                        textTransform: "none",
                                        borderRadius: 2,
-                                       px: 2,
+                                       px: 2.5,
                                        py: 0.75,
+                                       color: "primary.main",
+                                       fontWeight: 500,
+                                       fontSize: 15,
+                                       background: (theme) =>
+                                          theme.palette.mode === "dark"
+                                             ? "linear-gradient(135deg, rgba(0,153,255,0.08) 0%, rgba(0,153,255,0.04) 100%)"
+                                             : "linear-gradient(135deg, rgba(0,102,204,0.05) 0%, rgba(0,102,204,0.02) 100%)",
+                                       transition:
+                                          "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                                       "&:hover": {
+                                          bgcolor: (theme) =>
+                                             theme.palette.mode === "dark"
+                                                ? "rgba(0,153,255,0.12)"
+                                                : "rgba(0,113,227,0.08)",
+                                          transform: "translateX(2px)",
+                                          boxShadow: (theme) =>
+                                             theme.palette.mode === "dark"
+                                                ? "0 2px 8px rgba(0,153,255,0.25)"
+                                                : "0 2px 8px rgba(0,102,204,0.15)",
+                                       },
                                     }}
                                  >
                                     Search
@@ -171,15 +290,49 @@ const Hero: React.FC<HeroProps> = ({
                         }}
                         sx={{
                            "& .MuiOutlinedInput-root": {
-                              borderRadius: 2,
-                              bgcolor: "#E3F2FD",
-                              height: 48,
+                              borderRadius: 1.5,
+                              bgcolor: (theme) =>
+                                 theme.palette.mode === "dark"
+                                    ? "#1a1f2e"
+                                    : "#ffffff",
+                              height: 52,
+                              border: (theme) =>
+                                 theme.palette.mode === "dark"
+                                    ? "1px solid #2d3548"
+                                    : "1px solid #d2d2d7",
+                              transition:
+                                 "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                              boxShadow: (theme) =>
+                                 theme.palette.mode === "dark"
+                                    ? "0 1px 3px rgba(0,0,0,0.3)"
+                                    : "0 1px 3px rgba(0,0,0,0.04)",
+                              "&:hover": {
+                                 borderColor: "text.secondary",
+                                 boxShadow: (theme) =>
+                                    theme.palette.mode === "dark"
+                                       ? "0 2px 8px rgba(0,0,0,0.4)"
+                                       : "0 2px 8px rgba(0,0,0,0.08)",
+                              },
+                              "&.Mui-focused": {
+                                 borderColor: "primary.main",
+                                 boxShadow: (theme) =>
+                                    theme.palette.mode === "dark"
+                                       ? "0 0 0 4px rgba(0,153,255,0.15), 0 4px 12px rgba(0,153,255,0.25)"
+                                       : "0 0 0 4px rgba(0,113,227,0.1), 0 4px 12px rgba(0,102,204,0.15)",
+                                 transform: "translateY(-1px)",
+                              },
                            },
                            "& .MuiOutlinedInput-notchedOutline": {
-                              borderColor: "divider",
+                              border: "none",
                            },
                            "& .MuiInputBase-input": {
-                              fontSize: { xs: 12.5, sm: 13, md: 14 },
+                              fontSize: { xs: 15, sm: 16, md: 17 },
+                              fontWeight: 400,
+                              color: "text.primary",
+                              "&::placeholder": {
+                                 color: "text.secondary",
+                                 opacity: 1,
+                              },
                            },
                         }}
                      />

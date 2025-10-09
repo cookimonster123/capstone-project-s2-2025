@@ -3,25 +3,26 @@
    line-height: 1.5;
    font-weight: 400;
 
-   /* Force light UI and soft blue background */
+   /* Clean white background with blue accents */
    color-scheme: light;
    color: #213547;
-   background-color: #eaf2ff; /* light blue */
+   background: #ffffff;
 
    font-synthesis: none;
    text-rendering: optimizeLegibility;
    -webkit-font-smoothing: antialiased;
    -moz-osx-font-smoothing: grayscale;
-   /* Avoid reserving permanent scrollbar gutter to prevent right-side color strips */
-   /* scrollbar-gutter: stable; */
+}
+
+/* Show default cursor alongside custom cursor effect */
+* {
+   cursor: auto;
 }
 
 body {
    margin: 0;
-   /* Use normal document flow so content starts below navbar */
    min-width: 320px;
-   /* ensure body inherits the soft blue as well */
-   background-color: #eaf2ff;
+   background: #ffffff;
    color: #213547;
 }
 
@@ -30,7 +31,7 @@ html,
 body,
 #root {
    max-width: 100%;
-   overflow-x: clip; /* avoids showing blue gutter on the right */
+   overflow-x: clip;
 }
 
 h1 {

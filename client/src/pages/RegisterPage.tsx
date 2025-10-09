@@ -1,30 +1,34 @@
 import RegisterForm from "../components/auth/RegisterForm";
 import React from "react";
+import { Box } from "@mui/material";
+import AdaptiveAuthBackground from "../components/animations/AdaptiveAuthBackground";
 
 const RegisterPage: React.FC = () => {
    return (
-      <div
-         style={{
+      <Box
+         sx={{
             minHeight: "100dvh",
             width: "auto",
-            backgroundColor: "#ffffff",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            paddingTop: 24,
-            paddingBottom: 24,
-            paddingLeft: 24,
-            paddingRight: 24,
-            marginLeft: -24,
-            marginRight: -24,
-            marginBottom: -48,
+            pt: 3,
+            pb: 3,
+            px: 3,
+            mx: -3,
+            mb: -6,
             boxSizing: "border-box",
-            overflowX: "clip",
-            overflowY: "auto",
+            overflow: "hidden",
+            position: "relative",
          }}
       >
-         <RegisterForm />
-      </div>
+         {/* Adaptive Background: Nebula in Dark Mode, Abstract Art in Light Mode */}
+         <AdaptiveAuthBackground />
+
+         <Box sx={{ position: "relative", zIndex: 10 }}>
+            <RegisterForm />
+         </Box>
+      </Box>
    );
 };
 

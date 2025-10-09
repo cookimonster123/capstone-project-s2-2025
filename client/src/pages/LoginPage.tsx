@@ -1,31 +1,34 @@
 import LoginForm from "../components/auth/LoginForm";
 import React from "react";
+import { Box } from "@mui/material";
+import AdaptiveAuthBackground from "../components/animations/AdaptiveAuthBackground";
 
 const LoginPage: React.FC = () => {
    return (
-      <div
-         style={{
+      <Box
+         sx={{
             minHeight: "100dvh",
-            width: "auto", // avoid 100vw which causes horizontal overflow inside RootLayout padding
-            backgroundColor: "#ffffff",
+            width: "auto",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            paddingTop: 24,
-            paddingBottom: 24,
-            paddingLeft: 24,
-            paddingRight: 24,
-            // Extend white background to the edges of RootLayout (px:3) and bottom (pb:6)
-            marginLeft: -24,
-            marginRight: -24,
-            marginBottom: -48,
+            pt: 3,
+            pb: 3,
+            px: 3,
+            mx: -3,
+            mb: -6,
             boxSizing: "border-box",
-            overflowX: "clip",
-            overflowY: "auto",
+            overflow: "hidden",
+            position: "relative",
          }}
       >
-         <LoginForm />
-      </div>
+         {/* Adaptive Background: Nebula in Dark Mode, Bubbles in Light Mode */}
+         <AdaptiveAuthBackground />
+
+         <Box sx={{ position: "relative", zIndex: 10 }}>
+            <LoginForm />
+         </Box>
+      </Box>
    );
 };
 

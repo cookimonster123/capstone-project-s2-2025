@@ -10,6 +10,7 @@ import {
    Link,
    TextField,
    Typography,
+   useTheme,
 } from "@mui/material";
 import { Visibility, VisibilityOff, ArrowBack } from "@mui/icons-material";
 import { registerUser } from "../../api/authApi";
@@ -17,6 +18,7 @@ import type { FormFieldErrors, RegisterFormData } from "@types";
 
 // Registration form (MUI)
 const RegisterForm: React.FC = () => {
+   const theme = useTheme();
    const [formData, setFormData] = useState<RegisterFormData>({
       name: "",
       email: "",
@@ -181,6 +183,21 @@ const RegisterForm: React.FC = () => {
                   error={!!errors.name}
                   helperText={errors.name}
                   required
+                  InputProps={{
+                     style: {
+                        backgroundColor:
+                           theme.palette.mode === "dark"
+                              ? "#1a1f2e"
+                              : "rgba(255, 255, 255, 0.9)",
+                     },
+                     sx: {
+                        bgcolor: (theme) =>
+                           theme.palette.mode === "dark"
+                              ? "#1a1f2e !important"
+                              : "rgba(255, 255, 255, 0.9) !important",
+                        backdropFilter: "blur(10px)",
+                     },
+                  }}
                   InputLabelProps={{
                      sx: {
                         fontSize: {
@@ -190,7 +207,10 @@ const RegisterForm: React.FC = () => {
                            lg: "1.15rem",
                         },
                         "&.MuiInputLabel-shrink": {
-                           backgroundColor: "#eaf2ff",
+                           backgroundColor: (theme) =>
+                              theme.palette.mode === "dark"
+                                 ? "rgba(26, 31, 46, 0.95)"
+                                 : "rgba(255, 255, 255, 0.95)",
                            px: 0.5,
                         },
                         "&:not(.MuiInputLabel-shrink)": {
@@ -200,6 +220,28 @@ const RegisterForm: React.FC = () => {
                      },
                   }}
                   sx={{
+                     "& .MuiOutlinedInput-root": {
+                        bgcolor: (theme) =>
+                           theme.palette.mode === "dark"
+                              ? "#1a1f2e !important"
+                              : "rgba(255, 255, 255, 0.9) !important",
+                        backdropFilter: "blur(10px)",
+                        "& fieldset": {
+                           borderColor: (theme) =>
+                              theme.palette.mode === "dark"
+                                 ? "#2d3548"
+                                 : "rgba(0, 0, 0, 0.12)",
+                        },
+                        "&:hover fieldset": {
+                           borderColor: (theme) =>
+                              theme.palette.mode === "dark"
+                                 ? "#3d4558"
+                                 : "rgba(0, 0, 0, 0.23)",
+                        },
+                        "&.Mui-focused fieldset": {
+                           borderColor: "#1976d2",
+                        },
+                     },
                      "& .MuiInputBase-input": {
                         fontSize: {
                            xs: "1rem",
@@ -231,6 +273,21 @@ const RegisterForm: React.FC = () => {
                   helperText={errors.email}
                   autoComplete="email"
                   required
+                  InputProps={{
+                     style: {
+                        backgroundColor:
+                           theme.palette.mode === "dark"
+                              ? "#1a1f2e"
+                              : "rgba(255, 255, 255, 0.9)",
+                     },
+                     sx: {
+                        bgcolor: (theme) =>
+                           theme.palette.mode === "dark"
+                              ? "#1a1f2e !important"
+                              : "rgba(255, 255, 255, 0.9) !important",
+                        backdropFilter: "blur(10px)",
+                     },
+                  }}
                   InputLabelProps={{
                      sx: {
                         fontSize: {
@@ -240,7 +297,10 @@ const RegisterForm: React.FC = () => {
                            lg: "1.15rem",
                         },
                         "&.MuiInputLabel-shrink": {
-                           backgroundColor: "#eaf2ff",
+                           backgroundColor: (theme) =>
+                              theme.palette.mode === "dark"
+                                 ? "rgba(26, 31, 46, 0.95)"
+                                 : "rgba(255, 255, 255, 0.95)",
                            px: 0.5,
                         },
                         "&:not(.MuiInputLabel-shrink)": {
@@ -250,6 +310,28 @@ const RegisterForm: React.FC = () => {
                      },
                   }}
                   sx={{
+                     "& .MuiOutlinedInput-root": {
+                        bgcolor: (theme) =>
+                           theme.palette.mode === "dark"
+                              ? "#1a1f2e !important"
+                              : "rgba(255, 255, 255, 0.9) !important",
+                        backdropFilter: "blur(10px)",
+                        "& fieldset": {
+                           borderColor: (theme) =>
+                              theme.palette.mode === "dark"
+                                 ? "#2d3548"
+                                 : "rgba(0, 0, 0, 0.12)",
+                        },
+                        "&:hover fieldset": {
+                           borderColor: (theme) =>
+                              theme.palette.mode === "dark"
+                                 ? "#3d4558"
+                                 : "rgba(0, 0, 0, 0.23)",
+                        },
+                        "&.Mui-focused fieldset": {
+                           borderColor: "#1976d2",
+                        },
+                     },
                      "& .MuiInputBase-input": {
                         fontSize: {
                            xs: "1rem",
@@ -292,7 +374,10 @@ const RegisterForm: React.FC = () => {
                            lg: "1.15rem",
                         },
                         "&.MuiInputLabel-shrink": {
-                           backgroundColor: "#eaf2ff",
+                           backgroundColor: (theme) =>
+                              theme.palette.mode === "dark"
+                                 ? "rgba(26, 31, 46, 0.95)"
+                                 : "rgba(255, 255, 255, 0.95)",
                            px: 0.5,
                         },
                         "&:not(.MuiInputLabel-shrink)": {
@@ -302,6 +387,19 @@ const RegisterForm: React.FC = () => {
                      },
                   }}
                   InputProps={{
+                     style: {
+                        backgroundColor:
+                           theme.palette.mode === "dark"
+                              ? "#1a1f2e"
+                              : "rgba(255, 255, 255, 0.9)",
+                     },
+                     sx: {
+                        bgcolor: (theme) =>
+                           theme.palette.mode === "dark"
+                              ? "#1a1f2e !important"
+                              : "rgba(255, 255, 255, 0.9) !important",
+                        backdropFilter: "blur(10px)",
+                     },
                      endAdornment: (
                         <InputAdornment position="end" sx={{ mr: 1 }}>
                            <IconButton
@@ -335,25 +433,47 @@ const RegisterForm: React.FC = () => {
                            </IconButton>
                         </InputAdornment>
                      ),
-                     sx: {
-                        "& .MuiInputBase-input": {
-                           fontSize: {
-                              xs: "1rem",
-                              sm: "1.05rem",
-                              md: "1.15rem",
-                              lg: "1.2rem",
-                           },
-                           py: { xs: 2, sm: 2.25, md: 2.5 },
-                           px: { xs: 2, sm: 2.25, md: 2.5 },
-                           "@media (min-width: 2560px)": {
-                              fontSize: "1.3rem",
-                              py: 2.75,
-                              px: 2.75,
-                           },
+                  }}
+                  sx={{
+                     "& .MuiOutlinedInput-root": {
+                        bgcolor: (theme) =>
+                           theme.palette.mode === "dark"
+                              ? "#1a1f2e"
+                              : "rgba(255, 255, 255, 0.9)",
+                        backdropFilter: "blur(10px)",
+                        "& fieldset": {
+                           borderColor: (theme) =>
+                              theme.palette.mode === "dark"
+                                 ? "#2d3548"
+                                 : "rgba(0, 0, 0, 0.12)",
+                        },
+                        "&:hover fieldset": {
+                           borderColor: (theme) =>
+                              theme.palette.mode === "dark"
+                                 ? "#3d4558"
+                                 : "rgba(0, 0, 0, 0.23)",
+                        },
+                        "&.Mui-focused fieldset": {
+                           borderColor: "#1976d2",
                         },
                      },
+                     "& .MuiInputBase-input": {
+                        fontSize: {
+                           xs: "1rem",
+                           sm: "1.05rem",
+                           md: "1.15rem",
+                           lg: "1.2rem",
+                        },
+                        py: { xs: 2, sm: 2.25, md: 2.5 },
+                        px: { xs: 2, sm: 2.25, md: 2.5 },
+                        "@media (min-width: 2560px)": {
+                           fontSize: "1.3rem",
+                           py: 2.75,
+                           px: 2.75,
+                        },
+                     },
+                     "& .MuiFormHelperText-root": { fontSize: "1rem" },
                   }}
-                  sx={{ "& .MuiFormHelperText-root": { fontSize: "1rem" } }}
                />
 
                <Button

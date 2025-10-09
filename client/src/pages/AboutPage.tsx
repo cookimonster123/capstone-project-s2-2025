@@ -99,57 +99,111 @@ const CONTENT_GAP = 25;
 
 const AboutPage: React.FC = () => {
    return (
-      <Box sx={{ bgcolor: "background.default" }}>
+      <Box
+         sx={{ bgcolor: "#fbfbfd", position: "relative", overflow: "hidden" }}
+      >
+         <Box
+            sx={{
+               position: "absolute",
+               top: 0,
+               left: 0,
+               right: 0,
+               bottom: 0,
+               pointerEvents: "none",
+               zIndex: 0,
+               background: `
+                  radial-gradient(circle at 10% 20%, rgba(0,102,204,0.04) 0%, transparent 50%),
+                  radial-gradient(circle at 90% 80%, rgba(0,102,204,0.04) 0%, transparent 50%)
+               `,
+            }}
+         />
+
          <Box
             sx={{
                position: "relative",
                overflow: "hidden",
                py: { xs: 8, md: 12 },
                mb: 4,
-               background:
-                  "radial-gradient(1200px 600px at 10% -10%, rgba(26,115,232,0.20), transparent 60%)," +
-                  "radial-gradient(1000px 500px at 90% -20%, rgba(255,105,180,0.18), transparent 60%)," +
-                  "linear-gradient(180deg, #ffffff 0%, #f8fbff 100%)",
+               background: `
+                  linear-gradient(135deg, rgba(0,102,204,0.08) 0%, rgba(0,102,204,0.02) 50%, transparent 100%),
+                  linear-gradient(180deg, #fbfbfd 0%, #ffffff 100%)
+               `,
+               "&::before": {
+                  content: '""',
+                  position: "absolute",
+                  inset: 0,
+                  background: `
+                     linear-gradient(90deg, rgba(0,102,204,0.02) 1px, transparent 1px),
+                     linear-gradient(rgba(0,102,204,0.02) 1px, transparent 1px)
+                  `,
+                  backgroundSize: "60px 60px",
+                  opacity: 0.4,
+                  pointerEvents: "none",
+               },
                "&::after": {
                   content: '""',
                   position: "absolute",
-                  inset: "-20% -10%",
+                  top: "50%",
+                  left: "50%",
+                  transform: "translate(-50%, -50%)",
+                  width: "1000px",
+                  height: "1000px",
                   background:
-                     "conic-gradient(from 0deg, rgba(26,115,232,0.12), rgba(255,105,180,0.10), rgba(26,115,232,0.12))",
-                  filter: "blur(60px)",
-                  animation: "spin 22s linear infinite",
+                     "radial-gradient(circle, rgba(0,102,204,0.06) 0%, transparent 70%)",
+                  animation: "pulse 10s ease-in-out infinite",
                   pointerEvents: "none",
                },
-               "@keyframes spin": { to: { transform: "rotate(360deg)" } },
-               "@keyframes floatY": {
-                  "0%, 100%": { transform: "translateY(0px)" },
-                  "50%": { transform: "translateY(-6px)" },
+               "@keyframes pulse": {
+                  "0%, 100%": {
+                     transform: "translate(-50%, -50%) scale(1)",
+                     opacity: 0.6,
+                  },
+                  "50%": {
+                     transform: "translate(-50%, -50%) scale(1.2)",
+                     opacity: 0.3,
+                  },
                },
             }}
          >
-            <Container maxWidth="lg">
+            <Container maxWidth="lg" sx={{ position: "relative", zIndex: 1 }}>
                <Stack spacing={2.5} alignItems="center" textAlign="center">
                   <Typography
                      variant="h2"
                      sx={{
-                        fontWeight: 900,
+                        fontWeight: 700,
                         lineHeight: 1.15,
-                        letterSpacing: "-0.02em",
+                        letterSpacing: "-0.03em",
+                        fontSize: { xs: 32, md: 48, lg: 56 },
                         background:
-                           "linear-gradient(90deg, #0f172a 0%, #111827 30%, #1a73e8 60%, #0ea5e9 100%)",
+                           "linear-gradient(135deg, #1d1d1f 0%, #06c 70%, #0ea5e9 100%)",
                         WebkitBackgroundClip: "text",
                         backgroundClip: "text",
-                        color: "transparent",
-                        textShadow: "0 8px 24px rgba(16, 24, 40, 0.15)",
-                        textAlign: "center",
+                        WebkitTextFillColor: "transparent",
+                        position: "relative",
+                        "&::after": {
+                           content:
+                              '"Spiders Plus — Showcasing excellence at UoA"',
+                           position: "absolute",
+                           left: 0,
+                           top: 0,
+                           zIndex: -1,
+                           color: "#1d1d1f",
+                           opacity: 0.02,
+                           transform: "translate(3px, 3px)",
+                        },
                      }}
                   >
                      Spiders Plus — Showcasing excellence at UoA
                   </Typography>
                   <Typography
                      variant="h6"
-                     color="text.secondary"
                      maxWidth={900}
+                     sx={{
+                        color: "#6e6e73",
+                        fontSize: { xs: 16, md: 18 },
+                        letterSpacing: "-0.01em",
+                        lineHeight: 1.6,
+                     }}
                   >
                      An online portfolio to showcase capstone projects — where
                      students share their work, connect with others, and get
@@ -159,25 +213,32 @@ const AboutPage: React.FC = () => {
             </Container>
          </Box>
 
-         <Container maxWidth="lg" sx={{ pb: { xs: 6, md: 10 } }}>
+         <Container
+            maxWidth="lg"
+            sx={{ pb: { xs: 6, md: 10 }, position: "relative", zIndex: 1 }}
+         >
             {/* ===== Our Team (centered content, equal spacing, left/right symmetric) ===== */}
             <Typography
                variant="h5"
                sx={{
-                  fontWeight: 800,
-                  mb: 2,
+                  fontWeight: 600,
+                  mb: 3,
+                  fontSize: { xs: 24, md: 32 },
+                  color: "#1d1d1f",
+                  letterSpacing: "-0.02em",
                   position: "relative",
                   display: "inline-block",
                   "&::after": {
                      content: '""',
                      position: "absolute",
                      left: 0,
-                     bottom: -6,
+                     bottom: -8,
                      width: "100%",
-                     height: 6,
+                     height: 4,
                      borderRadius: 999,
                      background:
-                        "linear-gradient(90deg, rgba(26,115,232,.25), rgba(14,165,233,.25))",
+                        "linear-gradient(90deg, #06c 0%, #0ea5e9 100%)",
+                     opacity: 0.6,
                   },
                }}
             >

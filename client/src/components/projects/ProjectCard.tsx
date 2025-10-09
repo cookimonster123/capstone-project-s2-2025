@@ -1,3 +1,8 @@
+/**
+ * ProjectCard Component
+ * Displays project information in a card format with dark mode support
+ * Updated: Fixed dark mode background colors
+ */
 import * as React from "react";
 import {
    Card,
@@ -7,6 +12,7 @@ import {
    Stack,
    IconButton,
    Tooltip,
+   useTheme,
 } from "@mui/material";
 import { ThumbUpOffAlt, ThumbUp } from "@mui/icons-material";
 import WebIcon from "@mui/icons-material/Web";
@@ -73,11 +79,36 @@ export default function ProjectCard({
    dense = false,
    hoverLift = false,
 }: Props) {
+   const theme = useTheme();
+   const isDark = theme.palette.mode === "dark";
+
    const [user, setUser] = React.useState<UserSummary | null>(null);
    const [liked, setLiked] = React.useState<boolean>(false);
    const [likes, setLikes] = React.useState<number>(
       resolveInitialLikes(project),
    );
+
+   const [rotateX, setRotateX] = React.useState(0);
+   const [rotateY, setRotateY] = React.useState(0);
+   const cardRef = React.useRef<HTMLDivElement>(null);
+
+   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+      if (!hoverLift || !cardRef.current) return;
+      const rect = cardRef.current.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+      const rotateXValue = ((y - centerY) / centerY) * -8;
+      const rotateYValue = ((x - centerX) / centerX) * 8;
+      setRotateX(rotateXValue);
+      setRotateY(rotateYValue);
+   };
+
+   const handleMouseLeave = () => {
+      setRotateX(0);
+      setRotateY(0);
+   };
    const [busy, setBusy] = React.useState(false);
 
    // Fetch current user on mount
@@ -187,36 +218,98 @@ export default function ProjectCard({
 
    return (
       <Card
+         ref={cardRef}
+         onMouseMove={handleMouseMove}
+         onMouseLeave={handleMouseLeave}
          onClick={() => onClick(project)}
          sx={{
             width,
             height,
-            borderRadius: 2,
+            borderRadius: 2.5,
             overflow: "hidden",
             display: "flex",
             flexDirection: "column",
             cursor: "pointer",
+            bgcolor: (theme) =>
+               theme.palette.mode === "dark" ? "#0f1419" : "#ffffff",
+            background: (theme) =>
+               theme.palette.mode === "dark"
+                  ? "#0f1419 !important"
+                  : "#ffffff !important",
+            border: (theme) =>
+               theme.palette.mode === "dark"
+                  ? "1px solid #1a1f2e"
+                  : "1px solid #e5e5e7",
+            position: "relative",
+            transformStyle: "preserve-3d",
+            perspective: "1000px",
             transition: hoverLift
-               ? "transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease"
+               ? "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)"
                : undefined,
-            boxShadow: hoverLift ? 1 : undefined,
+            transform: hoverLift
+               ? `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`
+               : undefined,
+            boxShadow: hoverLift
+               ? isDark
+                  ? "0 2px 8px rgba(0,0,0,0.3)"
+                  : "0 2px 8px rgba(0,0,0,0.04)"
+               : undefined,
+            "&::before": hoverLift
+               ? {
+                    content: '""',
+                    position: "absolute",
+                    top: 0,
+                    left: "-100%",
+                    width: "100%",
+                    height: "100%",
+                    background: isDark
+                       ? "linear-gradient(90deg, transparent, rgba(0, 204, 255, 0.15), transparent)"
+                       : "linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent)",
+                    transition: "left 0.6s ease",
+                    zIndex: 2,
+                    pointerEvents: "none",
+                 }
+               : undefined,
+            "&::after": hoverLift
+               ? {
+                    content: '""',
+                    position: "absolute",
+                    inset: "-2px",
+                    background: isDark
+                       ? "linear-gradient(45deg, #0099ff, #00ccff, #33ddff, #0099ff)"
+                       : "linear-gradient(45deg, #06c, #0ea5e9, #38bdf8, #06c)",
+                    backgroundSize: "300% 300%",
+                    borderRadius: "inherit",
+                    opacity: 0,
+                    zIndex: -1,
+                    transition: "opacity 0.4s",
+                    animation: "gradientRotate 6s linear infinite",
+                    "@keyframes gradientRotate": {
+                       "0%": { backgroundPosition: "0% 50%" },
+                       "50%": { backgroundPosition: "100% 50%" },
+                       "100%": { backgroundPosition: "0% 50%" },
+                    },
+                 }
+               : undefined,
             "&:hover": hoverLift
                ? {
-                    transform: "translateY(-6px)",
-                    boxShadow: 6,
+                    transform: `perspective(1000px) translateY(-12px) translateZ(20px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.03)`,
+                    boxShadow: isDark
+                       ? "0 20px 40px rgba(0, 153, 255, 0.25), 0 8px 16px rgba(0, 0, 0, 0.4)"
+                       : "0 20px 40px rgba(0, 102, 204, 0.15), 0 8px 16px rgba(0, 0, 0, 0.1)",
+                    borderColor: "transparent",
+                    "&::before": {
+                       left: "100%",
+                    },
+                    "&::after": {
+                       opacity: 1,
+                    },
                  }
                : undefined,
             "&:active": hoverLift
                ? {
-                    transform: "translateY(-2px)",
-                    boxShadow: 4,
-                 }
-               : undefined,
-            "&:focus-visible": hoverLift
-               ? {
-                    outline: "2px solid",
-                    outlineColor: "primary.main",
-                    outlineOffset: 2,
+                    transform: `perspective(1000px) translateY(-8px) translateZ(10px) scale(1.01)`,
+                    boxShadow: "0 12px 24px rgba(0,102,204,0.12)",
                  }
                : undefined,
          }}
@@ -226,8 +319,31 @@ export default function ProjectCard({
             sx={{
                position: "relative",
                height: dense ? 180 : 210,
-               bgcolor: !firstImageUrl || !imageOk ? "grey.200" : "transparent",
+               bgcolor: (theme) => {
+                  if (!firstImageUrl || !imageOk) {
+                     return theme.palette.mode === "dark"
+                        ? "#1a1f2e"
+                        : "#f5f5f7";
+                  }
+                  return "transparent";
+               },
                overflow: "hidden",
+               // 添加渐变遮罩
+               "&::after":
+                  firstImageUrl && imageOk
+                     ? {
+                          content: '""',
+                          position: "absolute",
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          height: "40%",
+                          background:
+                             "linear-gradient(to top, rgba(0,0,0,0.15), transparent)",
+                          pointerEvents: "none",
+                          zIndex: 1,
+                       }
+                     : undefined,
             }}
          >
             {firstImageUrl && imageOk && (
@@ -239,8 +355,19 @@ export default function ProjectCard({
                      width: "100%",
                      height: "100%",
                      objectFit: "cover",
+                     transition: "transform 0.3s ease",
                   }}
                   onError={() => setImageOk(false)}
+                  onMouseEnter={(e) => {
+                     if (hoverLift) {
+                        e.currentTarget.style.transform = "scale(1.05)";
+                     }
+                  }}
+                  onMouseLeave={(e) => {
+                     if (hoverLift) {
+                        e.currentTarget.style.transform = "scale(1)";
+                     }
+                  }}
                />
             )}
          </Box>
@@ -254,6 +381,10 @@ export default function ProjectCard({
                p: dense ? 1.5 : 2,
                pb: dense ? 0.25 : 0.5,
                "&:last-child": { pb: dense ? 0.25 : 0.5 },
+               position: "relative",
+               zIndex: 2,
+               bgcolor: (theme) =>
+                  theme.palette.mode === "dark" ? "#0f1419" : "#ffffff",
             }}
          >
             {/* Title (left) + Award block (right in the red area) */}
@@ -269,15 +400,18 @@ export default function ProjectCard({
                   sx={{
                      flex: "1 1 auto",
                      maxWidth: hasAward ? "calc(100% - 128px)" : "100%",
-                     fontWeight: 700,
+                     fontWeight: 600,
                      pr: 1,
                      display: "-webkit-box",
                      WebkitLineClamp: 2,
                      WebkitBoxOrient: "vertical",
                      overflow: "hidden",
-                     lineHeight: 1.2,
+                     lineHeight: 1.3,
                      minHeight: dense ? 34 : 40,
-                     fontSize: dense ? 16 : undefined,
+                     fontSize: dense ? 16 : 18,
+                     color: (theme) =>
+                        theme.palette.mode === "dark" ? "#e8eaed" : "#1d1d1f",
+                     letterSpacing: "-0.01em",
                   }}
                >
                   {resolveTitle(project)}
@@ -327,8 +461,11 @@ export default function ProjectCard({
                {when && (
                   <Typography
                      variant="body2"
-                     color="text.secondary"
-                     sx={{ fontSize: dense ? 12.5 : undefined }}
+                     sx={{
+                        fontSize: dense ? 12.5 : 14,
+                        color: "#6e6e73",
+                        fontWeight: 500,
+                     }}
                   >
                      {when}
                   </Typography>
@@ -336,8 +473,11 @@ export default function ProjectCard({
                {teamName && (
                   <Typography
                      variant="body2"
-                     color="text.secondary"
-                     sx={{ fontSize: dense ? 12.5 : undefined }}
+                     sx={{
+                        fontSize: dense ? 12.5 : 14,
+                        color: "#6e6e73",
+                        fontWeight: 500,
+                     }}
                   >
                      {teamName}
                   </Typography>
@@ -349,18 +489,25 @@ export default function ProjectCard({
                direction="row"
                alignItems="center"
                justifyContent="space-between"
-               sx={{ mt: "auto", pb: 0.25, mb: 0 }}
+               sx={{
+                  mt: "auto",
+                  pb: 0.25,
+                  mb: 0,
+                  pt: 1,
+                  borderTop: "1px solid #f5f5f7",
+               }}
             >
                <Stack direction="row" alignItems="center" spacing={0.5}>
                   {!!categoryName && (
                      <>
                         <Typography
                            variant="body2"
-                           color="text.secondary"
                            sx={{
                               fontSize: dense
                                  ? { xs: 12, sm: 12.5, md: 13 }
                                  : { xs: 13, md: 14 },
+                              color: "#6e6e73",
+                              fontWeight: 500,
                            }}
                         >
                            {categoryName}
@@ -394,18 +541,34 @@ export default function ProjectCard({
                                  isAuthenticated === false
                                     ? "not-allowed"
                                     : "pointer",
+                              transition:
+                                 "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                              "&:hover": {
+                                 transform: isAuthenticated
+                                    ? "scale(1.1)"
+                                    : "none",
+                                 bgcolor: isAuthenticated
+                                    ? "rgba(0, 102, 204, 0.04)"
+                                    : "transparent",
+                              },
                               "&:hover svg": {
                                  color:
                                     liked && isAuthenticated
-                                       ? "error.dark"
-                                       : undefined,
+                                       ? "#dc2626"
+                                       : isAuthenticated
+                                         ? "#06c"
+                                         : undefined,
                               },
                            }}
                         >
                            {liked && isAuthenticated ? (
-                              <ThumbUp sx={{ color: "error.main" }} />
+                              <ThumbUp
+                                 sx={{ color: "#ef4444", fontSize: 20 }}
+                              />
                            ) : (
-                              <ThumbUpOffAlt />
+                              <ThumbUpOffAlt
+                                 sx={{ fontSize: 20, color: "#6e6e73" }}
+                              />
                            )}
                         </IconButton>
                      </span>
@@ -413,11 +576,9 @@ export default function ProjectCard({
                   <Typography
                      variant="body2"
                      sx={{
-                        color:
-                           liked && isAuthenticated
-                              ? "error.main"
-                              : "text.primary",
-                        fontSize: dense ? 12.5 : undefined,
+                        color: liked && isAuthenticated ? "#ef4444" : "#6e6e73",
+                        fontSize: dense ? 12.5 : 14,
+                        fontWeight: 500,
                      }}
                   >
                      {Number.isFinite(likes) ? likes : 0}
@@ -434,12 +595,12 @@ function renderCategoryIcon(nameRaw: string, isDense: boolean) {
    const iconSx = isDense
       ? {
            ml: 0.5,
-           color: "text.secondary",
+           color: "#6e6e73",
            fontSize: { xs: "1.05em", md: "1.1em" },
         }
       : {
            ml: 0.5,
-           color: "text.secondary",
+           color: "#6e6e73",
            fontSize: { xs: "1.1em", md: "1.15em", lg: "1.2em" },
         };
    if (name.includes("web")) return <WebIcon sx={iconSx} />;

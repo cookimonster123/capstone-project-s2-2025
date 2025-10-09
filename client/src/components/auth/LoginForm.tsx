@@ -1,3 +1,8 @@
+/**
+ * LoginForm Component
+ * Handles user authentication with dark mode support
+ * Fixed: Added InputProps sx for proper background color control
+ */
 import React, { useEffect, useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
 import {
@@ -12,6 +17,7 @@ import {
    Link,
    TextField,
    Typography,
+   useTheme,
 } from "@mui/material";
 import { Visibility, VisibilityOff, ArrowBack } from "@mui/icons-material";
 import type { FormFieldErrors } from "@types";
@@ -20,6 +26,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
 const LoginForm: React.FC = () => {
+   const theme = useTheme();
    const [formData, setFormData] = useState({ email: "", password: "" });
    const [message, setMessage] = useState("");
    const [loading, setLoading] = useState(false);
@@ -255,6 +262,27 @@ const LoginForm: React.FC = () => {
                   helperText={errors.email}
                   autoComplete="email"
                   required
+                  InputProps={{
+                     style: {
+                        backgroundColor:
+                           theme.palette.mode === "dark"
+                              ? "#1a1f2e"
+                              : "rgba(255, 255, 255, 0.9)",
+                     },
+                     sx: {
+                        bgcolor:
+                           theme.palette.mode === "dark"
+                              ? "#1a1f2e !important"
+                              : "rgba(255, 255, 255, 0.9) !important",
+                        backdropFilter: "blur(10px)",
+                        "& .MuiOutlinedInput-input": {
+                           bgcolor:
+                              theme.palette.mode === "dark"
+                                 ? "#1a1f2e !important"
+                                 : "rgba(255, 255, 255, 0.9) !important",
+                        },
+                     },
+                  }}
                   InputLabelProps={{
                      sx: {
                         fontSize: {
@@ -264,7 +292,10 @@ const LoginForm: React.FC = () => {
                            lg: "1.15rem",
                         },
                         "&.MuiInputLabel-shrink": {
-                           backgroundColor: "#eaf2ff",
+                           backgroundColor: (theme) =>
+                              theme.palette.mode === "dark"
+                                 ? "rgba(26, 31, 46, 0.95)"
+                                 : "rgba(255, 255, 255, 0.95)",
                            px: 0.5,
                         },
                         "&:not(.MuiInputLabel-shrink)": {
@@ -275,6 +306,28 @@ const LoginForm: React.FC = () => {
                   }}
                   sx={{
                      width: "100%",
+                     "& .MuiOutlinedInput-root": {
+                        bgcolor:
+                           theme.palette.mode === "dark"
+                              ? "#1a1f2e !important"
+                              : "rgba(255, 255, 255, 0.9) !important",
+                        backdropFilter: "blur(10px)",
+                        "& fieldset": {
+                           borderColor:
+                              theme.palette.mode === "dark"
+                                 ? "#2d3548"
+                                 : "rgba(0, 0, 0, 0.12)",
+                        },
+                        "&:hover fieldset": {
+                           borderColor:
+                              theme.palette.mode === "dark"
+                                 ? "#3d4558"
+                                 : "rgba(0, 0, 0, 0.23)",
+                        },
+                        "&.Mui-focused fieldset": {
+                           borderColor: "#1976d2",
+                        },
+                     },
                      "& .MuiInputBase-input": {
                         fontSize: {
                            xs: "1rem",
@@ -288,6 +341,39 @@ const LoginForm: React.FC = () => {
                            fontSize: "1.3rem",
                            py: 2.75,
                            px: 2.75,
+                        },
+                        "&:-webkit-autofill": {
+                           WebkitBoxShadow:
+                              theme.palette.mode === "dark"
+                                 ? "0 0 0 100px #1a1f2e inset !important"
+                                 : "0 0 0 100px rgba(255, 255, 255, 0.9) inset !important",
+                           WebkitTextFillColor:
+                              theme.palette.mode === "dark"
+                                 ? "#e8eaed !important"
+                                 : "#1d1d1f !important",
+                           caretColor:
+                              theme.palette.mode === "dark"
+                                 ? "#e8eaed"
+                                 : "#1d1d1f",
+                           borderRadius: "4px",
+                        },
+                        "&:-webkit-autofill:hover": {
+                           WebkitBoxShadow:
+                              theme.palette.mode === "dark"
+                                 ? "0 0 0 100px #1a1f2e inset !important"
+                                 : "0 0 0 100px rgba(255, 255, 255, 0.9) inset !important",
+                        },
+                        "&:-webkit-autofill:focus": {
+                           WebkitBoxShadow:
+                              theme.palette.mode === "dark"
+                                 ? "0 0 0 100px #1a1f2e inset !important"
+                                 : "0 0 0 100px rgba(255, 255, 255, 0.9) inset !important",
+                        },
+                        "&:-webkit-autofill:active": {
+                           WebkitBoxShadow:
+                              theme.palette.mode === "dark"
+                                 ? "0 0 0 100px #1a1f2e inset !important"
+                                 : "0 0 0 100px rgba(255, 255, 255, 0.9) inset !important",
                         },
                      },
                      "& .MuiFormHelperText-root": { fontSize: "1rem" },
@@ -314,7 +400,10 @@ const LoginForm: React.FC = () => {
                            lg: "1.15rem",
                         },
                         "&.MuiInputLabel-shrink": {
-                           backgroundColor: "#eaf2ff",
+                           backgroundColor: (theme) =>
+                              theme.palette.mode === "dark"
+                                 ? "rgba(26, 31, 46, 0.95)"
+                                 : "rgba(255, 255, 255, 0.95)",
                            px: 0.5,
                         },
                         "&:not(.MuiInputLabel-shrink)": {
@@ -324,6 +413,25 @@ const LoginForm: React.FC = () => {
                      },
                   }}
                   InputProps={{
+                     style: {
+                        backgroundColor:
+                           theme.palette.mode === "dark"
+                              ? "#1a1f2e"
+                              : "rgba(255, 255, 255, 0.9)",
+                     },
+                     sx: {
+                        bgcolor:
+                           theme.palette.mode === "dark"
+                              ? "#1a1f2e !important"
+                              : "rgba(255, 255, 255, 0.9) !important",
+                        backdropFilter: "blur(10px)",
+                        "& .MuiOutlinedInput-input": {
+                           bgcolor:
+                              theme.palette.mode === "dark"
+                                 ? "#1a1f2e !important"
+                                 : "rgba(255, 255, 255, 0.9) !important",
+                        },
+                     },
                      endAdornment: (
                         <InputAdornment position="end" sx={{ mr: 1 }}>
                            <IconButton
@@ -357,26 +465,79 @@ const LoginForm: React.FC = () => {
                            </IconButton>
                         </InputAdornment>
                      ),
-                     sx: {
-                        "& .MuiInputBase-input": {
-                           fontSize: {
-                              xs: "1rem",
-                              sm: "1.05rem",
-                              md: "1.15rem",
-                              lg: "1.2rem",
-                           },
-                           py: { xs: 2, sm: 2.25, md: 2.5 },
-                           px: { xs: 2, sm: 2.25, md: 2.5 },
-                           "@media (min-width: 2560px)": {
-                              fontSize: "1.3rem",
-                              py: 2.75,
-                              px: 2.75,
-                           },
-                        },
-                     },
                   }}
                   sx={{
                      width: "100%",
+                     "& .MuiOutlinedInput-root": {
+                        bgcolor:
+                           theme.palette.mode === "dark"
+                              ? "#1a1f2e !important"
+                              : "rgba(255, 255, 255, 0.9) !important",
+                        backdropFilter: "blur(10px)",
+                        "& fieldset": {
+                           borderColor:
+                              theme.palette.mode === "dark"
+                                 ? "#2d3548"
+                                 : "rgba(0, 0, 0, 0.12)",
+                        },
+                        "&:hover fieldset": {
+                           borderColor:
+                              theme.palette.mode === "dark"
+                                 ? "#3d4558"
+                                 : "rgba(0, 0, 0, 0.23)",
+                        },
+                        "&.Mui-focused fieldset": {
+                           borderColor: "#1976d2",
+                        },
+                     },
+                     "& .MuiInputBase-input": {
+                        fontSize: {
+                           xs: "1rem",
+                           sm: "1.05rem",
+                           md: "1.15rem",
+                           lg: "1.2rem",
+                        },
+                        py: { xs: 2, sm: 2.25, md: 2.5 },
+                        px: { xs: 2, sm: 2.25, md: 2.5 },
+                        "@media (min-width: 2560px)": {
+                           fontSize: "1.3rem",
+                           py: 2.75,
+                           px: 2.75,
+                        },
+                        "&:-webkit-autofill": {
+                           WebkitBoxShadow:
+                              theme.palette.mode === "dark"
+                                 ? "0 0 0 100px #1a1f2e inset !important"
+                                 : "0 0 0 100px rgba(255, 255, 255, 0.9) inset !important",
+                           WebkitTextFillColor:
+                              theme.palette.mode === "dark"
+                                 ? "#e8eaed !important"
+                                 : "#1d1d1f !important",
+                           caretColor:
+                              theme.palette.mode === "dark"
+                                 ? "#e8eaed"
+                                 : "#1d1d1f",
+                           borderRadius: "4px",
+                        },
+                        "&:-webkit-autofill:hover": {
+                           WebkitBoxShadow:
+                              theme.palette.mode === "dark"
+                                 ? "0 0 0 100px #1a1f2e inset !important"
+                                 : "0 0 0 100px rgba(255, 255, 255, 0.9) inset !important",
+                        },
+                        "&:-webkit-autofill:focus": {
+                           WebkitBoxShadow:
+                              theme.palette.mode === "dark"
+                                 ? "0 0 0 100px #1a1f2e inset !important"
+                                 : "0 0 0 100px rgba(255, 255, 255, 0.9) inset !important",
+                        },
+                        "&:-webkit-autofill:active": {
+                           WebkitBoxShadow:
+                              theme.palette.mode === "dark"
+                                 ? "0 0 0 100px #1a1f2e inset !important"
+                                 : "0 0 0 100px rgba(255, 255, 255, 0.9) inset !important",
+                        },
+                     },
                      "& .MuiFormHelperText-root": { fontSize: "1rem" },
                   }}
                />

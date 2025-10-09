@@ -7,6 +7,7 @@ import {
    IconButton,
    Stack,
    Typography,
+   useTheme,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import CommentSection from "../components/Profile/Comment";
@@ -38,6 +39,7 @@ const ProjectProfileView: React.FC<ProjectProfileProps> = ({
    project,
    onBack,
 }) => {
+   const theme = useTheme();
    const [isLiked, setIsLiked] = useState(false);
    const [likeCount, setLikeCount] = useState<number>(project.likeCounts ?? 0);
    const [liking, setLiking] = useState(false);
@@ -137,7 +139,186 @@ const ProjectProfileView: React.FC<ProjectProfileProps> = ({
    const categoryName = project.category?.name ?? "Uncategorized";
 
    return (
-      <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
+      <Box
+         sx={{
+            minHeight: "100vh",
+            bgcolor: (theme) =>
+               theme.palette.mode === "dark" ? "#0a0e17" : "#fbfbfd",
+            position: "relative",
+            overflow: "hidden",
+            // Animated pulsing gradient background
+            "&::before": {
+               content: '""',
+               position: "fixed",
+               top: 0,
+               left: 0,
+               right: 0,
+               bottom: 0,
+               background: (theme) =>
+                  theme.palette.mode === "dark"
+                     ? `
+                        radial-gradient(circle 900px at 20% 15%, rgba(0, 153, 255, 0.10), transparent),
+                        radial-gradient(circle 700px at 80% 85%, rgba(14, 165, 233, 0.08), transparent),
+                        radial-gradient(circle 500px at 50% 50%, rgba(0, 153, 255, 0.05), transparent)
+                     `
+                     : `
+                        radial-gradient(circle 900px at 20% 15%, rgba(0, 102, 204, 0.12), transparent),
+                        radial-gradient(circle 700px at 80% 85%, rgba(14, 165, 233, 0.1), transparent),
+                        radial-gradient(circle 500px at 50% 50%, rgba(0, 102, 204, 0.05), transparent)
+                     `,
+               animation: "pulse 8s ease-in-out infinite",
+               pointerEvents: "none",
+               zIndex: 0,
+               "@keyframes pulse": {
+                  "0%, 100%": {
+                     opacity: 1,
+                     transform: "scale(1)",
+                  },
+                  "50%": {
+                     opacity: 0.8,
+                     transform: "scale(1.05)",
+                  },
+               },
+            },
+            // Animated grid pattern
+            "&::after": {
+               content: '""',
+               position: "fixed",
+               top: 0,
+               left: 0,
+               right: 0,
+               bottom: 0,
+               backgroundImage: (theme) =>
+                  theme.palette.mode === "dark"
+                     ? `
+                        linear-gradient(rgba(0, 153, 255, 0.04) 2px, transparent 2px),
+                        linear-gradient(90deg, rgba(0, 153, 255, 0.04) 2px, transparent 2px)
+                     `
+                     : `
+                        linear-gradient(rgba(0, 102, 204, 0.03) 2px, transparent 2px),
+                        linear-gradient(90deg, rgba(0, 102, 204, 0.03) 2px, transparent 2px)
+                     `,
+               backgroundSize: "60px 60px",
+               opacity: 0.6,
+               pointerEvents: "none",
+               zIndex: 0,
+               animation: "gridMove 20s linear infinite",
+               "@keyframes gridMove": {
+                  "0%": {
+                     transform: "translate(0, 0)",
+                  },
+                  "100%": {
+                     transform: "translate(60px, 60px)",
+                  },
+               },
+            },
+         }}
+      >
+         {/* Glowing orbs */}
+         {[...Array(5)].map((_, i) => (
+            <Box
+               key={`orb-${i}`}
+               sx={{
+                  position: "fixed",
+                  width: `${100 + Math.random() * 200}px`,
+                  height: `${100 + Math.random() * 200}px`,
+                  borderRadius: "50%",
+                  background: `radial-gradient(circle, rgba(0, 102, 204, ${0.15 + Math.random() * 0.1}), transparent)`,
+                  filter: "blur(40px)",
+                  left: `${Math.random() * 100}%`,
+                  top: `${Math.random() * 100}%`,
+                  pointerEvents: "none",
+                  zIndex: 0,
+                  animation: `orbit ${30 + Math.random() * 40}s ease-in-out infinite`,
+                  animationDelay: `${Math.random() * 10}s`,
+                  "@keyframes orbit": {
+                     "0%, 100%": {
+                        transform: "translate(0, 0) scale(1)",
+                     },
+                     "33%": {
+                        transform: `translate(${-100 + Math.random() * 200}px, ${-100 + Math.random() * 200}px) scale(1.3)`,
+                     },
+                     "66%": {
+                        transform: `translate(${-150 + Math.random() * 300}px, ${-80 + Math.random() * 160}px) scale(0.8)`,
+                     },
+                  },
+               }}
+            />
+         ))}
+
+         {/* Floating particles with rotation */}
+         {[...Array(20)].map((_, i) => (
+            <Box
+               key={`particle-${i}`}
+               sx={{
+                  position: "fixed",
+                  width: `${3 + Math.random() * 6}px`,
+                  height: `${3 + Math.random() * 6}px`,
+                  bgcolor:
+                     i % 3 === 0 ? "#06c" : i % 3 === 1 ? "#0ea5e9" : "#38bdf8",
+                  opacity: 0.2 + Math.random() * 0.3,
+                  borderRadius: "50%",
+                  left: `${Math.random() * 100}%`,
+                  top: `${Math.random() * 100}%`,
+                  pointerEvents: "none",
+                  zIndex: 0,
+                  boxShadow: `0 0 ${10 + Math.random() * 20}px currentColor`,
+                  animation: `float3d ${10 + Math.random() * 20}s ease-in-out infinite`,
+                  animationDelay: `${Math.random() * 5}s`,
+                  "@keyframes float3d": {
+                     "0%, 100%": {
+                        transform: "translate3d(0, 0, 0) rotate(0deg)",
+                     },
+                     "25%": {
+                        transform: `translate3d(${-20 + Math.random() * 40}px, ${-40 - Math.random() * 30}px, 0) rotate(90deg)`,
+                     },
+                     "50%": {
+                        transform: `translate3d(${-30 + Math.random() * 60}px, ${-60 - Math.random() * 40}px, 0) rotate(180deg)`,
+                     },
+                     "75%": {
+                        transform: `translate3d(${-20 + Math.random() * 40}px, ${-30 - Math.random() * 30}px, 0) rotate(270deg)`,
+                     },
+                  },
+               }}
+            />
+         ))}
+
+         {/* Light streaks */}
+         {[...Array(3)].map((_, i) => (
+            <Box
+               key={`streak-${i}`}
+               sx={{
+                  position: "fixed",
+                  width: "2px",
+                  height: `${100 + Math.random() * 200}px`,
+                  background:
+                     "linear-gradient(180deg, transparent, rgba(0, 102, 204, 0.4), transparent)",
+                  left: `${20 + i * 30}%`,
+                  top: "-200px",
+                  pointerEvents: "none",
+                  zIndex: 0,
+                  animation: `streak ${3 + Math.random() * 2}s ease-in infinite`,
+                  animationDelay: `${i * 2 + Math.random() * 3}s`,
+                  "@keyframes streak": {
+                     "0%": {
+                        transform: "translateY(0) scaleY(0)",
+                        opacity: 0,
+                     },
+                     "10%": {
+                        opacity: 1,
+                     },
+                     "90%": {
+                        opacity: 0.5,
+                     },
+                     "100%": {
+                        transform: "translateY(120vh) scaleY(1)",
+                        opacity: 0,
+                     },
+                  },
+               }}
+            />
+         ))}
+
          <Container
             maxWidth={false}
             disableGutters
@@ -146,17 +327,126 @@ const ProjectProfileView: React.FC<ProjectProfileProps> = ({
                px: { xs: 2, sm: 3, md: 4 },
                textAlign: "left",
                overflowX: "hidden",
+               position: "relative",
+               zIndex: 1,
             }}
          >
             <Box sx={{ maxWidth: 1680, mx: "auto" }}>
                {/* Title Row with Back */}
                <Box
-                  sx={{ mb: 2, display: "flex", alignItems: "center", gap: 1 }}
+                  sx={{
+                     mb: 3,
+                     display: "flex",
+                     alignItems: "center",
+                     gap: 1.5,
+                     position: "relative",
+                  }}
                >
-                  <IconButton aria-label="Back" onClick={onBack} size="small">
-                     <ArrowBackIcon />
+                  <IconButton
+                     aria-label="Back"
+                     onClick={onBack}
+                     size="medium"
+                     sx={{
+                        bgcolor: (theme) =>
+                           theme.palette.mode === "dark"
+                              ? "#1a1f2e"
+                              : "#ffffff",
+                        border: (theme) =>
+                           theme.palette.mode === "dark"
+                              ? "1px solid #2d3548"
+                              : "1px solid #e5e5e7",
+                        boxShadow: (theme) =>
+                           theme.palette.mode === "dark"
+                              ? "0 2px 8px rgba(0,0,0,0.3)"
+                              : "0 2px 8px rgba(0,0,0,0.06)",
+                        position: "relative",
+                        overflow: "hidden",
+                        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                        // Shine effect
+                        "&::before": {
+                           content: '""',
+                           position: "absolute",
+                           top: 0,
+                           left: "-100%",
+                           width: "100%",
+                           height: "100%",
+                           background: (theme) =>
+                              theme.palette.mode === "dark"
+                                 ? "linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)"
+                                 : "linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent)",
+                           transition: "left 0.5s",
+                        },
+                        "&:hover": {
+                           bgcolor: (theme) =>
+                              theme.palette.mode === "dark"
+                                 ? "#232936"
+                                 : "#fafafa",
+                           transform: "translateX(-6px) scale(1.05)",
+                           boxShadow: (theme) =>
+                              theme.palette.mode === "dark"
+                                 ? "0 8px 20px rgba(0, 153, 255, 0.25)"
+                                 : "0 8px 20px rgba(0, 102, 204, 0.15)",
+                           borderColor: (theme) =>
+                              theme.palette.mode === "dark"
+                                 ? "#0099ff"
+                                 : "#06c",
+                        },
+                        "&:hover::before": {
+                           left: "100%",
+                        },
+                        "&:active": {
+                           transform: "translateX(-4px) scale(0.98)",
+                        },
+                     }}
+                  >
+                     <ArrowBackIcon
+                        sx={{
+                           color: "#1d1d1f",
+                           transition: "all 0.3s",
+                           ".MuiIconButton-root:hover &": {
+                              color: "#06c",
+                           },
+                        }}
+                     />
                   </IconButton>
-                  <Typography variant="h4" component="h1" sx={{ ml: 0.5 }}>
+                  <Typography
+                     variant="h4"
+                     component="h1"
+                     sx={{
+                        ml: 0.5,
+                        fontWeight: 700,
+                        fontSize: { xs: 28, sm: 36, md: 42 },
+                        color: "#1d1d1f",
+                        letterSpacing: "-0.02em",
+                        background:
+                           "linear-gradient(135deg, #1d1d1f 0%, #06c 50%, #0ea5e9 100%)",
+                        WebkitBackgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                        backgroundClip: "text",
+                        backgroundSize: "200% 100%",
+                        animation: "gradientShift 3s ease infinite",
+                        position: "relative",
+                        // Text shadow layer
+                        "&::after": {
+                           content: "attr(data-text)",
+                           position: "absolute",
+                           left: 0,
+                           top: 0,
+                           zIndex: -1,
+                           background:
+                              "linear-gradient(135deg, #1d1d1f 0%, #06c 100%)",
+                           WebkitBackgroundClip: "text",
+                           WebkitTextFillColor: "transparent",
+                           backgroundClip: "text",
+                           filter: "blur(8px)",
+                           opacity: 0.3,
+                        },
+                        "@keyframes gradientShift": {
+                           "0%, 100%": { backgroundPosition: "0% 50%" },
+                           "50%": { backgroundPosition: "100% 50%" },
+                        },
+                     }}
+                  >
                      {project.name}
                   </Typography>
                </Box>
@@ -166,14 +456,121 @@ const ProjectProfileView: React.FC<ProjectProfileProps> = ({
                   direction="row"
                   spacing={1}
                   flexWrap="wrap"
-                  sx={{ mb: 1 }}
+                  sx={{ mb: 3 }}
                >
-                  <Chip label={categoryName} size="small" />
+                  <Chip
+                     label={categoryName}
+                     size="medium"
+                     sx={{
+                        bgcolor: "#ffffff",
+                        border: "1px solid #e5e5e7",
+                        fontWeight: 600,
+                        fontSize: 14,
+                        color: "#06c",
+                        position: "relative",
+                        overflow: "hidden",
+                        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                        // Shimmer effect
+                        "&::before": {
+                           content: '""',
+                           position: "absolute",
+                           top: 0,
+                           left: "-100%",
+                           width: "100%",
+                           height: "100%",
+                           background:
+                              "linear-gradient(90deg, transparent, rgba(0, 102, 204, 0.2), transparent)",
+                           animation: "shimmer 2s infinite",
+                        },
+                        "@keyframes shimmer": {
+                           "0%": { left: "-100%" },
+                           "100%": { left: "100%" },
+                        },
+                        "&:hover": {
+                           bgcolor: "#f5f5f7",
+                           transform: "translateY(-4px) scale(1.05)",
+                           boxShadow:
+                              "0 8px 16px rgba(0, 102, 204, 0.2), 0 0 0 4px rgba(0, 102, 204, 0.05)",
+                           borderColor: "#06c",
+                        },
+                        "&:active": {
+                           transform: "translateY(-2px) scale(1.02)",
+                        },
+                     }}
+                  />
                   {project.semester?.semester && (
-                     <Chip label={project.semester.semester} size="small" />
+                     <Chip
+                        label={project.semester.semester}
+                        size="medium"
+                        sx={{
+                           bgcolor: "#ffffff",
+                           border: "1px solid #e5e5e7",
+                           fontWeight: 500,
+                           fontSize: 14,
+                           color: "#6e6e73",
+                           position: "relative",
+                           overflow: "hidden",
+                           transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                           "&::after": {
+                              content: '""',
+                              position: "absolute",
+                              bottom: 0,
+                              left: "50%",
+                              transform: "translateX(-50%)",
+                              width: 0,
+                              height: "2px",
+                              bgcolor: "#06c",
+                              transition: "width 0.3s",
+                           },
+                           "&:hover": {
+                              bgcolor: "#f5f5f7",
+                              transform:
+                                 "translateY(-4px) scale(1.05) rotate(2deg)",
+                              boxShadow: "0 6px 16px rgba(0, 0, 0, 0.12)",
+                              color: "#06c",
+                           },
+                           "&:hover::after": {
+                              width: "80%",
+                           },
+                        }}
+                     />
                   )}
                   {project.semester?.year && (
-                     <Chip label={String(project.semester.year)} size="small" />
+                     <Chip
+                        label={String(project.semester.year)}
+                        size="medium"
+                        sx={{
+                           bgcolor: "#ffffff",
+                           border: "1px solid #e5e5e7",
+                           fontWeight: 500,
+                           fontSize: 14,
+                           color: "#6e6e73",
+                           position: "relative",
+                           overflow: "hidden",
+                           transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                           "&::after": {
+                              content: '""',
+                              position: "absolute",
+                              bottom: 0,
+                              left: "50%",
+                              transform: "translateX(-50%)",
+                              width: 0,
+                              height: "2px",
+                              bgcolor: "#06c",
+                              transition: "width 0.3s",
+                           },
+                           "&:hover": {
+                              bgcolor: "#f5f5f7",
+                              transform:
+                                 "translateY(-4px) scale(1.05) rotate(-2deg)",
+                              boxShadow: "0 6px 16px rgba(0, 0, 0, 0.12)",
+                              color: "#06c",
+                           },
+                           "&:hover::after": {
+                              width: "80%",
+                           },
+                        }}
+                     />
                   )}
                   {!!project.tags?.length && (
                      <Stack
@@ -182,11 +579,11 @@ const ProjectProfileView: React.FC<ProjectProfileProps> = ({
                         flexWrap="wrap"
                         sx={{ mb: 2, rowGap: 0.5 }}
                      >
-                        {project.tags.map((t) => (
+                        {project.tags.map((t, idx) => (
                            <Chip
                               key={t._id ?? t.name}
                               label={t.name}
-                              size="small"
+                              size="medium"
                               variant="outlined"
                               clickable
                               onClick={() =>
@@ -194,6 +591,58 @@ const ProjectProfileView: React.FC<ProjectProfileProps> = ({
                                     `/projects?tag=${encodeURIComponent(t.name)}`,
                                  )
                               }
+                              sx={{
+                                 borderColor: "#d2d2d7",
+                                 color: "#6e6e73",
+                                 fontWeight: 500,
+                                 fontSize: 13,
+                                 position: "relative",
+                                 overflow: "hidden",
+                                 transition:
+                                    "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                                 animationDelay: `${idx * 0.1}s`,
+                                 // Magnetic glow effect
+                                 "&::before": {
+                                    content: '""',
+                                    position: "absolute",
+                                    inset: "-2px",
+                                    background:
+                                       "linear-gradient(45deg, #06c, #0ea5e9, #06c)",
+                                    backgroundSize: "200% 200%",
+                                    borderRadius: "inherit",
+                                    opacity: 0,
+                                    transition: "opacity 0.3s",
+                                    animation: "rotate 4s linear infinite",
+                                    zIndex: -1,
+                                 },
+                                 "&::after": {
+                                    content: '""',
+                                    position: "absolute",
+                                    inset: 0,
+                                    background: "#fbfbfd",
+                                    borderRadius: "inherit",
+                                    zIndex: -1,
+                                 },
+                                 "@keyframes rotate": {
+                                    "0%": { backgroundPosition: "0% 50%" },
+                                    "50%": { backgroundPosition: "100% 50%" },
+                                    "100%": { backgroundPosition: "0% 50%" },
+                                 },
+                                 "&:hover": {
+                                    borderColor: "transparent",
+                                    color: "#06c",
+                                    bgcolor: "rgba(0, 102, 204, 0.06)",
+                                    transform: "translateY(-4px) scale(1.08)",
+                                    boxShadow:
+                                       "0 8px 16px rgba(0, 102, 204, 0.2)",
+                                 },
+                                 "&:hover::before": {
+                                    opacity: 1,
+                                 },
+                                 "&:active": {
+                                    transform: "translateY(-2px) scale(1.04)",
+                                 },
+                              }}
                            />
                         ))}
                      </Stack>

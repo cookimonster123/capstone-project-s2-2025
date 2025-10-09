@@ -12,6 +12,7 @@ import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import { useAuth } from "../context/AuthContext";
 import { fetchUserById } from "../api/userApi";
+import DarkModeToggle from "./common/DarkModeToggle";
 
 // Adjust these imports to your real asset names if needed.
 import logo from "../assets/capstone.svg";
@@ -82,53 +83,130 @@ const Navbar: React.FC = () => {
          position="fixed"
          elevation={0}
          sx={{
-            backgroundColor: "#fff",
-            color: "inherit",
-            borderBottom: "1px solid #ccc",
+            backgroundColor: (theme) =>
+               theme.palette.mode === "dark"
+                  ? "rgba(21, 27, 43, 0.85)"
+                  : "rgba(251, 251, 253, 0.72)",
+            backdropFilter: "saturate(180%) blur(20px)",
+            WebkitBackdropFilter: "saturate(180%) blur(20px)",
+            color: "text.primary",
+            borderBottom: (theme) =>
+               theme.palette.mode === "dark"
+                  ? "1px solid rgba(255, 255, 255, 0.08)"
+                  : "1px solid rgba(0, 0, 0, 0.06)",
             height: NAV_HEIGHT,
             justifyContent: "center",
+            transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+            "&::before": {
+               content: '""',
+               position: "absolute",
+               top: 0,
+               left: 0,
+               right: 0,
+               height: "1px",
+               background: (theme) =>
+                  theme.palette.mode === "dark"
+                     ? "linear-gradient(90deg, transparent, rgba(0, 153, 255, 0.3) 50%, transparent)"
+                     : "linear-gradient(90deg, transparent, rgba(0, 102, 204, 0.2) 50%, transparent)",
+               opacity: 0.3,
+            },
+            // Scroll 效果
+            "@media (prefers-reduced-motion: no-preference)": {
+               "&:hover": {
+                  backgroundColor: (theme) =>
+                     theme.palette.mode === "dark"
+                        ? "rgba(21, 27, 43, 0.95)"
+                        : "rgba(255, 255, 255, 0.85)",
+               },
+            },
          }}
       >
-         <Toolbar sx={{ minHeight: NAV_HEIGHT, px: 4 }}>
+         <Toolbar
+            sx={{
+               minHeight: NAV_HEIGHT,
+               px: { xs: 2, sm: 3, md: 5, lg: 6 },
+               maxWidth: 1850,
+               width: "100%",
+               mx: "auto",
+            }}
+         >
             {/* Left: logo + primary links */}
             <Box
                sx={{
                   display: "flex",
                   alignItems: "center",
-                  gap: 4,
+                  gap: { xs: 2, md: 4, lg: 5 },
                   flexGrow: 1,
                }}
             >
-               <NavLink to="/">
+               <NavLink
+                  to="/"
+                  style={{ display: "flex", alignItems: "center" }}
+               >
                   <Box
                      component="img"
                      src={logo}
                      alt="Site logo"
-                     sx={{ width: 225, height: 40, objectFit: "contain" }}
+                     sx={{
+                        width: { xs: 180, sm: 200, md: 225 },
+                        height: 40,
+                        objectFit: "contain",
+                        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                        filter: "drop-shadow(0 0 0 transparent)",
+                        "&:hover": {
+                           opacity: 0.8,
+                           filter:
+                              "drop-shadow(0 2px 8px rgba(0,102,204,0.15))",
+                           transform: "translateY(-1px)",
+                        },
+                     }}
                   />
                </NavLink>
 
-               <Box sx={{ display: "flex", gap: 2 }}>
+               <Box sx={{ display: { xs: "none", md: "flex" }, gap: 0.5 }}>
                   {links.map((l) => (
                      <Button
                         key={l.to}
                         component={NavLink}
                         to={l.to}
-                        variant="contained"
-                        disableElevation
+                        variant="text"
                         sx={{
                            textTransform: "none",
-                           borderRadius: 2,
-                           px: 2.25,
-                           py: 1.25,
-                           bgcolor: "#f6f7f9",
-                           color: "black",
-                           "&:hover": { bgcolor: "#eceff3" },
-                           // Active route highlight from NavLink's .active class
+                           borderRadius: 1.5,
+                           px: 2.5,
+                           py: 1,
+                           color: "text.primary",
+                           fontSize: 15,
+                           fontWeight: 400,
+                           letterSpacing: "-0.01em",
+                           position: "relative",
+                           transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                           "&::after": {
+                              content: '""',
+                              position: "absolute",
+                              bottom: 8,
+                              left: "50%",
+                              transform: "translateX(-50%)",
+                              width: 0,
+                              height: 2,
+                              borderRadius: 1,
+                              bgcolor: "primary.main",
+                              transition:
+                                 "width 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                           },
+                           "&:hover": {
+                              bgcolor: (theme) =>
+                                 theme.palette.mode === "dark"
+                                    ? "rgba(255, 255, 255, 0.05)"
+                                    : "rgba(0, 0, 0, 0.03)",
+                              color: "primary.main",
+                           },
                            "&.active": {
-                              bgcolor: "#e8f0fe",
-                              boxShadow: "inset 0 0 0 1px #1a73e8",
-                              color: "#1a73e8",
+                              color: "#06c",
+                              fontWeight: 500,
+                              "&::after": {
+                                 width: "calc(100% - 20px)",
+                              },
                            },
                         }}
                      >
@@ -139,17 +217,35 @@ const Navbar: React.FC = () => {
             </Box>
 
             {/* Right: Upload + Auth */}
-            <Box sx={{ display: "flex", alignItems: "center", gap: 3, pr: 1 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2.5 }}>
+               {/* Dark Mode Toggle */}
+               <DarkModeToggle />
+
                <Button
                   component={NavLink}
                   to="/upload"
                   variant="contained"
-                  color="primary"
                   sx={{
                      textTransform: "none",
                      borderRadius: 2,
-                     px: 2.5,
+                     px: 3,
                      py: 1,
+                     bgcolor: "#06c",
+                     color: "#fff",
+                     fontSize: 15,
+                     fontWeight: 500,
+                     letterSpacing: "-0.01em",
+                     boxShadow: "0 1px 3px rgba(0,102,204,0.12)",
+                     transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                     "&:hover": {
+                        bgcolor: "#0077ed",
+                        boxShadow: "0 4px 12px rgba(0,102,204,0.2)",
+                        transform: "translateY(-1px)",
+                     },
+                     "&:active": {
+                        transform: "translateY(0)",
+                        boxShadow: "0 1px 3px rgba(0,102,204,0.12)",
+                     },
                   }}
                >
                   Upload
@@ -159,13 +255,26 @@ const Navbar: React.FC = () => {
                   <Button
                      component={NavLink}
                      to="/sign-in"
-                     variant="contained"
-                     color="primary"
+                     variant="outlined"
                      sx={{
                         textTransform: "none",
                         borderRadius: 2,
-                        px: 2.5,
+                        px: 3,
                         py: 1,
+                        borderColor: "divider",
+                        color: "text.primary",
+                        fontSize: 15,
+                        fontWeight: 500,
+                        letterSpacing: "-0.01em",
+                        transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                        "&:hover": {
+                           borderColor: "primary.main",
+                           bgcolor: (theme) =>
+                              theme.palette.mode === "dark"
+                                 ? "rgba(0, 153, 255, 0.08)"
+                                 : "rgba(0, 102, 204, 0.04)",
+                           color: "primary.main",
+                        },
                      }}
                   >
                      Sign in
@@ -178,6 +287,7 @@ const Navbar: React.FC = () => {
                               ? `${user.name} · Account`
                               : "Account menu"
                         }
+                        placement="bottom"
                      >
                         <Avatar
                            src={avatarSrc}
@@ -186,12 +296,16 @@ const Navbar: React.FC = () => {
                            }
                            onClick={(e) => setMenuEl(e.currentTarget)}
                            sx={{
-                              width: 44,
-                              height: 44,
+                              width: 40,
+                              height: 40,
                               cursor: "pointer",
-                              border: "1px solid #d6dae1",
+                              border: "2px solid rgba(0,0,0,0.06)",
+                              transition:
+                                 "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                               "&:hover": {
-                                 boxShadow: "0 0 0 3px rgba(26,115,232,.15)",
+                                 transform: "scale(1.08)",
+                                 borderColor: "#06c",
+                                 boxShadow: "0 0 0 3px rgba(0,102,204,0.1)",
                               },
                            }}
                         />
@@ -211,12 +325,39 @@ const Navbar: React.FC = () => {
                            vertical: "bottom",
                         }}
                         PaperProps={{
-                           elevation: 3,
-                           sx: { mt: 1.5, borderRadius: 2, minWidth: 180 },
+                           elevation: 0,
+                           sx: {
+                              mt: 1.5,
+                              borderRadius: 2.5,
+                              minWidth: 200,
+                              border: "1px solid #e5e5e7",
+                              boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+                              bgcolor: "rgba(255,255,255,0.98)",
+                              backdropFilter: "blur(20px)",
+                           },
+                        }}
+                        MenuListProps={{
+                           sx: { py: 1 },
                         }}
                      >
-                        <MenuItem component={NavLink} to={getDashboardPath()}>
-                           <Typography variant="body2">
+                        <MenuItem
+                           component={NavLink}
+                           to={getDashboardPath()}
+                           sx={{
+                              mx: 1,
+                              borderRadius: 1.5,
+                              px: 2,
+                              py: 1.25,
+                              fontSize: 15,
+                              color: "#1d1d1f",
+                              transition: "all 0.2s ease",
+                              "&:hover": {
+                                 bgcolor: "rgba(0,102,204,0.06)",
+                                 color: "#06c",
+                              },
+                           }}
+                        >
+                           <Typography variant="body2" sx={{ fontWeight: 500 }}>
                               {user?.role === "admin"
                                  ? "Admin Dashboard"
                                  : user?.role === "staff"
@@ -224,13 +365,25 @@ const Navbar: React.FC = () => {
                                    : "Profile"}
                            </Typography>
                         </MenuItem>
-                        <Divider />
+                        <Divider sx={{ my: 1, borderColor: "#e5e5e7" }} />
                         <MenuItem
                            onClick={() => {
                               signOut();
                               setMenuEl(null);
                            }}
-                           sx={{ color: "#d63939", fontWeight: 600 }}
+                           sx={{
+                              mx: 1,
+                              borderRadius: 1.5,
+                              px: 2,
+                              py: 1.25,
+                              fontSize: 15,
+                              color: "#d63939",
+                              fontWeight: 500,
+                              transition: "all 0.2s ease",
+                              "&:hover": {
+                                 bgcolor: "rgba(214,57,57,0.06)",
+                              },
+                           }}
                         >
                            Log out
                         </MenuItem>

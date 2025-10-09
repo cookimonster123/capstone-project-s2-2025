@@ -35,7 +35,17 @@ const ProjectMeta: React.FC<ProjectMetaProps> = ({ project }) => {
       <Box sx={{ minWidth: 0 }}>
          <Stack spacing={3} sx={{ position: "sticky", top: 24 }}>
             {/* Meta */}
-            <Card elevation={1}>
+            <Card
+               elevation={1}
+               sx={{
+                  bgcolor: (theme) =>
+                     theme.palette.mode === "dark" ? "#0f1419" : "#ffffff",
+                  border: (theme) =>
+                     theme.palette.mode === "dark"
+                        ? "1px solid #1a1f2e"
+                        : "1px solid #e5e5e7",
+               }}
+            >
                <CardHeader
                   title={
                      <Typography variant="subtitle1" fontWeight={700}>

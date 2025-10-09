@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { Typography, Box, Alert, Skeleton, Paper, Grow } from "@mui/material";
+import { Typography, Box, Alert, Skeleton, Paper } from "@mui/material";
 import { SentimentDissatisfied as SadIcon } from "@mui/icons-material";
 import ProjectCard from "./ProjectCard";
 import type { Project } from "../../types/project";
-import { useAuth } from "../../context/AuthContext"; // read global login state
+import { useAuth } from "../../context/AuthContext";
+import { motion, AnimatePresence } from "framer-motion";
 
 export interface ProjectGridProps {
    projects: Project[]; // pre-filtered projects to display
@@ -15,23 +16,29 @@ export interface ProjectGridProps {
 
 /** Small empty-state block for "no results". */
 const EmptyState: React.FC = () => (
-   <Paper
-      elevation={0}
-      sx={{
-         p: 4,
-         display: "flex",
-         alignItems: "center",
-         gap: 2,
-         bgcolor: "grey.50",
-         border: "1px dashed",
-         borderColor: "divider",
-      }}
+   <motion.div
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.5 }}
    >
-      <SadIcon />
-      <Typography variant="body1" color="text.secondary">
-         No projects match your current filters.
-      </Typography>
-   </Paper>
+      <Paper
+         elevation={0}
+         sx={{
+            p: 4,
+            display: "flex",
+            alignItems: "center",
+            gap: 2,
+            bgcolor: "grey.50",
+            border: "1px dashed",
+            borderColor: "divider",
+         }}
+      >
+         <SadIcon />
+         <Typography variant="body1" color="text.secondary">
+            No projects match your current filters.
+         </Typography>
+      </Paper>
+   </motion.div>
 );
 
 /** Main responsive grid of project cards. */
@@ -103,7 +110,7 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({
                            <EmptyState />
                         </Box>
                      ) : (
-                        // Cards grid
+                        // Cards grid with stagger animation
                         <Box
                            sx={{
                               display: "grid",
@@ -112,24 +119,34 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({
                               gap: 2,
                            }}
                         >
-                           {projects.map((project, idx) => (
-                              <Grow
-                                 in
-                                 timeout={300 + idx * 40}
-                                 key={project._id}
-                              >
-                                 <Box sx={{ width: "100%" }}>
+                           <AnimatePresence mode="popLayout">
+                              {projects.map((project, idx) => (
+                                 <motion.div
+                                    key={project._id}
+                                    layout
+                                    initial={{ opacity: 0, y: 50, scale: 0.9 }}
+                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 0.9 }}
+                                    transition={{
+                                       duration: 0.5,
+                                       delay: idx * 0.05,
+                                       ease: [0.6, -0.05, 0.01, 0.99],
+                                    }}
+                                    whileHover={{
+                                       y: -8,
+                                       transition: { duration: 0.2 },
+                                    }}
+                                 >
                                     <ProjectCard
                                        project={project}
                                        onClick={onProjectClick}
-                                       // Pass auth state down so the card can block likes when not logged in
                                        isAuthenticated={isLoggedIn}
                                        width={"100%"}
                                        hoverLift
                                     />
-                                 </Box>
-                              </Grow>
-                           ))}
+                                 </motion.div>
+                              ))}
+                           </AnimatePresence>
                         </Box>
                      )}
                   </>
