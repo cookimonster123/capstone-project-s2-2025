@@ -127,22 +127,27 @@ const UploadProjectPage: React.FC = () => {
          "image/png",
          "image/gif",
          "image/webp",
+         "image/bmp",
+         "image/svg",
+         "image/svg+xml",
       ];
       const invalidFiles = fileArray.filter(
          (file) => !validTypes.includes(file.type),
       );
 
       if (invalidFiles.length > 0) {
-         setUploadError("Only JPEG, PNG, GIF, and WebP images are allowed");
+         setUploadError(
+            "Only JPG, JPEG, PNG, GIF, WEBP, BMP, and SVG images are allowed",
+         );
          return;
       }
 
       // Validate file sizes (max 5MB per image)
       const oversizedFiles = fileArray.filter(
-         (file) => file.size > 5 * 1024 * 1024,
+         (file) => file.size > 20 * 1024 * 1024,
       );
       if (oversizedFiles.length > 0) {
-         setUploadError("Each image must be less than 5MB");
+         setUploadError("Each image must be less than 20MB");
          return;
       }
 
@@ -649,7 +654,14 @@ const UploadProjectPage: React.FC = () => {
                               )}
 
                               <input
-                                 accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                                 accept="
+                                    image/jpeg,
+                                    image/jpg,
+                                    image/png,
+                                    image/gif,
+                                    image/webp, 
+                                    image/bmp,
+                                    image/svg+xml"
                                  style={{ display: "none" }}
                                  id="image-upload-input"
                                  type="file"
@@ -692,7 +704,7 @@ const UploadProjectPage: React.FC = () => {
                                     >
                                        {selectedImages.length >= 5
                                           ? "Maximum 5 images reached"
-                                          : "Click to upload images (JPEG, PNG, GIF, WebP)"}
+                                          : "Click to upload images (JPG, JPEG, PNG, GIF, WEBP, BMP, SVG)"}
                                     </Typography>
                                     <Typography
                                        variant="body2"
@@ -700,7 +712,7 @@ const UploadProjectPage: React.FC = () => {
                                     >
                                        {selectedImages.length > 0
                                           ? `${selectedImages.length} of 5 images selected`
-                                          : "Max 5 images, 5MB each"}
+                                          : "Max 5 images, largest size 20MB each"}
                                     </Typography>
                                  </Paper>
                               </label>

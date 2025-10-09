@@ -13,7 +13,7 @@ import { authenticateToken, authorizeRoles } from "../middleware/auth";
 import { requireTeamOwnership } from "../middleware/projects";
 import multer from "multer";
 
-const uploadImageSize = multer({ limits: { fileSize: 5 * 1024 * 1024 } }); //5MB max
+const uploadImageSize = multer({ limits: { fileSize: 20 * 1024 * 1024 } }); //20MB max
 const router = Router();
 
 router.get("/", getAllProjects);

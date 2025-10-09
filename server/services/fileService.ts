@@ -57,7 +57,10 @@ export async function uploadFilesToS3(
             folder = "otherImages";
             break;
       }
-      const key = `assets/${folder}/${objectId}/${Date.now()}_${file.originalname}`;
+
+      // Replace '+' with '_' to avoid issues in S3 keys
+      const safeFileName = file.originalname.replace(/\+/g, "_");
+      const key = `assets/${folder}/${objectId}/${Date.now()}_${safeFileName}`;
 
       const command = new PutObjectCommand({
          Bucket: process.env.AWS_S3_BUCKET_NAME || "",
