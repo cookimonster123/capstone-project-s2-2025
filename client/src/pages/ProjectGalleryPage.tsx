@@ -126,6 +126,29 @@ const ProjectGalleryPage: React.FC = () => {
 
    // Filter data
    const filteredProjects = useMemo(() => {
+      const cmpBySemester = (a: Project, b: Project) => {
+         const ay = a.semester?.year ?? -Infinity;
+         const by = b.semester?.year ?? -Infinity;
+         if (by !== ay) return by - ay; // year desc
+
+         const as =
+            a.semester?.semester === "S2"
+               ? 2
+               : a.semester?.semester === "S1"
+                 ? 1
+                 : 0;
+         const bs =
+            b.semester?.semester === "S2"
+               ? 2
+               : b.semester?.semester === "S1"
+                 ? 1
+                 : 0;
+         if (bs !== as) return bs - as; // S2 before S1
+
+         const ad = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+         const bd = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+         return bd - ad; // newer first
+      };
       const search = debouncedSearch.trim().toLowerCase();
       const selectedCategory = category === "" ? null : category;
       const selectedYear = year === "" ? null : Number(year);
@@ -164,7 +187,7 @@ const ProjectGalleryPage: React.FC = () => {
          return matchesCategory && matchesYear && matchesSemester && anyMatch;
       });
 
-      if (!search) return filtered;
+      if (!search) return filtered.sort(cmpBySemester);
 
       // team > keyword > tag
       const scored = filtered
@@ -189,7 +212,8 @@ const ProjectGalleryPage: React.FC = () => {
             if (b.score[0] !== a.score[0]) return b.score[0] - a.score[0]; // team
             if (b.score[1] !== a.score[1]) return b.score[1] - a.score[1]; // keyword
             if (b.score[2] !== a.score[2]) return b.score[2] - a.score[2]; // tag
-            return (a.p.name || "").localeCompare(b.p.name || ""); // stable fallback
+            // When scores are equal, sort by Year desc, Semester (S2>S1), then createdAt desc
+            return cmpBySemester(a.p, b.p);
          })
          .map((x) => x.p);
 

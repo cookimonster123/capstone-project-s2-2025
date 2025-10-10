@@ -52,6 +52,7 @@ import {
    Star as StarIcon,
    Restore as RestoreIcon,
 } from "@mui/icons-material";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { fetchProjects, likeProject } from "../api/projectApi";
@@ -79,6 +80,12 @@ import {
    type Comment,
 } from "../api/staffApi";
 import { fetchCategories, type CategoryDto } from "../api/categoryApi";
+import {
+   fetchSemesters,
+   createSemester as createSemesterApi,
+   deleteSemesters,
+   type SemesterDto,
+} from "../api/semesterApi";
 import ProfessionalDashboardBackground from "../components/animations/ProfessionalDashboardBackground";
 
 // Tab panel component
@@ -177,6 +184,17 @@ const StaffDashboard: React.FC = () => {
    const [awards, setAwards] = useState<Award[]>([]);
    const [comments, setComments] = useState<Comment[]>([]);
    const [categories, setCategories] = useState<CategoryDto[]>([]);
+   const [semesters, setSemesters] = useState<SemesterDto[]>([]);
+   const [semesterForm, setSemesterForm] = useState<{
+      year: number | "";
+      semester: "S1" | "S2";
+   }>({
+      year: new Date().getFullYear(),
+      semester: "S1",
+   });
+   const [createSemesterError, setCreateSemesterError] = useState<
+      string | null
+   >(null);
 
    // Dialog states
    const [openTeamDialog, setOpenTeamDialog] = useState(false);
@@ -184,6 +202,8 @@ const StaffDashboard: React.FC = () => {
    const [openAssignDialog, setOpenAssignDialog] = useState(false);
    const [openEditUserDialog, setOpenEditUserDialog] = useState(false);
    const [openCreateTeamDialog, setOpenCreateTeamDialog] = useState(false);
+   const [openCreateSemesterDialog, setOpenCreateSemesterDialog] =
+      useState(false);
    const [newTeamName, setNewTeamName] = useState("");
    const [selectedAward, setSelectedAward] = useState<Award | null>(null);
    const [selectedUser, setSelectedUser] = useState<UserSummary | null>(null);
@@ -232,6 +252,10 @@ const StaffDashboard: React.FC = () => {
          // Load categories
          const categoriesData = await fetchCategories();
          setCategories(categoriesData);
+
+         // Load semesters
+         const semestersData = await fetchSemesters();
+         setSemesters(semestersData);
       } catch (error) {
          console.error("Error loading data:", error);
          showSnackbar("Failed to load some data", "error");
@@ -357,6 +381,61 @@ const StaffDashboard: React.FC = () => {
       } catch (error) {
          console.error("Error creating team:", error);
          showSnackbar("Failed to create team", "error");
+      }
+   };
+
+   const handleDeleteSemester = async (semesterId: string) => {
+      if (window.confirm("Are you sure you want to delete this semester?")) {
+         const result = await deleteSemesters({ id: semesterId });
+         if (result && result.deletedCount > 0) {
+            showSnackbar("Semester deleted successfully", "info");
+            setSemesters(semesters.filter((s) => s._id !== semesterId));
+         } else {
+            showSnackbar("Failed to delete semester", "error");
+         }
+      }
+   };
+
+   const handleCreateSemester = async () => {
+      setCreateSemesterError(null);
+      // Front-end validation: empty year
+      if (
+         semesterForm.year === "" ||
+         semesterForm.year === undefined ||
+         semesterForm.year === null
+      ) {
+         setCreateSemesterError("year cannot be empty");
+         return;
+      }
+      // Front-end validation for year range
+      if (
+         typeof semesterForm.year !== "number" ||
+         semesterForm.year < 2000 ||
+         semesterForm.year > 2100
+      ) {
+         setCreateSemesterError("Year is out of range (2000–2100)");
+         return;
+      }
+      try {
+         const result = await createSemesterApi({
+            year: semesterForm.year,
+            semester: semesterForm.semester,
+         });
+         if (!("success" in result) || !result.success) {
+            const code = (result as any)?.error;
+            if (code === "SEMESTER_EXISTS") {
+               setCreateSemesterError("same semester exists");
+            } else {
+               setCreateSemesterError("Failed to create semester");
+            }
+            return;
+         }
+         showSnackbar("Semester created", "success");
+         const data = await fetchSemesters();
+         setSemesters(data);
+         setOpenCreateSemesterDialog(false);
+      } catch (e) {
+         setCreateSemesterError("Failed to create semester");
       }
    };
 
@@ -633,6 +712,11 @@ const StaffDashboard: React.FC = () => {
                            icon={<TeamIcon />}
                            iconPosition="start"
                            label="Teams"
+                        />
+                        <Tab
+                           icon={<AccessTimeIcon />}
+                           iconPosition="start"
+                           label="Semesters"
                         />
                         <Tab
                            icon={<PersonIcon />}
@@ -1018,8 +1102,194 @@ const StaffDashboard: React.FC = () => {
                         </Stack>
                      </TabPanel>
 
-                     {/* Users Tab */}
+                     {/* Semesters Tab */}
                      <TabPanel value={tabValue} index={2}>
+                        <Stack spacing={3}>
+                           <Stack
+                              direction="row"
+                              justifyContent="space-between"
+                           >
+                              <Typography variant="h6">
+                                 Semester Management
+                              </Typography>
+                              <Stack direction="row" spacing={1}>
+                                 <Button
+                                    variant="contained"
+                                    startIcon={<AddIcon />}
+                                    onClick={() =>
+                                       setOpenCreateSemesterDialog(true)
+                                    }
+                                 >
+                                    Create Semester
+                                 </Button>
+                              </Stack>
+                           </Stack>
+
+                           {loading ? (
+                              <Box
+                                 sx={{
+                                    display: "flex",
+                                    justifyContent: "center",
+                                    py: 4,
+                                 }}
+                              >
+                                 <CircularProgress />
+                              </Box>
+                           ) : (
+                              <TableContainer
+                                 component={Paper}
+                                 variant="outlined"
+                              >
+                                 <Table>
+                                    <TableHead>
+                                       <TableRow>
+                                          <TableCell>Year</TableCell>
+                                          <TableCell>Semester</TableCell>
+                                          <TableCell align="right">
+                                             Actions
+                                          </TableCell>
+                                       </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                       {semesters.map((s) => (
+                                          <TableRow key={s._id} hover>
+                                             <TableCell>
+                                                <Typography
+                                                   variant="subtitle2"
+                                                   fontWeight={600}
+                                                >
+                                                   {s.year}
+                                                </Typography>
+                                             </TableCell>
+                                             <TableCell>
+                                                <Chip
+                                                   label={s.semester}
+                                                   size="small"
+                                                   variant="outlined"
+                                                />
+                                             </TableCell>
+                                             <TableCell align="right">
+                                                <Stack
+                                                   direction="row"
+                                                   spacing={1}
+                                                   justifyContent="flex-end"
+                                                >
+                                                   <IconButton
+                                                      size="small"
+                                                      color="error"
+                                                      onClick={() =>
+                                                         handleDeleteSemester(
+                                                            s._id,
+                                                         )
+                                                      }
+                                                   >
+                                                      <DeleteIcon fontSize="small" />
+                                                   </IconButton>
+                                                </Stack>
+                                             </TableCell>
+                                          </TableRow>
+                                       ))}
+                                    </TableBody>
+                                 </Table>
+                              </TableContainer>
+                           )}
+
+                           <Dialog
+                              open={openCreateSemesterDialog}
+                              onClose={() => setOpenCreateSemesterDialog(false)}
+                              maxWidth="xs"
+                              fullWidth
+                           >
+                              <DialogTitle>Create Semester</DialogTitle>
+                              <DialogContent>
+                                 <Stack spacing={2} sx={{ mt: 1 }}>
+                                    <TextField
+                                       label="Year"
+                                       type="number"
+                                       placeholder="YYYY"
+                                       fullWidth
+                                       value={semesterForm.year}
+                                       onChange={(e) => {
+                                          const cleaned = String(
+                                             e.target.value,
+                                          ).replace(/[^0-9]/g, "");
+                                          setSemesterForm({
+                                             ...semesterForm,
+                                             year:
+                                                cleaned === ""
+                                                   ? ""
+                                                   : Number(cleaned),
+                                          });
+                                       }}
+                                       inputProps={{
+                                          min: 2000,
+                                          max: 2100,
+                                          inputMode: "numeric",
+                                          pattern: "[0-9]*",
+                                       }}
+                                       onWheel={(e) =>
+                                          (e.target as HTMLInputElement).blur()
+                                       }
+                                       sx={{
+                                          "& input[type=number]": {
+                                             MozAppearance: "textfield",
+                                          },
+                                          "& input::-webkit-outer-spin-button, & input::-webkit-inner-spin-button":
+                                             {
+                                                WebkitAppearance: "none",
+                                                margin: 0,
+                                             },
+                                       }}
+                                    />
+                                    <FormControl fullWidth>
+                                       <InputLabel>Semester</InputLabel>
+                                       <Select
+                                          label="Semester"
+                                          value={semesterForm.semester}
+                                          onChange={(e: SelectChangeEvent) =>
+                                             setSemesterForm({
+                                                ...semesterForm,
+                                                semester: e.target.value as
+                                                   | "S1"
+                                                   | "S2",
+                                             })
+                                          }
+                                       >
+                                          <MenuItem value="S1">S1</MenuItem>
+                                          <MenuItem value="S2">S2</MenuItem>
+                                       </Select>
+                                    </FormControl>
+                                    {createSemesterError && (
+                                       <Alert
+                                          severity="error"
+                                          variant="outlined"
+                                       >
+                                          {createSemesterError}
+                                       </Alert>
+                                    )}
+                                 </Stack>
+                              </DialogContent>
+                              <DialogActions>
+                                 <Button
+                                    onClick={() =>
+                                       setOpenCreateSemesterDialog(false)
+                                    }
+                                 >
+                                    Cancel
+                                 </Button>
+                                 <Button
+                                    variant="contained"
+                                    onClick={handleCreateSemester}
+                                 >
+                                    Create
+                                 </Button>
+                              </DialogActions>
+                           </Dialog>
+                        </Stack>
+                     </TabPanel>
+
+                     {/* Users Tab */}
+                     <TabPanel value={tabValue} index={3}>
                         <Stack spacing={3}>
                            <Typography variant="h6">User Management</Typography>
 
@@ -1124,7 +1394,7 @@ const StaffDashboard: React.FC = () => {
                      </TabPanel>
 
                      {/* Awards Tab */}
-                     <TabPanel value={tabValue} index={3}>
+                     <TabPanel value={tabValue} index={4}>
                         <Stack spacing={3}>
                            <Stack
                               direction="row"
@@ -1214,7 +1484,7 @@ const StaffDashboard: React.FC = () => {
                      </TabPanel>
 
                      {/* Comments Tab */}
-                     <TabPanel value={tabValue} index={4}>
+                     <TabPanel value={tabValue} index={5}>
                         <Stack spacing={3}>
                            <Stack
                               direction="row"

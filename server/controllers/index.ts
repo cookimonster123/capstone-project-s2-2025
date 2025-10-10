@@ -7,3 +7,4 @@ export * from "./favoriteController";
 export * from "./categoryController";
 export * from "./awardController";
 export * from "./commentController";
+export * from "./semesterController";

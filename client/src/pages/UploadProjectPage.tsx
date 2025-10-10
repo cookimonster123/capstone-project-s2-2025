@@ -31,6 +31,7 @@ import {
    fetchProjects,
 } from "../api/projectApi";
 import { fetchCategories } from "../api/categoryApi";
+import { fetchSemesters, type SemesterDto } from "../api/semesterApi";
 import { fetchUserById } from "../api/userApi";
 import { motion } from "framer-motion";
 import SuccessCelebration from "../components/animations/SuccessCelebration";
@@ -47,6 +48,7 @@ const UploadProjectPage: React.FC = () => {
       liveDemoUrl: "",
       videoDemoUrl: "",
       category: "",
+      semester: "",
    });
 
    const [tagInput, setTagInput] = useState<string>("");
@@ -56,6 +58,8 @@ const UploadProjectPage: React.FC = () => {
       { _id: string; name: string }[]
    >([]);
    const [categoryLoading, setCategoryLoading] = useState(false);
+   const [semesterOptions, setSemesterOptions] = useState<SemesterDto[]>([]);
+   const [semesterLoading, setSemesterLoading] = useState(false);
    const [submitting, setSubmitting] = useState(false);
    const [selectedImages, setSelectedImages] = useState<File[]>([]);
    const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -66,20 +70,24 @@ const UploadProjectPage: React.FC = () => {
       null,
    );
 
-   // Load categories on mount
+   // Load categories and semesters on mount
    React.useEffect(() => {
       let active = true;
       (async () => {
          try {
             setCategoryLoading(true);
+            setSemesterLoading(true);
             const categories = await fetchCategories();
+            const semesters = await fetchSemesters();
             if (!active) return;
             // keep full category objects; fetchCategories should return [{ _id, name }, ...]
             setCategoryOptions(categories);
+            setSemesterOptions(semesters);
          } catch (e) {
             console.warn("Failed to fetch categories", e);
          } finally {
             setCategoryLoading(false);
+            setSemesterLoading(false);
          }
       })();
       return () => {
@@ -183,6 +191,12 @@ const UploadProjectPage: React.FC = () => {
          return;
       }
 
+      // Require semester selection similar to title/description
+      if (!formData.semester) {
+         alert("Semester is required.");
+         return;
+      }
+
       setSubmitting(true);
       try {
          //
@@ -194,17 +208,8 @@ const UploadProjectPage: React.FC = () => {
             );
          }
 
-         //
-         const all = await fetchProjects();
-         const semesters = all
-            .map((p) => p.semester)
-            .filter((s): s is NonNullable<typeof s> => Boolean(s));
-         const latest = semesters.slice().sort((a, b) => b.year - a.year)[0];
-         if (!latest?._id) {
-            throw new Error(
-               "Could not determine a semester. Please seed data or contact staff.",
-            );
-         }
+         // Selected semester (required above)
+         const semesterId = formData.semester;
 
          const githubUrlNormalized = formData.githubRepo
             ? normalizeUrl(formData.githubRepo)
@@ -248,7 +253,7 @@ const UploadProjectPage: React.FC = () => {
             name: formData.title.trim(),
             description: formData.description.trim(),
             teamId,
-            semester: latest._id,
+            semester: semesterId,
             links,
             tags: selectedTags
                .map((t) => t.trim())
@@ -499,6 +504,41 @@ const UploadProjectPage: React.FC = () => {
                                  "& .MuiInputLabel-asterisk": { color: "red" },
                               }}
                            />
+
+                           {/* Semester Select (from backend semesters) */}
+                           <FormControl
+                              fullWidth
+                              required
+                              sx={{
+                                 mb: 2,
+                                 "& .MuiInputLabel-asterisk": { color: "red" },
+                              }}
+                           >
+                              <InputLabel required>Semester</InputLabel>
+                              <Select
+                                 value={formData.semester}
+                                 label="Semester"
+                                 required
+                                 onChange={(e) =>
+                                    setFormData((prev) => ({
+                                       ...prev,
+                                       semester: e.target.value as string,
+                                    }))
+                                 }
+                                 disabled={semesterLoading}
+                              >
+                                 {semesterOptions.map((s) => (
+                                    <MenuItem key={s._id} value={s._id}>
+                                       {`${s.semester} ${s.year}`}
+                                    </MenuItem>
+                                 ))}
+                                 {semesterOptions.length === 0 && (
+                                    <MenuItem value="__placeholder__" disabled>
+                                       No semesters
+                                    </MenuItem>
+                                 )}
+                              </Select>
+                           </FormControl>
 
                            {/* Category Select (from backend categories) */}
                            <FormControl fullWidth>
