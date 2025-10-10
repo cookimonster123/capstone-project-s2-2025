@@ -1,37 +1,63 @@
-import React, { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import React, { useEffect, useRef, useState } from "react";
+import { LazyMotion, domAnimation, m, useReducedMotion } from "framer-motion";
 
 /**
  * Epic custom cursor with glow effect - keeps default cursor visible
  * Adds beautiful trailing glow effect without hiding the mouse
  */
 const CustomCursor: React.FC = () => {
+   const prefersReducedMotion = useReducedMotion();
    const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
    const [isClicking, setIsClicking] = useState(false);
+   const rafIdRef = useRef<number | null>(null);
+   const pendingPosRef = useRef<{ x: number; y: number } | null>(null);
+   const runningRef = useRef(false);
 
    useEffect(() => {
+      if (prefersReducedMotion) return;
+
+      const tick = () => {
+         rafIdRef.current = null;
+         if (!runningRef.current) return;
+         const next = pendingPosRef.current;
+         if (next) {
+            setMousePosition(next);
+            pendingPosRef.current = null;
+         }
+      };
+
       const handleMouseMove = (e: MouseEvent) => {
-         setMousePosition({ x: e.clientX, y: e.clientY });
+         pendingPosRef.current = { x: e.clientX, y: e.clientY };
+         if (rafIdRef.current == null) {
+            rafIdRef.current = requestAnimationFrame(tick);
+         }
       };
 
       const handleMouseDown = () => setIsClicking(true);
       const handleMouseUp = () => setIsClicking(false);
 
-      window.addEventListener("mousemove", handleMouseMove);
-      window.addEventListener("mousedown", handleMouseDown);
-      window.addEventListener("mouseup", handleMouseUp);
+      runningRef.current = true;
+      window.addEventListener("mousemove", handleMouseMove, { passive: true });
+      window.addEventListener("mousedown", handleMouseDown, { passive: true });
+      window.addEventListener("mouseup", handleMouseUp, { passive: true });
 
       return () => {
-         window.removeEventListener("mousemove", handleMouseMove);
-         window.removeEventListener("mousedown", handleMouseDown);
-         window.removeEventListener("mouseup", handleMouseUp);
+         runningRef.current = false;
+         if (rafIdRef.current != null) cancelAnimationFrame(rafIdRef.current);
+         rafIdRef.current = null;
+         pendingPosRef.current = null;
+         window.removeEventListener("mousemove", handleMouseMove as any);
+         window.removeEventListener("mousedown", handleMouseDown as any);
+         window.removeEventListener("mouseup", handleMouseUp as any);
       };
-   }, []);
+   }, [prefersReducedMotion]);
+
+   if (prefersReducedMotion) return null;
 
    return (
-      <>
+      <LazyMotion features={domAnimation} strict>
          {/* Outer glow - follows with delay for trail effect */}
-         <motion.div
+         <m.div
             animate={{
                x: mousePosition.x - 30,
                y: mousePosition.y - 30,
@@ -57,7 +83,7 @@ const CustomCursor: React.FC = () => {
          />
 
          {/* Middle glow */}
-         <motion.div
+         <m.div
             animate={{
                x: mousePosition.x - 20,
                y: mousePosition.y - 20,
@@ -83,7 +109,7 @@ const CustomCursor: React.FC = () => {
          />
 
          {/* Inner ring - sharp and visible */}
-         <motion.div
+         <m.div
             animate={{
                x: mousePosition.x - 12,
                y: mousePosition.y - 12,
@@ -106,7 +132,7 @@ const CustomCursor: React.FC = () => {
                boxShadow: "0 0 10px rgba(0, 102, 204, 0.3)",
             }}
          />
-      </>
+      </LazyMotion>
    );
 };
 

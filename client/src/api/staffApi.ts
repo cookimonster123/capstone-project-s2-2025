@@ -1,5 +1,6 @@
 import { BASE_API_URL } from "../config/api";
 import type { UserSummary } from "./userApi";
+import type { PaginationMeta } from "../types/pagination";
 
 // Team type
 export interface Team {
@@ -56,6 +57,42 @@ export const fetchAllUsers = async (): Promise<UserSummary[]> => {
       console.error("Error fetching users:", error);
       return [];
    }
+};
+
+export interface FetchUsersPaginatedParams {
+   page?: number;
+   limit?: number;
+   q?: string;
+   role?: string;
+   sort?: string;
+   order?: "asc" | "desc";
+}
+
+export interface UsersPaginatedResponse {
+   users: UserSummary[];
+   pagination: PaginationMeta;
+}
+
+export const fetchUsersPaginated = async (
+   params: FetchUsersPaginatedParams,
+): Promise<UsersPaginatedResponse> => {
+   const qs = new URLSearchParams();
+   if (params.page) qs.set("page", String(params.page));
+   if (params.limit) qs.set("limit", String(params.limit));
+   if (params.q) qs.set("q", params.q);
+   if (params.role) qs.set("role", params.role);
+   if (params.sort) qs.set("sort", params.sort);
+   if (params.order) qs.set("order", params.order);
+
+   const response = await fetch(`${BASE_API_URL}/users?${qs.toString()}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+   });
+   if (!response.ok)
+      throw new Error(`Failed to fetch users: ${response.status}`);
+   const data = await response.json();
+   return { users: data.users || [], pagination: data.pagination };
 };
 
 // Update a user
@@ -160,6 +197,39 @@ export const fetchAllTeams = async (): Promise<Team[]> => {
       console.error("Error fetching teams:", error);
       return [];
    }
+};
+
+export interface FetchTeamsPaginatedParams {
+   page?: number;
+   limit?: number;
+   q?: string;
+   sort?: string;
+   order?: "asc" | "desc";
+}
+
+export interface TeamsPaginatedResponse {
+   teams: Team[];
+   pagination: PaginationMeta;
+}
+
+export const fetchTeamsPaginated = async (
+   params: FetchTeamsPaginatedParams,
+): Promise<TeamsPaginatedResponse> => {
+   const qs = new URLSearchParams();
+   if (params.page) qs.set("page", String(params.page));
+   if (params.limit) qs.set("limit", String(params.limit));
+   if (params.q) qs.set("q", params.q);
+   if (params.sort) qs.set("sort", params.sort);
+   if (params.order) qs.set("order", params.order);
+
+   const res = await fetch(`${BASE_API_URL}/teams?${qs.toString()}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+   });
+   if (!res.ok) throw new Error(`Failed to fetch teams: ${res.status}`);
+   const data = await res.json();
+   return { teams: data.teams || [], pagination: data.pagination };
 };
 
 // Upload teams CSV

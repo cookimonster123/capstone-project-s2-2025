@@ -1,5 +1,6 @@
 import React from "react";
 import { Box } from "@mui/material";
+import { useReducedMotion } from "framer-motion";
 
 /**
  * PremiumLightBackground
@@ -13,6 +14,7 @@ import { Box } from "@mui/material";
  * - 优雅的变形和旋转效果
  */
 const PremiumLightBackground: React.FC = () => {
+   const prefersReducedMotion = useReducedMotion();
    return (
       <Box
          sx={{
@@ -41,7 +43,9 @@ const PremiumLightBackground: React.FC = () => {
                WebkitBackdropFilter: "blur(30px) saturate(180%)",
                border: "1px solid rgba(255, 255, 255, 0.5)",
                boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.1)",
-               animation: "morphFloat1 20s ease-in-out infinite",
+               animation: prefersReducedMotion
+                  ? "none"
+                  : "morphFloat1 20s ease-in-out infinite",
                "@keyframes morphFloat1": {
                   "0%, 100%": {
                      transform: "translate(0, 0) rotate(0deg)",
@@ -77,7 +81,9 @@ const PremiumLightBackground: React.FC = () => {
                WebkitBackdropFilter: "blur(25px) saturate(180%)",
                border: "1px solid rgba(255, 255, 255, 0.4)",
                boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.08)",
-               animation: "morphFloat2 25s ease-in-out infinite",
+               animation: prefersReducedMotion
+                  ? "none"
+                  : "morphFloat2 25s ease-in-out infinite",
                "@keyframes morphFloat2": {
                   "0%, 100%": {
                      transform: "translate(0, 0) rotate(0deg)",
@@ -109,7 +115,9 @@ const PremiumLightBackground: React.FC = () => {
                WebkitBackdropFilter: "blur(28px) saturate(180%)",
                border: "1px solid rgba(255, 255, 255, 0.45)",
                boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.09)",
-               animation: "morphFloat3 30s ease-in-out infinite",
+               animation: prefersReducedMotion
+                  ? "none"
+                  : "morphFloat3 30s ease-in-out infinite",
                "@keyframes morphFloat3": {
                   "0%, 100%": {
                      transform: "translate(0, 0) rotate(0deg)",
@@ -135,7 +143,9 @@ const PremiumLightBackground: React.FC = () => {
                background:
                   "radial-gradient(circle, rgba(0, 70, 127, 0.12) 0%, transparent 70%)",
                filter: "blur(45px)",
-               animation: "pulse1 8s ease-in-out infinite",
+               animation: prefersReducedMotion
+                  ? "none"
+                  : "pulse1 8s ease-in-out infinite",
                "@keyframes pulse1": {
                   "0%, 100%": { opacity: 0.7, transform: "scale(1)" },
                   "50%": { opacity: 1, transform: "scale(1.25)" },
@@ -154,7 +164,9 @@ const PremiumLightBackground: React.FC = () => {
                background:
                   "radial-gradient(circle, rgba(0, 70, 127, 0.08) 0%, transparent 70%)",
                filter: "blur(40px)",
-               animation: "pulse2 10s ease-in-out infinite",
+               animation: prefersReducedMotion
+                  ? "none"
+                  : "pulse2 10s ease-in-out infinite",
                "@keyframes pulse2": {
                   "0%, 100%": { opacity: 0.6, transform: "scale(1)" },
                   "50%": { opacity: 0.95, transform: "scale(1.2)" },

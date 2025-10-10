@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { useTheme } from "@mui/material";
 
@@ -13,23 +13,43 @@ const MouseTrail: React.FC = () => {
    const isDark = theme.palette.mode === "dark";
    const [trail, setTrail] = useState<TrailDot[]>([]);
    const [trailId, setTrailId] = useState(0);
+   const reducedMotionRef = useRef<boolean>(false);
+   const visibleRef = useRef<boolean>(true);
 
    useEffect(() => {
-      let lastTime = Date.now();
-      let frameCount = 0;
+      const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
+      reducedMotionRef.current = mql.matches;
+      const onReducedMotionChange = (e: MediaQueryListEvent) => {
+         reducedMotionRef.current = e.matches;
+      };
+      if ("addEventListener" in mql) {
+         mql.addEventListener("change", onReducedMotionChange);
+      } else {
+         (mql as any).addListener(onReducedMotionChange);
+      }
+
+      const onVisibilityChange = () => {
+         visibleRef.current = document.visibilityState === "visible";
+      };
+      document.addEventListener("visibilitychange", onVisibilityChange);
+
+      let lastTime = performance.now();
+      const THROTTLE_MS = 80;
 
       const handleMouseMove = (e: MouseEvent) => {
-         const now = Date.now();
-         frameCount++;
-
-         // Throttle more aggressively: every 80ms and skip frames
-         if (now - lastTime > 80 && frameCount % 2 === 0) {
+         if (reducedMotionRef.current || !visibleRef.current) return;
+         const now = performance.now();
+         if (now - lastTime > THROTTLE_MS) {
             const newDot = {
                id: trailId,
                x: e.clientX,
                y: e.clientY,
             };
-            setTrail((prev) => [...prev.slice(-6), newDot]); // Reduced to max 6 dots
+            setTrail((prev) => {
+               const next = prev.length >= 6 ? prev.slice(1) : prev.slice();
+               next.push(newDot);
+               return next;
+            }); // keep at most 6, reuse array where possible
             setTrailId((prev) => prev + 1);
             lastTime = now;
          }
@@ -38,6 +58,12 @@ const MouseTrail: React.FC = () => {
       window.addEventListener("mousemove", handleMouseMove, { passive: true });
       return () => {
          window.removeEventListener("mousemove", handleMouseMove);
+         document.removeEventListener("visibilitychange", onVisibilityChange);
+         if ("removeEventListener" in mql) {
+            mql.removeEventListener("change", onReducedMotionChange);
+         } else {
+            (mql as any).removeListener(onReducedMotionChange);
+         }
       };
    }, [trailId]);
 

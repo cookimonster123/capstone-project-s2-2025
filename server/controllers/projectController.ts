@@ -2,6 +2,7 @@ import { Response } from "express";
 import { AuthRequest } from "../middleware/auth";
 import {
    findAllProjects,
+   findProjectsPaginated,
    findProjectById,
    removeProject,
    updateProject,
@@ -23,12 +24,44 @@ export const getAllProjects = async (
    res: Response,
 ): Promise<void> => {
    try {
-      const result = await findAllProjects();
-      if (result.success) {
-         res.status(200).json({ projects: result.data });
-      } else {
-         res.status(500).json({ error: "Failed to fetch projects" });
+      const { page, limit, q, category, semester, sort, order } =
+         req.query as any;
+
+      if (page || limit || q || category || semester || sort || order) {
+         const p = Number(page) || 1;
+         const l = Math.min(Math.max(Number(limit) || 20, 1), 200);
+         const result = await findProjectsPaginated({
+            page: p,
+            limit: l,
+            q: q as string | undefined,
+            category: category as string | undefined,
+            semester: semester as string | undefined,
+            sort: (sort as string) || "createdAt",
+            order: (order as string) === "asc" ? "asc" : "desc",
+         });
+         if (!result.success || !result.data) {
+            res.status(500).json({ error: "Failed to fetch projects" });
+            return;
+         }
+         const { items, total, totalPages } = result.data;
+         res.status(200).json({
+            projects: items,
+            pagination: {
+               total,
+               page: p,
+               limit: l,
+               totalPages,
+               hasNext: p < totalPages,
+               hasPrev: p > 1,
+            },
+         });
+         return;
       }
+
+      // Legacy behaviour without pagination
+      const result = await findAllProjects();
+      if (result.success) res.status(200).json({ projects: result.data });
+      else res.status(500).json({ error: "Failed to fetch projects" });
    } catch (error) {
       console.error("Error fetching projects:", error);
       res.status(500).json({ error: "Internal server error" });

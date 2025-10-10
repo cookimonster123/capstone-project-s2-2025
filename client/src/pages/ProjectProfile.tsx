@@ -40,6 +40,19 @@ const ProjectProfileView: React.FC<ProjectProfileProps> = ({
    onBack,
 }) => {
    const theme = useTheme();
+   // Respect user motion preference and avoid heavy animations when reduced
+   const [reducedMotion, setReducedMotion] = useState(false);
+   useEffect(() => {
+      try {
+         const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+         const update = () => setReducedMotion(!!mq.matches);
+         update();
+         mq.addEventListener("change", update);
+         return () => mq.removeEventListener("change", update);
+      } catch {
+         // noop (SSR or older browsers)
+      }
+   }, []);
    const [isLiked, setIsLiked] = useState(false);
    const [likeCount, setLikeCount] = useState<number>(project.likeCounts ?? 0);
    const [liking, setLiking] = useState(false);
@@ -104,12 +117,201 @@ const ProjectProfileView: React.FC<ProjectProfileProps> = ({
             if (active) setIsLiked(liked.includes(project._id));
          } catch {}
       };
+      // run
       loadLikeState();
       return () => {
          active = false;
       };
    }, [user?.id, project._id]);
 
+   // Precompute decoration configs once per mount to avoid recreating styles
+   const orbConfigs = useMemo(() => {
+      if (reducedMotion) return [] as Array<any>;
+      const count = 3; // reduced from 5
+      return Array.from({ length: count }).map(() => {
+         const size = 100 + Math.round(Math.random() * 200);
+         const dx1 = -100 + Math.round(Math.random() * 200);
+         const dy1 = -100 + Math.round(Math.random() * 200);
+         const s1 = 1 + Math.random() * 0.6; // 1-1.6
+         const dx2 = -150 + Math.round(Math.random() * 300);
+         const dy2 = -80 + Math.round(Math.random() * 160);
+         const s2 = 0.7 + Math.random() * 0.6; // 0.7-1.3
+         const left = Math.round(Math.random() * 100);
+         const top = Math.round(Math.random() * 100);
+         const opacity = 0.12 + Math.random() * 0.12;
+         const dur = 28 + Math.round(Math.random() * 24); // 28-52s
+         const delay = Math.round(Math.random() * 10);
+         return {
+            size,
+            dx1,
+            dy1,
+            s1,
+            dx2,
+            dy2,
+            s2,
+            left,
+            top,
+            opacity,
+            dur,
+            delay,
+         };
+      });
+   }, [reducedMotion]);
+
+   const particleConfigs = useMemo(() => {
+      if (reducedMotion) return [] as Array<any>;
+      const count = 14; // reduced from 20
+      return Array.from({ length: count }).map(() => {
+         const size = 3 + Math.round(Math.random() * 6);
+         const left = Math.round(Math.random() * 100);
+         const top = Math.round(Math.random() * 100);
+         const opacity = +(0.2 + Math.random() * 0.3).toFixed(2);
+         const boxGlow = 10 + Math.round(Math.random() * 20);
+         const dx1 = -20 + Math.round(Math.random() * 40);
+         const dy1 = -40 - Math.round(Math.random() * 30);
+         const dx2 = -30 + Math.round(Math.random() * 60);
+         const dy2 = -60 - Math.round(Math.random() * 40);
+         const dx3 = -20 + Math.round(Math.random() * 40);
+         const dy3 = -30 - Math.round(Math.random() * 30);
+         const dur = 10 + Math.round(Math.random() * 20);
+         const delay = Math.round(Math.random() * 5);
+         const colorIndex = Math.floor(Math.random() * 3);
+         return {
+            size,
+            left,
+            top,
+            opacity,
+            boxGlow,
+            dx1,
+            dy1,
+            dx2,
+            dy2,
+            dx3,
+            dy3,
+            dur,
+            delay,
+            colorIndex,
+         };
+      });
+   }, [reducedMotion]);
+
+   const streakConfigs = useMemo(() => {
+      if (reducedMotion) return [] as Array<any>;
+      const count = 2; // reduced from 3
+      return Array.from({ length: count }).map((_, i) => {
+         const h = 100 + Math.round(Math.random() * 200);
+         const left = 20 + i * 35 + Math.round(Math.random() * 8);
+         const dur = 3 + Math.round(Math.random() * 2);
+         const delay = i * 2 + Math.round(Math.random() * 3);
+         return { h, left, dur, delay };
+      });
+   }, [reducedMotion]);
+
+   const containerSx = useMemo(
+      () => ({
+         minHeight: "100vh",
+         bgcolor: (theme: any) =>
+            theme.palette.mode === "dark" ? "#0a0e17" : "#fbfbfd",
+         position: "relative",
+         overflow: "hidden",
+         // Define reusable keyframes ONCE to prevent re-injection
+         "@keyframes pulse": {
+            "0%, 100%": { opacity: 1, transform: "scale(1)" },
+            "50%": { opacity: 0.8, transform: "scale(1.05)" },
+         },
+         "@keyframes gridMove": {
+            "0%": { transform: "translate(0, 0)" },
+            "100%": { transform: "translate(60px, 60px)" },
+         },
+         // New global keyframes using CSS variables per element
+         "@keyframes orbitKF": {
+            "0%, 100%": { transform: "translate(0, 0) scale(1)" },
+            "33%": {
+               transform:
+                  "translate(var(--o1x, 40px), var(--o1y, -30px)) scale(var(--o1s, 1.2))",
+            },
+            "66%": {
+               transform:
+                  "translate(var(--o2x, -60px), var(--o2y, 40px)) scale(var(--o2s, 0.9))",
+            },
+         },
+         "@keyframes float3dKF": {
+            "0%, 100%": { transform: "translate3d(0, 0, 0) rotate(0deg)" },
+            "25%": {
+               transform:
+                  "translate3d(var(--p1x, -10px), var(--p1y, -30px), 0) rotate(90deg)",
+            },
+            "50%": {
+               transform:
+                  "translate3d(var(--p2x, -15px), var(--p2y, -50px), 0) rotate(180deg)",
+            },
+            "75%": {
+               transform:
+                  "translate3d(var(--p3x, -10px), var(--p3y, -28px), 0) rotate(270deg)",
+            },
+         },
+         "@keyframes streakKF": {
+            "0%": { transform: "translateY(0) scaleY(0)", opacity: 0 },
+            "10%": { opacity: 1 },
+            "90%": { opacity: 0.5 },
+            "100%": { transform: "translateY(120vh) scaleY(1)", opacity: 0 },
+         },
+         // Animated pulsing gradient background
+         "&::before": {
+            content: '""',
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: (theme: any) =>
+               theme.palette.mode === "dark"
+                  ? `
+                           radial-gradient(circle 900px at 20% 15%, rgba(0, 153, 255, 0.10), transparent),
+                           radial-gradient(circle 700px at 80% 85%, rgba(14, 165, 233, 0.08), transparent),
+                           radial-gradient(circle 500px at 50% 50%, rgba(0, 153, 255, 0.05), transparent)
+                        `
+                  : `
+                           radial-gradient(circle 900px at 20% 15%, rgba(0, 102, 204, 0.12), transparent),
+                           radial-gradient(circle 700px at 80% 85%, rgba(14, 165, 233, 0.1), transparent),
+                           radial-gradient(circle 500px at 50% 50%, rgba(0, 102, 204, 0.05), transparent)
+                        `,
+            animation: reducedMotion ? "none" : "pulse 8s ease-in-out infinite",
+            pointerEvents: "none",
+            zIndex: 0,
+         },
+         // Animated grid pattern
+         "&::after": {
+            content: '""',
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundImage: (theme: any) =>
+               theme.palette.mode === "dark"
+                  ? `
+                           linear-gradient(rgba(0, 153, 255, 0.04) 2px, transparent 2px),
+                           linear-gradient(90deg, rgba(0, 153, 255, 0.04) 2px, transparent 2px)
+                        `
+                  : `
+                           linear-gradient(rgba(0, 102, 204, 0.03) 2px, transparent 2px),
+                           linear-gradient(90deg, rgba(0, 102, 204, 0.03) 2px, transparent 2px)
+                        `,
+            backgroundSize: "60px 60px",
+            opacity: 0.6,
+            pointerEvents: "none",
+            zIndex: 0,
+            animation: reducedMotion ? "none" : "gridMove 20s linear infinite",
+         },
+      }),
+      [reducedMotion, theme.palette.mode],
+   );
+
+   // Derive category name once for chips
+   const categoryName = project.category?.name ?? "Uncategorized";
+
+   // Like toggle handler (unchanged semantics)
    const handleToggleLike = async () => {
       if (liking) return;
       if (!user?.id) {
@@ -119,13 +321,24 @@ const ProjectProfileView: React.FC<ProjectProfileProps> = ({
       try {
          setLiking(true);
          const res = await likeProject(project._id);
-         setIsLiked(res.data.button);
-         if (typeof res.data.likeCounts === "number") {
-            setLikeCount(res.data.likeCounts);
-         } else {
-            // Fallback adjust
-            setLikeCount((c) => c + (res.data.button ? 1 : -1));
-         }
+         const nextLiked = Boolean(res.data.button);
+         const nextCount =
+            typeof res.data.likeCounts === "number"
+               ? res.data.likeCounts
+               : likeCount + (nextLiked ? 1 : -1);
+         setIsLiked(nextLiked);
+         setLikeCount(nextCount);
+         try {
+            window.dispatchEvent(
+               new CustomEvent("project-like-changed", {
+                  detail: {
+                     projectId: project._id,
+                     liked: nextLiked,
+                     likeCounts: nextCount,
+                  },
+               }),
+            );
+         } catch {}
       } catch (e) {
          if (e instanceof LikeApiError && e.status === 401) {
             navigate("/sign-in");
@@ -136,185 +349,92 @@ const ProjectProfileView: React.FC<ProjectProfileProps> = ({
       }
    };
 
-   const categoryName = project.category?.name ?? "Uncategorized";
-
    return (
-      <Box
-         sx={{
-            minHeight: "100vh",
-            bgcolor: (theme) =>
-               theme.palette.mode === "dark" ? "#0a0e17" : "#fbfbfd",
-            position: "relative",
-            overflow: "hidden",
-            // Animated pulsing gradient background
-            "&::before": {
-               content: '""',
-               position: "fixed",
-               top: 0,
-               left: 0,
-               right: 0,
-               bottom: 0,
-               background: (theme) =>
-                  theme.palette.mode === "dark"
-                     ? `
-                        radial-gradient(circle 900px at 20% 15%, rgba(0, 153, 255, 0.10), transparent),
-                        radial-gradient(circle 700px at 80% 85%, rgba(14, 165, 233, 0.08), transparent),
-                        radial-gradient(circle 500px at 50% 50%, rgba(0, 153, 255, 0.05), transparent)
-                     `
-                     : `
-                        radial-gradient(circle 900px at 20% 15%, rgba(0, 102, 204, 0.12), transparent),
-                        radial-gradient(circle 700px at 80% 85%, rgba(14, 165, 233, 0.1), transparent),
-                        radial-gradient(circle 500px at 50% 50%, rgba(0, 102, 204, 0.05), transparent)
-                     `,
-               animation: "pulse 8s ease-in-out infinite",
-               pointerEvents: "none",
-               zIndex: 0,
-               "@keyframes pulse": {
-                  "0%, 100%": {
-                     opacity: 1,
-                     transform: "scale(1)",
-                  },
-                  "50%": {
-                     opacity: 0.8,
-                     transform: "scale(1.05)",
-                  },
-               },
-            },
-            // Animated grid pattern
-            "&::after": {
-               content: '""',
-               position: "fixed",
-               top: 0,
-               left: 0,
-               right: 0,
-               bottom: 0,
-               backgroundImage: (theme) =>
-                  theme.palette.mode === "dark"
-                     ? `
-                        linear-gradient(rgba(0, 153, 255, 0.04) 2px, transparent 2px),
-                        linear-gradient(90deg, rgba(0, 153, 255, 0.04) 2px, transparent 2px)
-                     `
-                     : `
-                        linear-gradient(rgba(0, 102, 204, 0.03) 2px, transparent 2px),
-                        linear-gradient(90deg, rgba(0, 102, 204, 0.03) 2px, transparent 2px)
-                     `,
-               backgroundSize: "60px 60px",
-               opacity: 0.6,
-               pointerEvents: "none",
-               zIndex: 0,
-               animation: "gridMove 20s linear infinite",
-               "@keyframes gridMove": {
-                  "0%": {
-                     transform: "translate(0, 0)",
-                  },
-                  "100%": {
-                     transform: "translate(60px, 60px)",
-                  },
-               },
-            },
-         }}
-      >
-         {/* Glowing orbs */}
-         {[...Array(5)].map((_, i) => (
+      <Box sx={containerSx}>
+         {/* Glowing orbs (stable styles) */}
+         {orbConfigs.map((c, i) => (
             <Box
                key={`orb-${i}`}
-               sx={{
-                  position: "fixed",
-                  width: `${100 + Math.random() * 200}px`,
-                  height: `${100 + Math.random() * 200}px`,
-                  borderRadius: "50%",
-                  background: `radial-gradient(circle, rgba(0, 102, 204, ${0.15 + Math.random() * 0.1}), transparent)`,
-                  filter: "blur(40px)",
-                  left: `${Math.random() * 100}%`,
-                  top: `${Math.random() * 100}%`,
-                  pointerEvents: "none",
-                  zIndex: 0,
-                  animation: `orbit ${30 + Math.random() * 40}s ease-in-out infinite`,
-                  animationDelay: `${Math.random() * 10}s`,
-                  "@keyframes orbit": {
-                     "0%, 100%": {
-                        transform: "translate(0, 0) scale(1)",
-                     },
-                     "33%": {
-                        transform: `translate(${-100 + Math.random() * 200}px, ${-100 + Math.random() * 200}px) scale(1.3)`,
-                     },
-                     "66%": {
-                        transform: `translate(${-150 + Math.random() * 300}px, ${-80 + Math.random() * 160}px) scale(0.8)`,
-                     },
-                  },
-               }}
+               sx={
+                  {
+                     position: "fixed",
+                     width: `${c.size}px`,
+                     height: `${c.size}px`,
+                     borderRadius: "50%",
+                     background: `radial-gradient(circle, rgba(0, 102, 204, ${c.opacity}), transparent)`,
+                     filter: "blur(40px)",
+                     left: `${c.left}%`,
+                     top: `${c.top}%`,
+                     pointerEvents: "none",
+                     zIndex: 0,
+                     animation: reducedMotion
+                        ? "none"
+                        : `orbitKF ${c.dur}s ease-in-out infinite`,
+                     animationDelay: `${c.delay}s`,
+                     "--o1x": `${c.dx1}px`,
+                     "--o1y": `${c.dy1}px`,
+                     "--o1s": `${c.s1}`,
+                     "--o2x": `${c.dx2}px`,
+                     "--o2y": `${c.dy2}px`,
+                     "--o2s": `${c.s2}`,
+                  } as any
+               }
             />
          ))}
-
-         {/* Floating particles with rotation */}
-         {[...Array(20)].map((_, i) => (
+         {/* Floating particles with rotation (stable styles) */}
+         {particleConfigs.map((p, i) => (
             <Box
                key={`particle-${i}`}
-               sx={{
-                  position: "fixed",
-                  width: `${3 + Math.random() * 6}px`,
-                  height: `${3 + Math.random() * 6}px`,
-                  bgcolor:
-                     i % 3 === 0 ? "#06c" : i % 3 === 1 ? "#0ea5e9" : "#38bdf8",
-                  opacity: 0.2 + Math.random() * 0.3,
-                  borderRadius: "50%",
-                  left: `${Math.random() * 100}%`,
-                  top: `${Math.random() * 100}%`,
-                  pointerEvents: "none",
-                  zIndex: 0,
-                  boxShadow: `0 0 ${10 + Math.random() * 20}px currentColor`,
-                  animation: `float3d ${10 + Math.random() * 20}s ease-in-out infinite`,
-                  animationDelay: `${Math.random() * 5}s`,
-                  "@keyframes float3d": {
-                     "0%, 100%": {
-                        transform: "translate3d(0, 0, 0) rotate(0deg)",
-                     },
-                     "25%": {
-                        transform: `translate3d(${-20 + Math.random() * 40}px, ${-40 - Math.random() * 30}px, 0) rotate(90deg)`,
-                     },
-                     "50%": {
-                        transform: `translate3d(${-30 + Math.random() * 60}px, ${-60 - Math.random() * 40}px, 0) rotate(180deg)`,
-                     },
-                     "75%": {
-                        transform: `translate3d(${-20 + Math.random() * 40}px, ${-30 - Math.random() * 30}px, 0) rotate(270deg)`,
-                     },
-                  },
-               }}
+               sx={
+                  {
+                     position: "fixed",
+                     width: `${p.size}px`,
+                     height: `${p.size}px`,
+                     bgcolor:
+                        p.colorIndex === 0
+                           ? "#06c"
+                           : p.colorIndex === 1
+                             ? "#0ea5e9"
+                             : "#38bdf8",
+                     opacity: p.opacity,
+                     borderRadius: "50%",
+                     left: `${p.left}%`,
+                     top: `${p.top}%`,
+                     pointerEvents: "none",
+                     zIndex: 0,
+                     boxShadow: `0 0 ${p.boxGlow}px currentColor`,
+                     animation: reducedMotion
+                        ? "none"
+                        : `float3dKF ${p.dur}s ease-in-out infinite`,
+                     animationDelay: `${p.delay}s`,
+                     "--p1x": `${p.dx1}px`,
+                     "--p1y": `${p.dy1}px`,
+                     "--p2x": `${p.dx2}px`,
+                     "--p2y": `${p.dy2}px`,
+                     "--p3x": `${p.dx3}px`,
+                     "--p3y": `${p.dy3}px`,
+                  } as any
+               }
             />
          ))}
-
-         {/* Light streaks */}
-         {[...Array(3)].map((_, i) => (
+         {/* Light streaks (stable styles) */}
+         {streakConfigs.map((s, i) => (
             <Box
                key={`streak-${i}`}
                sx={{
                   position: "fixed",
                   width: "2px",
-                  height: `${100 + Math.random() * 200}px`,
+                  height: `${s.h}px`,
                   background:
                      "linear-gradient(180deg, transparent, rgba(0, 102, 204, 0.4), transparent)",
-                  left: `${20 + i * 30}%`,
+                  left: `${s.left}%`,
                   top: "-200px",
                   pointerEvents: "none",
                   zIndex: 0,
-                  animation: `streak ${3 + Math.random() * 2}s ease-in infinite`,
-                  animationDelay: `${i * 2 + Math.random() * 3}s`,
-                  "@keyframes streak": {
-                     "0%": {
-                        transform: "translateY(0) scaleY(0)",
-                        opacity: 0,
-                     },
-                     "10%": {
-                        opacity: 1,
-                     },
-                     "90%": {
-                        opacity: 0.5,
-                     },
-                     "100%": {
-                        transform: "translateY(120vh) scaleY(1)",
-                        opacity: 0,
-                     },
-                  },
+                  animation: reducedMotion
+                     ? "none"
+                     : `streakKF ${s.dur}s ease-in infinite`,
+                  animationDelay: `${s.delay}s`,
                }}
             />
          ))}
@@ -723,7 +843,7 @@ const ProjectProfilePage: React.FC = () => {
             const data = await fetchProjectById(id);
             if (active) {
                setProject(data);
-               projectCache.set(id, data);
+               if (data) projectCache.set(id, data);
             }
          } catch (e) {
             if (active)

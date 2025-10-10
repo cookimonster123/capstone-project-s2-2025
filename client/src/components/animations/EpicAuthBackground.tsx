@@ -15,6 +15,9 @@ const EpicAuthBackground: React.FC = () => {
    const theme = useTheme();
    const canvasRef = useRef<HTMLCanvasElement>(null);
    const isDark = theme.palette.mode === "dark";
+   const rafIdRef = useRef<number | null>(null);
+   const runningRef = useRef<boolean>(false);
+   const reducedMotionRef = useRef<boolean>(false);
 
    useEffect(() => {
       const canvas = canvasRef.current;
@@ -24,12 +27,39 @@ const EpicAuthBackground: React.FC = () => {
       if (!ctx) return;
 
       // Set canvas size
+      let cWidth = window.innerWidth;
+      let cHeight = window.innerHeight;
       const setCanvasSize = () => {
-         canvas.width = window.innerWidth;
-         canvas.height = window.innerHeight;
+         cWidth = window.innerWidth;
+         cHeight = window.innerHeight;
+         canvas.width = cWidth;
+         canvas.height = cHeight;
       };
       setCanvasSize();
       window.addEventListener("resize", setCanvasSize);
+
+      // Reduced motion preference
+      const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
+      reducedMotionRef.current = mql.matches;
+      const onReducedMotionChange = (e: MediaQueryListEvent) => {
+         reducedMotionRef.current = e.matches;
+         if (e.matches) {
+            runningRef.current = false;
+            if (rafIdRef.current !== null) {
+               cancelAnimationFrame(rafIdRef.current);
+               rafIdRef.current = null;
+            }
+            renderStaticFrame();
+         } else if (!runningRef.current) {
+            runningRef.current = true;
+            rafIdRef.current = requestAnimationFrame(animate);
+         }
+      };
+      if ("addEventListener" in mql) {
+         mql.addEventListener("change", onReducedMotionChange);
+      } else {
+         (mql as any).addListener(onReducedMotionChange);
+      }
 
       // Particle class
       class Particle {
@@ -91,26 +121,31 @@ const EpicAuthBackground: React.FC = () => {
       const particles: Particle[] = [];
       const particleCount = isDark ? 120 : 80; // More particles in dark mode
       for (let i = 0; i < particleCount; i++) {
-         particles.push(new Particle(canvas.width, canvas.height));
+         particles.push(new Particle(cWidth, cHeight));
       }
 
-      let mouseX = canvas.width / 2;
-      let mouseY = canvas.height / 2;
+      let mouseX = cWidth / 2;
+      let mouseY = cHeight / 2;
+      let lastMouseUpdate = 0;
+      const THROTTLE_MS = 50; // 20Hz
 
       const handleMouseMove = (e: MouseEvent) => {
+         const now = performance.now();
+         if (now - lastMouseUpdate < THROTTLE_MS) return;
+         lastMouseUpdate = now;
          mouseX = e.clientX;
          mouseY = e.clientY;
       };
-      window.addEventListener("mousemove", handleMouseMove);
+      window.addEventListener("mousemove", handleMouseMove, { passive: true });
 
       // Animation loop
-      let animationId: number;
       const animate = () => {
-         ctx.clearRect(0, 0, canvas.width, canvas.height);
+         if (!runningRef.current || reducedMotionRef.current) return;
+         ctx.clearRect(0, 0, cWidth, cHeight);
 
          // Update and draw particles
          particles.forEach((particle) => {
-            particle.update(canvas.width, canvas.height);
+            particle.update(cWidth, cHeight);
             particle.draw(ctx);
          });
 
@@ -150,15 +185,50 @@ const EpicAuthBackground: React.FC = () => {
             }
          });
 
-         animationId = requestAnimationFrame(animate);
+         rafIdRef.current = requestAnimationFrame(animate);
       };
 
-      animate();
+      const renderStaticFrame = () => {
+         ctx.clearRect(0, 0, cWidth, cHeight);
+         particles.forEach((p) => p.draw(ctx));
+      };
+
+      const onVisibilityChange = () => {
+         if (document.visibilityState === "hidden") {
+            runningRef.current = false;
+            if (rafIdRef.current !== null) {
+               cancelAnimationFrame(rafIdRef.current);
+               rafIdRef.current = null;
+            }
+         } else if (!reducedMotionRef.current) {
+            runningRef.current = true;
+            rafIdRef.current = requestAnimationFrame(animate);
+         }
+      };
+      document.addEventListener("visibilitychange", onVisibilityChange);
+
+      if (reducedMotionRef.current) {
+         runningRef.current = false;
+         renderStaticFrame();
+      } else {
+         runningRef.current = true;
+         rafIdRef.current = requestAnimationFrame(animate);
+      }
 
       return () => {
          window.removeEventListener("resize", setCanvasSize);
-         window.removeEventListener("mousemove", handleMouseMove);
-         cancelAnimationFrame(animationId);
+         window.removeEventListener("mousemove", handleMouseMove as any);
+         document.removeEventListener("visibilitychange", onVisibilityChange);
+         if ("removeEventListener" in mql) {
+            mql.removeEventListener("change", onReducedMotionChange);
+         } else {
+            (mql as any).removeListener(onReducedMotionChange);
+         }
+         runningRef.current = false;
+         if (rafIdRef.current !== null) {
+            cancelAnimationFrame(rafIdRef.current);
+            rafIdRef.current = null;
+         }
       };
    }, [isDark]);
 
@@ -220,6 +290,9 @@ const EpicAuthBackground: React.FC = () => {
                      "0%, 100%": { transform: "translate(0, 0) scale(1)" },
                      "50%": { transform: "translate(80px, 150px) scale(1.15)" },
                   },
+                  "@media (prefers-reduced-motion: reduce)": {
+                     animation: "none",
+                  },
                }}
             />
          ))}
@@ -244,6 +317,9 @@ const EpicAuthBackground: React.FC = () => {
                "@keyframes grid-flow": {
                   "0%": { transform: "perspective(500px) rotateX(0deg)" },
                   "100%": { transform: "perspective(500px) rotateX(360deg)" },
+               },
+               "@media (prefers-reduced-motion: reduce)": {
+                  animation: "none",
                },
             }}
          />
@@ -290,6 +366,9 @@ const EpicAuthBackground: React.FC = () => {
                         transform: "scale(2)",
                         opacity: 0,
                      },
+                  },
+                  "@media (prefers-reduced-motion: reduce)": {
+                     animation: "none",
                   },
                }}
             />

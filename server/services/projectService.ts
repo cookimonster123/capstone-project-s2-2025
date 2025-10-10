@@ -13,6 +13,7 @@ import {
 } from "../services/fileService";
 import mongoose from "mongoose";
 import { addTagToProject } from "./tagService";
+import type { FilterQuery, SortOrder } from "mongoose";
 
 /**
  * Validates project data
@@ -74,6 +75,82 @@ export function validateUpdateProjectData(
    }).min(1); // Ensure at least one field is provided for update
 
    return schema.validate(updateData);
+}
+
+/**
+ * Paginated list of projects with optional search and filters
+ */
+export async function findProjectsPaginated(options: {
+   page?: number;
+   limit?: number;
+   q?: string;
+   category?: string;
+   semester?: string;
+   sort?: string;
+   order?: "asc" | "desc";
+}): Promise<
+   ServiceResult<{
+      items: any[];
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+   }>
+> {
+   try {
+      const {
+         page = 1,
+         limit = 20,
+         q,
+         category,
+         semester,
+         sort = "createdAt",
+         order = "desc",
+      } = options || {};
+
+      const skip = (page - 1) * limit;
+
+      const query: FilterQuery<typeof Project> = {} as any;
+      if (q && q.trim()) {
+         const rx = new RegExp(q.trim(), "i");
+         // Search on name and description
+         (query as any).$or = [{ name: rx }, { description: rx }];
+      }
+      if (category) {
+         (query as any).category = category;
+      }
+      if (semester) {
+         (query as any).semester = semester;
+      }
+
+      const primary = order === "asc" ? 1 : -1;
+      const sortSpec: Record<string, SortOrder> =
+         sort === "createdAt"
+            ? { createdAt: primary, _id: primary }
+            : { [sort]: primary, _id: primary };
+
+      const [items, total] = await Promise.all([
+         Project.find(query)
+            .populate("team")
+            .populate("semester")
+            .populate("category")
+            .populate("tags", "name")
+            .populate("awards", "_id iconUrl name")
+            .sort(sortSpec)
+            .skip(skip)
+            .limit(limit),
+         Project.countDocuments(query),
+      ]);
+
+      const totalPages = Math.max(1, Math.ceil(total / limit));
+      return {
+         success: true,
+         data: { items, total, page, limit, totalPages },
+      };
+   } catch (error) {
+      console.error("Error in findProjectsPaginated service:", error);
+      throw error;
+   }
 }
 
 /**

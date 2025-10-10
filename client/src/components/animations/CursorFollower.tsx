@@ -10,10 +10,26 @@ const CursorFollower: React.FC = () => {
    const [isHovering, setIsHovering] = useState(false);
 
    useEffect(() => {
+      const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
+      let reducedMotion = mql.matches;
+      const onReducedMotionChange = (e: MediaQueryListEvent) => {
+         reducedMotion = e.matches;
+      };
+      if ("addEventListener" in mql) {
+         mql.addEventListener("change", onReducedMotionChange);
+      } else {
+         (mql as any).addListener(onReducedMotionChange);
+      }
+
+      let lastTime = performance.now();
+      const THROTTLE_MS = 50;
       const handleMouseMove = (e: MouseEvent) => {
+         if (reducedMotion || document.visibilityState !== "visible") return;
+         const now = performance.now();
+         if (now - lastTime < THROTTLE_MS) return;
+         lastTime = now;
          setMousePosition({ x: e.clientX, y: e.clientY });
 
-         // Check if hovering over interactive element
          const target = e.target as HTMLElement;
          const isInteractive =
             target.tagName === "BUTTON" ||
@@ -21,12 +37,18 @@ const CursorFollower: React.FC = () => {
             target.closest("button") ||
             target.closest("a") ||
             target.style.cursor === "pointer";
-
          setIsHovering(!!isInteractive);
       };
 
-      window.addEventListener("mousemove", handleMouseMove);
-      return () => window.removeEventListener("mousemove", handleMouseMove);
+      window.addEventListener("mousemove", handleMouseMove, { passive: true });
+      return () => {
+         window.removeEventListener("mousemove", handleMouseMove as any);
+         if ("removeEventListener" in mql) {
+            mql.removeEventListener("change", onReducedMotionChange);
+         } else {
+            (mql as any).removeListener(onReducedMotionChange);
+         }
+      };
    }, []);
 
    return (

@@ -2,6 +2,7 @@ import { Response } from "express";
 import { AuthRequest } from "../middleware/auth";
 import {
    findAllUsers,
+   findUsersPaginated,
    findUserById,
    removeUser,
    updateUser,
@@ -21,6 +22,38 @@ export const getAllUsers = async (
    res: Response,
 ): Promise<void> => {
    try {
+      const { page, limit, q, role, sort, order } = req.query as any;
+
+      if (page || limit || q || role || sort || order) {
+         const p = Number(page) || 1;
+         const l = Math.min(Math.max(Number(limit) || 20, 1), 200);
+         const result = await findUsersPaginated({
+            page: p,
+            limit: l,
+            q: q as string | undefined,
+            role: role as string | undefined,
+            sort: (sort as string) || "createdAt",
+            order: (order as string) === "asc" ? "asc" : "desc",
+         });
+         if (!result.success || !result.data) {
+            res.status(500).json({ error: "Failed to fetch users" });
+            return;
+         }
+         const { items, total, totalPages } = result.data;
+         res.status(200).json({
+            users: items,
+            pagination: {
+               total,
+               page: p,
+               limit: l,
+               totalPages,
+               hasNext: p < totalPages,
+               hasPrev: p > 1,
+            },
+         });
+         return;
+      }
+
       const result = await findAllUsers();
       if (!result.success) {
          res.status(500).json({ error: "Failed to fetch users" });

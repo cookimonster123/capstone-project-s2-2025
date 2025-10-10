@@ -1,4 +1,5 @@
 import type { Project, ProjectsResponse } from "../types/project";
+import type { PaginationMeta } from "../types/pagination";
 import { BASE_API_URL } from "../config/api";
 
 /**
@@ -27,6 +28,46 @@ export const fetchProjects = async (): Promise<Project[]> => {
       console.error("Error fetching projects:", error);
       throw error;
    }
+};
+
+export interface FetchProjectsPaginatedParams {
+   page?: number;
+   limit?: number;
+   q?: string;
+   category?: string;
+   semester?: string;
+   sort?: string;
+   order?: "asc" | "desc";
+}
+
+export interface ProjectsPaginatedResponse {
+   projects: Project[];
+   pagination: PaginationMeta;
+}
+
+export const fetchProjectsPaginated = async (
+   params: FetchProjectsPaginatedParams,
+): Promise<ProjectsPaginatedResponse> => {
+   const qs = new URLSearchParams();
+   if (params.page) qs.set("page", String(params.page));
+   if (params.limit) qs.set("limit", String(params.limit));
+   if (params.q) qs.set("q", params.q);
+   if (params.category) qs.set("category", params.category);
+   if (params.semester) qs.set("semester", params.semester);
+   if (params.sort) qs.set("sort", params.sort);
+   if (params.order) qs.set("order", params.order);
+
+   const url = `${BASE_API_URL}/projects?${qs.toString()}`;
+   const response = await fetch(url, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+   });
+   if (!response.ok) {
+      throw new Error(`Failed to fetch projects: ${response.status}`);
+   }
+   const data = await response.json();
+   return { projects: data.projects || [], pagination: data.pagination };
 };
 
 /**

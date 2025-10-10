@@ -19,6 +19,7 @@ import {
    OutlinedInput,
    Stack,
    Divider,
+   Pagination,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import { NAV_HEIGHT } from "../components/Navbar";
@@ -46,6 +47,9 @@ const ProjectGalleryPage: React.FC = () => {
    const [searchParams, setSearchParams] = useSearchParams();
    const navigate = useNavigate();
    const [reducedMotion, setReducedMotion] = useState(false);
+   // Gallery pagination
+   const [page, setPage] = useState(1);
+   const rowsPerPage = 9;
 
    // Always start from top when entering the gallery
    useEffect(() => {
@@ -258,6 +262,24 @@ const ProjectGalleryPage: React.FC = () => {
 
       return scored;
    }, [projects, debouncedSearch, category, year, semester]);
+
+   // Derive paginated slice (client-side)
+   const pagedProjects = useMemo(() => {
+      const start = (page - 1) * rowsPerPage;
+      const end = start + rowsPerPage;
+      return filteredProjects.slice(start, end);
+   }, [filteredProjects, page]);
+
+   // Clamp page if filters change and current page is out of range
+   useEffect(() => {
+      const totalPages = Math.ceil(filteredProjects.length / rowsPerPage);
+      if (totalPages === 0) {
+         if (page !== 1) setPage(1);
+         return;
+      }
+      if (page > totalPages) setPage(totalPages);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+   }, [filteredProjects.length]);
 
    const yearOptions = useMemo(() => {
       const years = new Set<number>();
@@ -1210,12 +1232,34 @@ const ProjectGalleryPage: React.FC = () => {
 
                   {/* Grid */}
                   <ProjectGrid
-                     projects={filteredProjects}
+                     projects={pagedProjects}
                      loading={loading}
                      error={error}
                      onProjectClick={handleProjectClick}
                      showCount={true}
                   />
+
+                  {/* Pagination */}
+                  {Math.ceil(filteredProjects.length / rowsPerPage) > 1 && (
+                     <Box
+                        sx={{
+                           display: "flex",
+                           justifyContent: "center",
+                           mt: 3,
+                        }}
+                     >
+                        <Pagination
+                           count={Math.ceil(
+                              filteredProjects.length / rowsPerPage,
+                           )}
+                           page={page}
+                           onChange={(_e, value) => setPage(value)}
+                           color="primary"
+                           showFirstButton
+                           showLastButton
+                        />
+                     </Box>
+                  )}
                </Stack>
             </Box>
          </Container>

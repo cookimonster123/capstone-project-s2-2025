@@ -11,6 +11,9 @@ const NebulaSpaceBackground: React.FC = () => {
    const theme = useTheme();
    const canvasRef = useRef<HTMLCanvasElement>(null);
    const isDark = theme.palette.mode === "dark";
+   const rafIdRef = useRef<number | null>(null);
+   const runningRef = useRef<boolean>(false);
+   const reducedMotionRef = useRef<boolean>(false);
 
    useEffect(() => {
       const canvas = canvasRef.current;
@@ -19,12 +22,39 @@ const NebulaSpaceBackground: React.FC = () => {
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
 
+      let cWidth = window.innerWidth;
+      let cHeight = window.innerHeight;
       const setCanvasSize = () => {
-         canvas.width = window.innerWidth;
-         canvas.height = window.innerHeight;
+         cWidth = window.innerWidth;
+         cHeight = window.innerHeight;
+         canvas.width = cWidth;
+         canvas.height = cHeight;
       };
       setCanvasSize();
       window.addEventListener("resize", setCanvasSize);
+
+      // Reduced motion preference
+      const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
+      reducedMotionRef.current = mql.matches;
+      const onReducedMotionChange = (e: MediaQueryListEvent) => {
+         reducedMotionRef.current = e.matches;
+         if (e.matches) {
+            runningRef.current = false;
+            if (rafIdRef.current !== null) {
+               cancelAnimationFrame(rafIdRef.current);
+               rafIdRef.current = null;
+            }
+            renderStaticFrame();
+         } else if (!runningRef.current) {
+            runningRef.current = true;
+            rafIdRef.current = requestAnimationFrame(animate);
+         }
+      };
+      if ("addEventListener" in mql) {
+         mql.addEventListener("change", onReducedMotionChange);
+      } else {
+         (mql as any).addListener(onReducedMotionChange);
+      }
 
       // 星星
       class Star {
@@ -123,14 +153,16 @@ const NebulaSpaceBackground: React.FC = () => {
 
       // 创建星星
       for (let i = 0; i < 200; i++) {
-         stars.push(new Star(canvas.width, canvas.height));
+         stars.push(new Star(cWidth, cHeight));
       }
 
       let lastShootingStarTime = 0;
+      let nextSpawnGap = 1500 + Math.random() * 2000;
 
       const animate = (timestamp: number) => {
+         if (!runningRef.current || reducedMotionRef.current) return;
          ctx.fillStyle = isDark ? "#0a0e1a" : "#e6f0ff";
-         ctx.fillRect(0, 0, canvas.width, canvas.height);
+         ctx.fillRect(0, 0, cWidth, cHeight);
 
          // 绘制星星
          stars.forEach((star) => {
@@ -139,27 +171,67 @@ const NebulaSpaceBackground: React.FC = () => {
          });
 
          // 创建流星
-         if (timestamp - lastShootingStarTime > 1500 + Math.random() * 2000) {
-            shootingStars.push(new ShootingStar(canvas.width, canvas.height));
+         if (timestamp - lastShootingStarTime > nextSpawnGap) {
+            shootingStars.push(new ShootingStar(cWidth, cHeight));
             lastShootingStarTime = timestamp;
+            nextSpawnGap = 1500 + Math.random() * 2000;
          }
 
          // 绘制流星
          for (let i = shootingStars.length - 1; i >= 0; i--) {
             shootingStars[i].update();
             shootingStars[i].draw(ctx);
-            if (shootingStars[i].isDead(canvas.width, canvas.height)) {
+            if (shootingStars[i].isDead(cWidth, cHeight)) {
                shootingStars.splice(i, 1);
             }
          }
 
-         requestAnimationFrame(animate);
+         rafIdRef.current = requestAnimationFrame(animate);
       };
 
-      requestAnimationFrame(animate);
+      const renderStaticFrame = () => {
+         ctx.fillStyle = isDark ? "#0a0e1a" : "#e6f0ff";
+         ctx.fillRect(0, 0, cWidth, cHeight);
+         stars.forEach((s) => s.draw(ctx));
+      };
+
+      const onVisibilityChange = () => {
+         if (document.visibilityState === "hidden") {
+            runningRef.current = false;
+            if (rafIdRef.current !== null) {
+               cancelAnimationFrame(rafIdRef.current);
+               rafIdRef.current = null;
+            }
+         } else if (!reducedMotionRef.current) {
+            runningRef.current = true;
+            rafIdRef.current = requestAnimationFrame(animate);
+         }
+      };
+      document.addEventListener("visibilitychange", onVisibilityChange);
+
+      if (reducedMotionRef.current) {
+         runningRef.current = false;
+         renderStaticFrame();
+      } else {
+         runningRef.current = true;
+         rafIdRef.current = requestAnimationFrame(animate);
+      }
 
       return () => {
          window.removeEventListener("resize", setCanvasSize);
+         document.removeEventListener("visibilitychange", onVisibilityChange);
+         if ("removeEventListener" in mql) {
+            mql.removeEventListener("change", onReducedMotionChange);
+         } else {
+            (mql as any).removeListener(onReducedMotionChange);
+         }
+         runningRef.current = false;
+         if (rafIdRef.current !== null) {
+            cancelAnimationFrame(rafIdRef.current);
+            rafIdRef.current = null;
+         }
+         stars.length = 0;
+         shootingStars.length = 0;
       };
    }, [isDark]);
 

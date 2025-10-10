@@ -12,7 +12,9 @@ const BackgroundShootingStars: React.FC = () => {
    const theme = useTheme();
    const canvasRef = useRef<HTMLCanvasElement>(null);
    const isDarkMode = theme.palette.mode === "dark";
-   const animationFrameRef = useRef<number | undefined>(undefined);
+   const rafIdRef = useRef<number | null>(null);
+   const runningRef = useRef<boolean>(false);
+   const reducedMotionRef = useRef<boolean>(false);
 
    useEffect(() => {
       if (!isDarkMode) return;
@@ -23,13 +25,44 @@ const BackgroundShootingStars: React.FC = () => {
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
 
+      // Track dimensions to avoid nullable canvas typing and reuse values
+      let cWidth = window.innerWidth;
+      let cHeight = window.innerHeight;
+
       // Set canvas size
       const setCanvasSize = () => {
-         canvas.width = window.innerWidth;
-         canvas.height = window.innerHeight;
+         cWidth = window.innerWidth;
+         cHeight = window.innerHeight;
+         canvas.width = cWidth;
+         canvas.height = cHeight;
       };
       setCanvasSize();
       window.addEventListener("resize", setCanvasSize);
+
+      // Respect user motion preferences
+      const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
+      reducedMotionRef.current = mql.matches;
+      const onReducedMotionChange = (e: MediaQueryListEvent) => {
+         reducedMotionRef.current = e.matches;
+         if (e.matches) {
+            // Stop loop and render static
+            runningRef.current = false;
+            if (rafIdRef.current !== null) {
+               cancelAnimationFrame(rafIdRef.current);
+               rafIdRef.current = null;
+            }
+            renderStaticFrame();
+         } else if (!runningRef.current) {
+            // Resume
+            runningRef.current = true;
+            rafIdRef.current = requestAnimationFrame(animate);
+         }
+      };
+      if ("addEventListener" in mql) {
+         mql.addEventListener("change", onReducedMotionChange);
+      } else {
+         (mql as any).addListener(onReducedMotionChange);
+      }
 
       // Shooting star class
       class ShootingStar {
@@ -108,35 +141,36 @@ const BackgroundShootingStars: React.FC = () => {
 
       const shootingStars: ShootingStar[] = [];
       let lastShootingStarTime = 0;
+      let nextSpawnGap = 2500 + Math.random() * 3000; // compute once per spawn
       let lastFrameTime = performance.now();
       const targetFPS = 30; // Reduced FPS for better performance
       const frameInterval = 1000 / targetFPS;
 
       // Animation loop with throttling
       const animate = (timestamp: number) => {
+         // If stopped (unmounted/hidden/reduced motion), don't schedule further frames
+         if (!runningRef.current || reducedMotionRef.current) return;
          if (!ctx || !canvas) return;
 
          const deltaTime = timestamp - lastFrameTime;
 
          // Throttle to target FPS
          if (deltaTime < frameInterval) {
-            animationFrameRef.current = requestAnimationFrame(animate);
+            rafIdRef.current = requestAnimationFrame(animate);
             return;
          }
 
          lastFrameTime = timestamp - (deltaTime % frameInterval);
 
          // Clear canvas
-         ctx.clearRect(0, 0, canvas.width, canvas.height);
+         ctx.clearRect(0, 0, cWidth, cHeight);
 
          // Create new shooting stars periodically (reduced frequency)
-         if (timestamp - lastShootingStarTime > 2500 + Math.random() * 3000) {
+         if (timestamp - lastShootingStarTime > nextSpawnGap) {
             if (shootingStars.length < 5) {
-               // Increased from 3 to 5 for more stars
-               shootingStars.push(
-                  new ShootingStar(canvas.width, canvas.height),
-               );
+               shootingStars.push(new ShootingStar(cWidth, cHeight));
                lastShootingStarTime = timestamp;
+               nextSpawnGap = 2500 + Math.random() * 3000;
             }
          }
 
@@ -146,21 +180,58 @@ const BackgroundShootingStars: React.FC = () => {
             shootingStar.update();
             shootingStar.draw(ctx);
 
-            if (shootingStar.isFinished(canvas.width, canvas.height)) {
+            if (shootingStar.isFinished(cWidth, cHeight)) {
                shootingStars.splice(i, 1);
             }
          }
 
-         animationFrameRef.current = requestAnimationFrame(animate);
+         rafIdRef.current = requestAnimationFrame(animate);
       };
 
-      animationFrameRef.current = requestAnimationFrame(animate);
+      // Render a static frame for reduced motion users (blank/no streaks)
+      const renderStaticFrame = () => {
+         if (!ctx || !canvas) return;
+         ctx.clearRect(0, 0, cWidth, cHeight);
+      };
+
+      // Handle tab visibility to pause when hidden
+      const onVisibilityChange = () => {
+         if (document.visibilityState === "hidden") {
+            runningRef.current = false;
+            if (rafIdRef.current !== null) {
+               cancelAnimationFrame(rafIdRef.current);
+               rafIdRef.current = null;
+            }
+         } else if (!reducedMotionRef.current) {
+            runningRef.current = true;
+            rafIdRef.current = requestAnimationFrame(animate);
+         }
+      };
+      document.addEventListener("visibilitychange", onVisibilityChange);
+
+      // Start animation or static frame
+      if (reducedMotionRef.current) {
+         runningRef.current = false;
+         renderStaticFrame();
+      } else {
+         runningRef.current = true;
+         rafIdRef.current = requestAnimationFrame(animate);
+      }
 
       return () => {
          window.removeEventListener("resize", setCanvasSize);
-         if (animationFrameRef.current) {
-            cancelAnimationFrame(animationFrameRef.current);
+         document.removeEventListener("visibilitychange", onVisibilityChange);
+         if ("removeEventListener" in mql) {
+            mql.removeEventListener("change", onReducedMotionChange);
+         } else {
+            (mql as any).removeListener(onReducedMotionChange);
          }
+         runningRef.current = false;
+         if (rafIdRef.current !== null) {
+            cancelAnimationFrame(rafIdRef.current);
+            rafIdRef.current = null;
+         }
+         shootingStars.length = 0;
       };
    }, [isDarkMode]);
 

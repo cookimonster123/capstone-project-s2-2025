@@ -10,6 +10,9 @@ const ParticlesBackground: React.FC = () => {
    const canvasRef = useRef<HTMLCanvasElement>(null);
    const theme = useTheme();
    const isDark = theme.palette.mode === "dark";
+   const rafIdRef = useRef<number | null>(null);
+   const runningRef = useRef<boolean>(false);
+   const reducedMotionRef = useRef<boolean>(false);
 
    useEffect(() => {
       const canvas = canvasRef.current;
@@ -18,14 +21,41 @@ const ParticlesBackground: React.FC = () => {
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
 
-      // Set canvas size
+      // Track dimensions and resize canvas
+      let cWidth = window.innerWidth;
+      let cHeight = window.innerHeight;
       const resizeCanvas = () => {
          if (!canvas) return;
-         canvas.width = window.innerWidth;
-         canvas.height = window.innerHeight;
+         cWidth = window.innerWidth;
+         cHeight = window.innerHeight;
+         canvas.width = cWidth;
+         canvas.height = cHeight;
       };
       resizeCanvas();
       window.addEventListener("resize", resizeCanvas);
+
+      // Respect user motion preferences
+      const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
+      reducedMotionRef.current = mql.matches;
+      const onReducedMotionChange = (e: MediaQueryListEvent) => {
+         reducedMotionRef.current = e.matches;
+         if (e.matches) {
+            runningRef.current = false;
+            if (rafIdRef.current !== null) {
+               cancelAnimationFrame(rafIdRef.current);
+               rafIdRef.current = null;
+            }
+            renderStaticFrame();
+         } else if (!runningRef.current) {
+            runningRef.current = true;
+            rafIdRef.current = requestAnimationFrame(animate);
+         }
+      };
+      if ("addEventListener" in mql) {
+         mql.addEventListener("change", onReducedMotionChange);
+      } else {
+         (mql as any).addListener(onReducedMotionChange);
+      }
 
       // Particle system - ENHANCED
       class Particle {
@@ -36,13 +66,8 @@ const ParticlesBackground: React.FC = () => {
          radius: number;
 
          constructor() {
-            if (!canvas) {
-               this.x = 0;
-               this.y = 0;
-            } else {
-               this.x = Math.random() * canvas.width;
-               this.y = Math.random() * canvas.height;
-            }
+            this.x = Math.random() * cWidth;
+            this.y = Math.random() * cHeight;
             this.vx = (Math.random() - 0.5) * 0.8; // Faster movement
             this.vy = (Math.random() - 0.5) * 0.8;
             this.radius = Math.random() * 2.5 + 1.5; // Larger particles
@@ -52,9 +77,8 @@ const ParticlesBackground: React.FC = () => {
             this.x += this.vx;
             this.y += this.vy;
 
-            if (!canvas) return;
-            if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
-            if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+            if (this.x < 0 || this.x > cWidth) this.vx *= -1;
+            if (this.y < 0 || this.y > cHeight) this.vy *= -1;
          }
 
          draw() {
@@ -80,16 +104,22 @@ const ParticlesBackground: React.FC = () => {
 
       let mouseX = 0;
       let mouseY = 0;
+      let lastMouseUpdate = 0;
+      const THROTTLE_MS = 50; // 20Hz
 
       const handleMouseMove = (e: MouseEvent) => {
+         const now = performance.now();
+         if (now - lastMouseUpdate < THROTTLE_MS) return;
+         lastMouseUpdate = now;
          mouseX = e.clientX;
          mouseY = e.clientY;
       };
-      window.addEventListener("mousemove", handleMouseMove);
+      window.addEventListener("mousemove", handleMouseMove, { passive: true });
 
       // Animation loop
       const animate = () => {
-         ctx.clearRect(0, 0, canvas.width, canvas.height);
+         if (!runningRef.current || reducedMotionRef.current) return;
+         ctx.clearRect(0, 0, cWidth, cHeight);
 
          particles.forEach((particle) => {
             particle.update();
@@ -137,14 +167,72 @@ const ParticlesBackground: React.FC = () => {
             }
          });
 
-         requestAnimationFrame(animate);
+         rafIdRef.current = requestAnimationFrame(animate);
       };
 
-      animate();
+      // Static frame for reduced motion users
+      const renderStaticFrame = () => {
+         ctx.clearRect(0, 0, cWidth, cHeight);
+         particles.forEach((p) => p.draw());
+         // Draw static connections once
+         particles.forEach((p1, i) => {
+            particles.slice(i + 1).forEach((p2) => {
+               const dx = p1.x - p2.x;
+               const dy = p1.y - p2.y;
+               const distance = Math.sqrt(dx * dx + dy * dy);
+               if (distance < 140) {
+                  ctx.beginPath();
+                  ctx.strokeStyle = isDark
+                     ? `rgba(56, 189, 248, ${0.4 - distance / 500})`
+                     : `rgba(0, 153, 255, ${0.35 - distance / 500})`;
+                  ctx.lineWidth = 1.5;
+                  ctx.moveTo(p1.x, p1.y);
+                  ctx.lineTo(p2.x, p2.y);
+                  ctx.stroke();
+               }
+            });
+         });
+      };
+
+      // Pause when tab hidden
+      const onVisibilityChange = () => {
+         if (document.visibilityState === "hidden") {
+            runningRef.current = false;
+            if (rafIdRef.current !== null) {
+               cancelAnimationFrame(rafIdRef.current);
+               rafIdRef.current = null;
+            }
+         } else if (!reducedMotionRef.current) {
+            runningRef.current = true;
+            rafIdRef.current = requestAnimationFrame(animate);
+         }
+      };
+      document.addEventListener("visibilitychange", onVisibilityChange);
+
+      // Start animation or static frame
+      if (reducedMotionRef.current) {
+         runningRef.current = false;
+         renderStaticFrame();
+      } else {
+         runningRef.current = true;
+         rafIdRef.current = requestAnimationFrame(animate);
+      }
 
       return () => {
          window.removeEventListener("resize", resizeCanvas);
-         window.removeEventListener("mousemove", handleMouseMove);
+         window.removeEventListener("mousemove", handleMouseMove as any);
+         document.removeEventListener("visibilitychange", onVisibilityChange);
+         if ("removeEventListener" in mql) {
+            mql.removeEventListener("change", onReducedMotionChange);
+         } else {
+            (mql as any).removeListener(onReducedMotionChange);
+         }
+         runningRef.current = false;
+         if (rafIdRef.current !== null) {
+            cancelAnimationFrame(rafIdRef.current);
+            rafIdRef.current = null;
+         }
+         particles.length = 0;
       };
    }, [isDark]);
 

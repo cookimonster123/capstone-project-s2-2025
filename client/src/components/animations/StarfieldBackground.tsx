@@ -17,6 +17,10 @@ const StarfieldBackground: React.FC = () => {
    const theme = useTheme();
    const canvasRef = useRef<HTMLCanvasElement>(null);
    const isDarkMode = theme.palette.mode === "dark";
+   // Track animation lifecycle and preferences to avoid runaway RAF loops
+   const rafIdRef = useRef<number | null>(null);
+   const runningRef = useRef<boolean>(false);
+   const reducedMotionRef = useRef<boolean>(false);
 
    useEffect(() => {
       if (!isDarkMode) return;
@@ -27,13 +31,47 @@ const StarfieldBackground: React.FC = () => {
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
 
+      // Track dimensions separately to avoid nullable canvas typing inside classes
+      let cWidth = window.innerWidth;
+      let cHeight = window.innerHeight;
+
       // Set canvas size
       const setCanvasSize = () => {
-         canvas.width = window.innerWidth;
-         canvas.height = window.innerHeight;
+         cWidth = window.innerWidth;
+         cHeight = window.innerHeight;
+         canvas.width = cWidth;
+         canvas.height = cHeight;
       };
       setCanvasSize();
       window.addEventListener("resize", setCanvasSize);
+
+      // Respect user motion preferences
+      const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
+      reducedMotionRef.current = mql.matches;
+      const onReducedMotionChange = (e: MediaQueryListEvent) => {
+         reducedMotionRef.current = e.matches;
+         // If user switches to reduced motion on the fly, stop the loop
+         if (e.matches) {
+            runningRef.current = false;
+            if (rafIdRef.current !== null) {
+               cancelAnimationFrame(rafIdRef.current);
+               rafIdRef.current = null;
+            }
+            // Re-render a static frame to keep a pleasant background
+            renderStaticFrame();
+         } else {
+            // Resume
+            if (!runningRef.current) {
+               runningRef.current = true;
+               rafIdRef.current = requestAnimationFrame(animate);
+            }
+         }
+      };
+      if ("addEventListener" in mql) {
+         mql.addEventListener("change", onReducedMotionChange);
+      } else {
+         (mql as any).addListener(onReducedMotionChange);
+      }
 
       // Star class
       class Star {
@@ -102,8 +140,8 @@ const StarfieldBackground: React.FC = () => {
 
          constructor() {
             // Start from random position in upper portion
-            this.x = Math.random() * canvas.width;
-            this.y = Math.random() * canvas.height * 0.5;
+            this.x = Math.random() * cWidth;
+            this.y = Math.random() * cHeight * 0.5;
             this.length = Math.random() * 80 + 60;
             this.speed = Math.random() * 10 + 15;
             this.angle = Math.PI / 4 + (Math.random() - 0.5) * 0.5; // Roughly 45 degrees
@@ -149,30 +187,33 @@ const StarfieldBackground: React.FC = () => {
          isFinished() {
             return (
                this.opacity <= 0 ||
-               this.x > canvas.width + 100 ||
-               this.y > canvas.height + 100
+               this.x > cWidth + 100 ||
+               this.y > cHeight + 100
             );
          }
       }
 
       // Create stars
       const stars: Star[] = [];
-      const starCount = Math.floor((canvas.width * canvas.height) / 8000);
+      const starCount = Math.floor((cWidth * cHeight) / 8000);
       for (let i = 0; i < starCount; i++) {
-         stars.push(new Star());
+         stars.push(new Star(cWidth, cHeight));
       }
 
       // Shooting stars array
       const shootingStars: ShootingStar[] = [];
       let lastShootingStarTime = 0;
+      let nextSpawnGap = 3000 + Math.random() * 4000; // jitter once between spawns
 
       // Animation loop
       const animate = (timestamp: number) => {
+         // If stopped (unmounted/hidden/reduced motion), don't schedule further frames
+         if (!runningRef.current || reducedMotionRef.current) return;
          if (!ctx || !canvas) return;
 
          // Clear canvas with slight trail effect for smoother animation
          ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
-         ctx.fillRect(0, 0, canvas.width, canvas.height);
+         ctx.fillRect(0, 0, cWidth, cHeight);
 
          // Update and draw stars
          stars.forEach((star) => {
@@ -180,10 +221,11 @@ const StarfieldBackground: React.FC = () => {
             star.draw(ctx);
          });
 
-         // Create new shooting stars periodically
-         if (timestamp - lastShootingStarTime > 3000 + Math.random() * 4000) {
+         // Create new shooting stars periodically (use stable jitter until next spawn)
+         if (timestamp - lastShootingStarTime > nextSpawnGap) {
             shootingStars.push(new ShootingStar());
             lastShootingStarTime = timestamp;
+            nextSpawnGap = 3000 + Math.random() * 4000;
          }
 
          // Update and draw shooting stars
@@ -197,14 +239,60 @@ const StarfieldBackground: React.FC = () => {
             }
          }
 
-         requestAnimationFrame(animate);
+         rafIdRef.current = requestAnimationFrame(animate);
       };
 
-      const animationId = requestAnimationFrame(animate);
+      // Draw a static single frame for reduced motion users
+      const renderStaticFrame = () => {
+         if (!ctx || !canvas) return;
+         ctx.fillStyle = "rgba(0, 0, 0, 1)";
+         ctx.fillRect(0, 0, cWidth, cHeight);
+         stars.forEach((star) => {
+            // Skip twinkle update; draw at initial brightness
+            star.draw(ctx);
+         });
+      };
+
+      // Handle tab visibility to pause when hidden
+      const onVisibilityChange = () => {
+         if (document.visibilityState === "hidden") {
+            runningRef.current = false;
+            if (rafIdRef.current !== null) {
+               cancelAnimationFrame(rafIdRef.current);
+               rafIdRef.current = null;
+            }
+         } else if (!reducedMotionRef.current) {
+            runningRef.current = true;
+            rafIdRef.current = requestAnimationFrame(animate);
+         }
+      };
+      document.addEventListener("visibilitychange", onVisibilityChange);
+
+      // Start animation or static frame
+      if (reducedMotionRef.current) {
+         runningRef.current = false;
+         renderStaticFrame();
+      } else {
+         runningRef.current = true;
+         rafIdRef.current = requestAnimationFrame(animate);
+      }
 
       return () => {
          window.removeEventListener("resize", setCanvasSize);
-         cancelAnimationFrame(animationId);
+         document.removeEventListener("visibilitychange", onVisibilityChange);
+         if ("removeEventListener" in mql) {
+            mql.removeEventListener("change", onReducedMotionChange);
+         } else {
+            (mql as any).removeListener(onReducedMotionChange);
+         }
+         runningRef.current = false;
+         if (rafIdRef.current !== null) {
+            cancelAnimationFrame(rafIdRef.current);
+            rafIdRef.current = null;
+         }
+         // Help GC by clearing arrays
+         stars.length = 0;
+         shootingStars.length = 0;
       };
    }, [isDarkMode]);
 

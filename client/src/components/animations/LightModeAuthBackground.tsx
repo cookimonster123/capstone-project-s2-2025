@@ -9,6 +9,9 @@ import { Box } from "@mui/material";
  */
 const LightModeAuthBackground: React.FC = () => {
    const canvasRef = useRef<HTMLCanvasElement>(null);
+   const rafIdRef = useRef<number | null>(null);
+   const runningRef = useRef<boolean>(false);
+   const reducedMotionRef = useRef<boolean>(false);
 
    useEffect(() => {
       const canvas = canvasRef.current;
@@ -17,12 +20,40 @@ const LightModeAuthBackground: React.FC = () => {
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
 
+      let cWidth = window.innerWidth;
+      let cHeight = window.innerHeight;
+
       const setCanvasSize = () => {
-         canvas.width = window.innerWidth;
-         canvas.height = window.innerHeight;
+         cWidth = window.innerWidth;
+         cHeight = window.innerHeight;
+         canvas.width = cWidth;
+         canvas.height = cHeight;
       };
       setCanvasSize();
       window.addEventListener("resize", setCanvasSize);
+
+      // Reduced motion preference
+      const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
+      reducedMotionRef.current = mql.matches;
+      const onReducedMotionChange = (e: MediaQueryListEvent) => {
+         reducedMotionRef.current = e.matches;
+         if (e.matches) {
+            runningRef.current = false;
+            if (rafIdRef.current !== null) {
+               cancelAnimationFrame(rafIdRef.current);
+               rafIdRef.current = null;
+            }
+            renderStaticFrame();
+         } else if (!runningRef.current) {
+            runningRef.current = true;
+            rafIdRef.current = requestAnimationFrame(animate);
+         }
+      };
+      if ("addEventListener" in mql) {
+         mql.addEventListener("change", onReducedMotionChange);
+      } else {
+         (mql as any).addListener(onReducedMotionChange);
+      }
 
       // 浮动气泡类
       class Bubble {
@@ -134,36 +165,41 @@ const LightModeAuthBackground: React.FC = () => {
 
       // 创建气泡
       for (let i = 0; i < 8; i++) {
-         bubbles.push(new Bubble(canvas.width, canvas.height));
+         bubbles.push(new Bubble(cWidth, cHeight));
       }
 
       // 创建粒子
       for (let i = 0; i < 50; i++) {
-         particles.push(new Particle(canvas.width, canvas.height));
+         particles.push(new Particle(cWidth, cHeight));
       }
-
-      let mouseX = canvas.width / 2;
-      let mouseY = canvas.height / 2;
+      let mouseX = cWidth / 2;
+      let mouseY = cHeight / 2;
+      let lastMouseUpdate = 0;
+      const THROTTLE_MS = 50; // 20Hz
 
       const handleMouseMove = (e: MouseEvent) => {
+         const now = performance.now();
+         if (now - lastMouseUpdate < THROTTLE_MS) return;
+         lastMouseUpdate = now;
          mouseX = e.clientX;
          mouseY = e.clientY;
       };
-      window.addEventListener("mousemove", handleMouseMove);
+      window.addEventListener("mousemove", handleMouseMove, { passive: true });
 
       const animate = () => {
+         if (!runningRef.current || reducedMotionRef.current) return;
          ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
-         ctx.fillRect(0, 0, canvas.width, canvas.height);
+         ctx.fillRect(0, 0, cWidth, cHeight);
 
          // 绘制气泡
          bubbles.forEach((bubble) => {
-            bubble.update(canvas.width, canvas.height);
+            bubble.update(cWidth, cHeight);
             bubble.draw(ctx);
          });
 
          // 绘制粒子
          particles.forEach((particle) => {
-            particle.update(canvas.width, canvas.height);
+            particle.update(cWidth, cHeight);
             particle.draw(ctx);
          });
 
@@ -180,16 +216,54 @@ const LightModeAuthBackground: React.FC = () => {
          gradient.addColorStop(1, "transparent");
 
          ctx.fillStyle = gradient;
-         ctx.fillRect(0, 0, canvas.width, canvas.height);
+         ctx.fillRect(0, 0, cWidth, cHeight);
 
-         requestAnimationFrame(animate);
+         rafIdRef.current = requestAnimationFrame(animate);
       };
 
-      animate();
+      const renderStaticFrame = () => {
+         ctx.fillStyle = "rgba(255, 255, 255, 1)";
+         ctx.fillRect(0, 0, cWidth, cHeight);
+         bubbles.forEach((bubble) => bubble.draw(ctx));
+         particles.forEach((p) => p.draw(ctx));
+      };
+
+      const onVisibilityChange = () => {
+         if (document.visibilityState === "hidden") {
+            runningRef.current = false;
+            if (rafIdRef.current !== null) {
+               cancelAnimationFrame(rafIdRef.current);
+               rafIdRef.current = null;
+            }
+         } else if (!reducedMotionRef.current) {
+            runningRef.current = true;
+            rafIdRef.current = requestAnimationFrame(animate);
+         }
+      };
+      document.addEventListener("visibilitychange", onVisibilityChange);
+
+      if (reducedMotionRef.current) {
+         runningRef.current = false;
+         renderStaticFrame();
+      } else {
+         runningRef.current = true;
+         rafIdRef.current = requestAnimationFrame(animate);
+      }
 
       return () => {
          window.removeEventListener("resize", setCanvasSize);
-         window.removeEventListener("mousemove", handleMouseMove);
+         window.removeEventListener("mousemove", handleMouseMove as any);
+         document.removeEventListener("visibilitychange", onVisibilityChange);
+         if ("removeEventListener" in mql) {
+            mql.removeEventListener("change", onReducedMotionChange);
+         } else {
+            (mql as any).removeListener(onReducedMotionChange);
+         }
+         runningRef.current = false;
+         if (rafIdRef.current !== null) {
+            cancelAnimationFrame(rafIdRef.current);
+            rafIdRef.current = null;
+         }
       };
    }, []);
 

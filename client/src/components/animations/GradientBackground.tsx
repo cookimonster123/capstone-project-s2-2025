@@ -1,5 +1,5 @@
 import React from "react";
-import { motion } from "framer-motion";
+import { LazyMotion, domAnimation, m, useReducedMotion } from "framer-motion";
 import { Box, useTheme } from "@mui/material";
 
 /**
@@ -11,6 +11,7 @@ import { Box, useTheme } from "@mui/material";
 const GradientBackground: React.FC = () => {
    const theme = useTheme();
    const isDark = theme.palette.mode === "dark";
+   const prefersReducedMotion = useReducedMotion();
 
    return (
       <Box
@@ -64,94 +65,148 @@ const GradientBackground: React.FC = () => {
          )}
 
          {/* Primary animated gradient overlay - MORE VIBRANT */}
-         <motion.div
-            animate={{
-               background: isDark
-                  ? [
-                       "radial-gradient(circle at 0% 0%, rgba(0, 153, 255, 0.25) 0%, transparent 50%)",
-                       "radial-gradient(circle at 100% 100%, rgba(0, 204, 255, 0.25) 0%, transparent 50%)",
-                       "radial-gradient(circle at 0% 100%, rgba(56, 189, 248, 0.25) 0%, transparent 50%)",
-                       "radial-gradient(circle at 100% 0%, rgba(14, 165, 233, 0.25) 0%, transparent 50%)",
-                       "radial-gradient(circle at 0% 0%, rgba(0, 153, 255, 0.25) 0%, transparent 50%)",
-                    ]
-                  : [
-                       "radial-gradient(circle at 0% 0%, rgba(0, 102, 204, 0.2) 0%, transparent 50%)",
-                       "radial-gradient(circle at 100% 100%, rgba(0, 153, 255, 0.2) 0%, transparent 50%)",
-                       "radial-gradient(circle at 0% 100%, rgba(56, 189, 248, 0.2) 0%, transparent 50%)",
-                       "radial-gradient(circle at 100% 0%, rgba(14, 165, 233, 0.2) 0%, transparent 50%)",
-                       "radial-gradient(circle at 0% 0%, rgba(0, 102, 204, 0.2) 0%, transparent 50%)",
-                    ],
-            }}
-            transition={{
-               duration: 15,
-               repeat: Infinity,
-               ease: "easeInOut",
-            }}
-            style={{
-               position: "absolute",
-               top: 0,
-               left: 0,
-               right: 0,
-               bottom: 0,
-            }}
-         />
+         {prefersReducedMotion ? (
+            <Box
+               sx={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  background: isDark
+                     ? "radial-gradient(circle at 50% 50%, rgba(0, 153, 255, 0.2) 0%, transparent 60%)"
+                     : "radial-gradient(circle at 50% 50%, rgba(0, 102, 204, 0.15) 0%, transparent 60%)",
+               }}
+            />
+         ) : (
+            <LazyMotion features={domAnimation} strict>
+               <m.div
+                  animate={{
+                     background: isDark
+                        ? [
+                             "radial-gradient(circle at 0% 0%, rgba(0, 153, 255, 0.25) 0%, transparent 50%)",
+                             "radial-gradient(circle at 100% 100%, rgba(0, 204, 255, 0.25) 0%, transparent 50%)",
+                             "radial-gradient(circle at 0% 100%, rgba(56, 189, 248, 0.25) 0%, transparent 50%)",
+                             "radial-gradient(circle at 100% 0%, rgba(14, 165, 233, 0.25) 0%, transparent 50%)",
+                             "radial-gradient(circle at 0% 0%, rgba(0, 153, 255, 0.25) 0%, transparent 50%)",
+                          ]
+                        : [
+                             "radial-gradient(circle at 0% 0%, rgba(0, 102, 204, 0.2) 0%, transparent 50%)",
+                             "radial-gradient(circle at 100% 100%, rgba(0, 153, 255, 0.2) 0%, transparent 50%)",
+                             "radial-gradient(circle at 0% 100%, rgba(56, 189, 248, 0.2) 0%, transparent 50%)",
+                             "radial-gradient(circle at 100% 0%, rgba(14, 165, 233, 0.2) 0%, transparent 50%)",
+                             "radial-gradient(circle at 0% 0%, rgba(0, 102, 204, 0.2) 0%, transparent 50%)",
+                          ],
+                  }}
+                  transition={{
+                     duration: 15,
+                     repeat: Infinity,
+                     ease: "easeInOut",
+                  }}
+                  style={{
+                     position: "absolute",
+                     top: 0,
+                     left: 0,
+                     right: 0,
+                     bottom: 0,
+                  }}
+               />
+            </LazyMotion>
+         )}
 
          {/* Secondary gradient for depth - ENHANCED */}
-         <motion.div
-            animate={{
-               background: isDark
-                  ? [
-                       "radial-gradient(circle at 50% 50%, rgba(0, 153, 255, 0.18) 0%, transparent 60%)",
-                       "radial-gradient(circle at 30% 70%, rgba(0, 102, 204, 0.18) 0%, transparent 60%)",
-                       "radial-gradient(circle at 70% 30%, rgba(56, 189, 248, 0.18) 0%, transparent 60%)",
-                       "radial-gradient(circle at 50% 50%, rgba(0, 153, 255, 0.18) 0%, transparent 60%)",
-                    ]
-                  : [
-                       "radial-gradient(circle at 50% 50%, rgba(0, 153, 255, 0.15) 0%, transparent 60%)",
-                       "radial-gradient(circle at 30% 70%, rgba(0, 102, 204, 0.15) 0%, transparent 60%)",
-                       "radial-gradient(circle at 70% 30%, rgba(56, 189, 248, 0.15) 0%, transparent 60%)",
-                       "radial-gradient(circle at 50% 50%, rgba(0, 153, 255, 0.15) 0%, transparent 60%)",
-                    ],
-            }}
-            transition={{
-               duration: 12,
-               repeat: Infinity,
-               ease: "easeInOut",
-            }}
-            style={{
-               position: "absolute",
-               top: 0,
-               left: 0,
-               right: 0,
-               bottom: 0,
-            }}
-         />
+         {prefersReducedMotion ? (
+            <Box
+               sx={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  background: isDark
+                     ? "radial-gradient(circle at 50% 50%, rgba(0, 153, 255, 0.18) 0%, transparent 60%)"
+                     : "radial-gradient(circle at 50% 50%, rgba(0, 153, 255, 0.15) 0%, transparent 60%)",
+               }}
+            />
+         ) : (
+            <LazyMotion features={domAnimation} strict>
+               <m.div
+                  animate={{
+                     background: isDark
+                        ? [
+                             "radial-gradient(circle at 50% 50%, rgba(0, 153, 255, 0.18) 0%, transparent 60%)",
+                             "radial-gradient(circle at 30% 70%, rgba(0, 102, 204, 0.18) 0%, transparent 60%)",
+                             "radial-gradient(circle at 70% 30%, rgba(56, 189, 248, 0.18) 0%, transparent 60%)",
+                             "radial-gradient(circle at 50% 50%, rgba(0, 153, 255, 0.18) 0%, transparent 60%)",
+                          ]
+                        : [
+                             "radial-gradient(circle at 50% 50%, rgba(0, 153, 255, 0.15) 0%, transparent 60%)",
+                             "radial-gradient(circle at 30% 70%, rgba(0, 102, 204, 0.15) 0%, transparent 60%)",
+                             "radial-gradient(circle at 70% 30%, rgba(56, 189, 248, 0.15) 0%, transparent 60%)",
+                             "radial-gradient(circle at 50% 50%, rgba(0, 153, 255, 0.15) 0%, transparent 60%)",
+                          ],
+                  }}
+                  transition={{
+                     duration: 12,
+                     repeat: Infinity,
+                     ease: "easeInOut",
+                  }}
+                  style={{
+                     position: "absolute",
+                     top: 0,
+                     left: 0,
+                     right: 0,
+                     bottom: 0,
+                  }}
+               />
+            </LazyMotion>
+         )}
 
          {/* New: Pulsing center glow */}
-         <motion.div
-            animate={{
-               opacity: [0.3, 0.6, 0.3],
-               scale: [1, 1.2, 1],
-            }}
-            transition={{
-               duration: 8,
-               repeat: Infinity,
-               ease: "easeInOut",
-            }}
-            style={{
-               position: "absolute",
-               top: "50%",
-               left: "50%",
-               transform: "translate(-50%, -50%)",
-               width: "800px",
-               height: "800px",
-               borderRadius: "50%",
-               background: isDark
-                  ? "radial-gradient(circle, rgba(0, 153, 255, 0.2) 0%, transparent 70%)"
-                  : "radial-gradient(circle, rgba(0, 153, 255, 0.15) 0%, transparent 70%)",
-               filter: "blur(60px)",
-            }}
-         />
+         {prefersReducedMotion ? (
+            <Box
+               sx={{
+                  position: "absolute",
+                  top: "50%",
+                  left: "50%",
+                  transform: "translate(-50%, -50%)",
+                  width: "800px",
+                  height: "800px",
+                  borderRadius: "50%",
+                  background: isDark
+                     ? "radial-gradient(circle, rgba(0, 153, 255, 0.2) 0%, transparent 70%)"
+                     : "radial-gradient(circle, rgba(0, 153, 255, 0.15) 0%, transparent 70%)",
+                  filter: "blur(60px)",
+               }}
+            />
+         ) : (
+            <LazyMotion features={domAnimation} strict>
+               <m.div
+                  animate={{
+                     opacity: [0.3, 0.6, 0.3],
+                     scale: [1, 1.2, 1],
+                  }}
+                  transition={{
+                     duration: 8,
+                     repeat: Infinity,
+                     ease: "easeInOut",
+                  }}
+                  style={{
+                     position: "absolute",
+                     top: "50%",
+                     left: "50%",
+                     transform: "translate(-50%, -50%)",
+                     width: "800px",
+                     height: "800px",
+                     borderRadius: "50%",
+                     background: isDark
+                        ? "radial-gradient(circle, rgba(0, 153, 255, 0.2) 0%, transparent 70%)"
+                        : "radial-gradient(circle, rgba(0, 153, 255, 0.15) 0%, transparent 70%)",
+                     filter: "blur(60px)",
+                  }}
+               />
+            </LazyMotion>
+         )}
 
          {/* Mesh gradient overlay - ENHANCED */}
          <Box

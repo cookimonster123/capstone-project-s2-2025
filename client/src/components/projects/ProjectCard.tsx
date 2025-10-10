@@ -456,7 +456,7 @@ function ProjectCard({
                   <Typography
                      variant="body2"
                      sx={{
-                        color: "#6e6e73",
+                        color: "#FF0000",
                         fontSize: dense ? 12.5 : 14,
                         fontWeight: 500,
                      }}
@@ -466,7 +466,7 @@ function ProjectCard({
                   <Typography
                      variant="body2"
                      sx={{
-                        color: "#1d1d1f",
+                        color: "#FF0000",
                         fontSize: dense ? 12.5 : 14,
                         fontWeight: 600,
                      }}

@@ -11,6 +11,9 @@ const MatrixRainBackground: React.FC = () => {
    const theme = useTheme();
    const canvasRef = useRef<HTMLCanvasElement>(null);
    const isDark = theme.palette.mode === "dark";
+   const rafIdRef = useRef<number | null>(null);
+   const runningRef = useRef<boolean>(false);
+   const reducedMotionRef = useRef<boolean>(false);
 
    useEffect(() => {
       const canvas = canvasRef.current;
@@ -19,23 +22,25 @@ const MatrixRainBackground: React.FC = () => {
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
 
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      let cWidth = window.innerWidth;
+      let cHeight = window.innerHeight;
+      canvas.width = cWidth;
+      canvas.height = cHeight;
 
       const fontSize = 14;
-      const columns = Math.floor(canvas.width / fontSize);
+      let columns = Math.floor(cWidth / fontSize);
       const drops: number[] = Array(columns).fill(1);
 
       // 字符集：数字、字母、符号
       const chars =
          "01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-      const draw = () => {
+      const drawFrame = () => {
          // 半透明黑色背景实现拖尾效果
          ctx.fillStyle = isDark
             ? "rgba(10, 14, 23, 0.05)"
             : "rgba(255, 255, 255, 0.05)";
-         ctx.fillRect(0, 0, canvas.width, canvas.height);
+         ctx.fillRect(0, 0, cWidth, cHeight);
 
          ctx.font = `${fontSize}px monospace`;
 
@@ -53,7 +58,7 @@ const MatrixRainBackground: React.FC = () => {
             ctx.fillText(text, x, y);
 
             // 随机重置某些列
-            if (y > canvas.height && Math.random() > 0.975) {
+            if (y > cHeight && Math.random() > 0.975) {
                drops[i] = 0;
             }
 
@@ -61,17 +66,104 @@ const MatrixRainBackground: React.FC = () => {
          }
       };
 
-      const interval = setInterval(draw, 33); // ~30fps
+      // RAF-based animation loop at ~30fps using a time accumulator
+      let lastTime = performance.now();
+      const targetFPS = 30;
+      const frameInterval = 1000 / targetFPS;
+      let accumulator = 0;
+
+      const animate = (timestamp: number) => {
+         if (!runningRef.current || reducedMotionRef.current) return;
+         const delta = timestamp - lastTime;
+         lastTime = timestamp;
+         accumulator += delta;
+         // Only render at target FPS
+         if (accumulator >= frameInterval) {
+            drawFrame();
+            accumulator %= frameInterval;
+         }
+         rafIdRef.current = requestAnimationFrame(animate);
+      };
 
       const handleResize = () => {
-         canvas.width = window.innerWidth;
-         canvas.height = window.innerHeight;
+         cWidth = window.innerWidth;
+         cHeight = window.innerHeight;
+         canvas.width = cWidth;
+         canvas.height = cHeight;
+         // Recompute columns and reset drops to match new width
+         columns = Math.floor(cWidth / fontSize);
+         drops.length = 0;
+         for (let i = 0; i < columns; i++) drops.push(1);
       };
       window.addEventListener("resize", handleResize);
 
+      // Reduced motion
+      const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
+      reducedMotionRef.current = mql.matches;
+      const onReducedMotionChange = (e: MediaQueryListEvent) => {
+         reducedMotionRef.current = e.matches;
+         if (e.matches) {
+            runningRef.current = false;
+            if (rafIdRef.current !== null) {
+               cancelAnimationFrame(rafIdRef.current);
+               rafIdRef.current = null;
+            }
+            // Static frame: draw background only, no animated rain
+            ctx.fillStyle = isDark
+               ? "rgba(10, 14, 23, 1)"
+               : "rgba(255, 255, 255, 1)";
+            ctx.fillRect(0, 0, cWidth, cHeight);
+         } else if (!runningRef.current) {
+            runningRef.current = true;
+            rafIdRef.current = requestAnimationFrame(animate);
+         }
+      };
+      if ("addEventListener" in mql) {
+         mql.addEventListener("change", onReducedMotionChange);
+      } else {
+         (mql as any).addListener(onReducedMotionChange);
+      }
+
+      // Pause when hidden
+      const onVisibilityChange = () => {
+         if (document.visibilityState === "hidden") {
+            runningRef.current = false;
+            if (rafIdRef.current !== null) {
+               cancelAnimationFrame(rafIdRef.current);
+               rafIdRef.current = null;
+            }
+         } else if (!reducedMotionRef.current) {
+            runningRef.current = true;
+            rafIdRef.current = requestAnimationFrame(animate);
+         }
+      };
+      document.addEventListener("visibilitychange", onVisibilityChange);
+
+      // Start
+      if (reducedMotionRef.current) {
+         runningRef.current = false;
+         ctx.fillStyle = isDark
+            ? "rgba(10, 14, 23, 1)"
+            : "rgba(255, 255, 255, 1)";
+         ctx.fillRect(0, 0, cWidth, cHeight);
+      } else {
+         runningRef.current = true;
+         rafIdRef.current = requestAnimationFrame(animate);
+      }
+
       return () => {
-         clearInterval(interval);
          window.removeEventListener("resize", handleResize);
+         document.removeEventListener("visibilitychange", onVisibilityChange);
+         if ("removeEventListener" in mql) {
+            mql.removeEventListener("change", onReducedMotionChange);
+         } else {
+            (mql as any).removeListener(onReducedMotionChange);
+         }
+         runningRef.current = false;
+         if (rafIdRef.current !== null) {
+            cancelAnimationFrame(rafIdRef.current);
+            rafIdRef.current = null;
+         }
       };
    }, [isDark]);
 

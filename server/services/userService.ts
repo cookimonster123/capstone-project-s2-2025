@@ -7,7 +7,7 @@ import {
    UpdateUserData,
 } from "../interfaces";
 import { deleteFileFromS3 } from "./fileService";
-import mongoose from "mongoose";
+import mongoose, { type FilterQuery, type SortOrder } from "mongoose";
 
 /**
  * Validates user data
@@ -106,6 +106,87 @@ export async function findAllUsers(): Promise<ServiceResult<UserData[]>> {
       };
    } catch (error) {
       console.error("Error in findAllUsers service:", error);
+      throw error;
+   }
+}
+
+/**
+ * Paginated users with optional search, role filter and sorting
+ */
+export async function findUsersPaginated(options: {
+   page?: number;
+   limit?: number;
+   q?: string;
+   role?: string;
+   sort?: string;
+   order?: "asc" | "desc";
+}): Promise<
+   ServiceResult<{
+      items: UserData[];
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+   }>
+> {
+   try {
+      const {
+         page = 1,
+         limit = 20,
+         q,
+         role,
+         sort = "createdAt",
+         order = "desc",
+      } = options || {};
+      const skip = (page - 1) * limit;
+
+      const query: FilterQuery<typeof User> = {} as any;
+      if (q && q.trim()) {
+         const rx = new RegExp(q.trim(), "i");
+         (query as any).$or = [{ name: rx }, { email: rx }];
+      }
+      if (role) (query as any).role = role;
+
+      const sortSpec: Record<string, SortOrder> = {
+         [sort]: order === "asc" ? 1 : -1,
+      };
+
+      const [docs, total] = await Promise.all([
+         User.find(query)
+            .populate("project")
+            .populate("team")
+            .sort(sortSpec)
+            .skip(skip)
+            .limit(limit),
+         User.countDocuments(query),
+      ]);
+
+      const items: UserData[] = docs.map((user) => ({
+         _id: user._id?.toString(),
+         name: user.name,
+         email: user.email,
+         role: user.role,
+         profilePicture: user.profilePicture,
+         links:
+            user.links?.map((link) => ({
+               type: link.type,
+               value: link.value,
+            })) || [],
+         project: user.project?.id?.toString(),
+         likedProjects:
+            user.likedProjects?.map((likedProject) =>
+               likedProject._id.toString(),
+            ) || [],
+         team: user.team?.id?.toString(),
+      }));
+
+      const totalPages = Math.max(1, Math.ceil(total / limit));
+      return {
+         success: true,
+         data: { items, total, page, limit, totalPages },
+      };
+   } catch (error) {
+      console.error("Error in findUsersPaginated service:", error);
       throw error;
    }
 }

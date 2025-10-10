@@ -1,65 +1,68 @@
 import mongoose from "mongoose";
 
-const projectSchema = new mongoose.Schema({
-   name: {
-      type: String,
-      required: true,
-      minlength: 1,
-      maxlength: 100,
-   },
-   team: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Team",
-      required: true,
-   },
-   description: {
-      type: String,
-      default: "",
-   },
-   semester: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Semester",
-      required: true,
-   },
-   category: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Category",
-   },
-   links: [
-      {
-         type: new mongoose.Schema({
-            value: {
-               type: String,
-            },
-            type: {
-               type: String,
-               enum: ["github", "deployedWebsite", "videoDemoUrl"],
-            },
-         }),
-      },
-   ],
-   imageUrl: [
-      {
+const projectSchema = new mongoose.Schema(
+   {
+      name: {
          type: String,
+         required: true,
+         minlength: 1,
+         maxlength: 100,
       },
-   ],
-   likeCounts: {
-      type: Number,
-      default: 0,
-      required: true,
+      team: {
+         type: mongoose.Schema.Types.ObjectId,
+         ref: "Team",
+         required: true,
+      },
+      description: {
+         type: String,
+         default: "",
+      },
+      semester: {
+         type: mongoose.Schema.Types.ObjectId,
+         ref: "Semester",
+         required: true,
+      },
+      category: {
+         type: mongoose.Schema.Types.ObjectId,
+         ref: "Category",
+      },
+      links: [
+         {
+            type: new mongoose.Schema({
+               value: {
+                  type: String,
+               },
+               type: {
+                  type: String,
+                  enum: ["github", "deployedWebsite", "videoDemoUrl"],
+               },
+            }),
+         },
+      ],
+      imageUrl: [
+         {
+            type: String,
+         },
+      ],
+      likeCounts: {
+         type: Number,
+         default: 0,
+         required: true,
+      },
+      tags: [
+         {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Tag",
+         },
+      ],
+      awards: [
+         {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Award",
+         },
+      ],
    },
-   tags: [
-      {
-         type: mongoose.Schema.Types.ObjectId,
-         ref: "Tag",
-      },
-   ],
-   awards: [
-      {
-         type: mongoose.Schema.Types.ObjectId,
-         ref: "Award",
-      },
-   ],
-});
+   { timestamps: true },
+);
 
 export const Project = mongoose.model("Project", projectSchema);

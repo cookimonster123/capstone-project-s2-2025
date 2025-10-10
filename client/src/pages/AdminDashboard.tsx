@@ -4,9 +4,7 @@ import {
    Button,
    Card,
    CardContent,
-   CardHeader,
    Chip,
-   Divider,
    Stack,
    Typography,
    Tabs,
@@ -35,6 +33,7 @@ import {
    InputAdornment,
    type SelectChangeEvent,
    CircularProgress,
+   TablePagination,
 } from "@mui/material";
 import {
    Edit as EditIcon,
@@ -47,15 +46,17 @@ import {
    Group as TeamIcon,
    Person as PersonIcon,
    Assignment as ProjectIcon,
-   FilterList as FilterIcon,
    Upload as UploadIcon,
-   Star as StarIcon,
-   Restore as RestoreIcon,
+   FirstPage as FirstPageIcon,
+   LastPage as LastPageIcon,
+   KeyboardArrowLeft,
+   KeyboardArrowRight,
 } from "@mui/icons-material";
+import { useTheme } from "@mui/material/styles";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { fetchProjects, likeProject } from "../api/projectApi";
+import { fetchProjects } from "../api/projectApi";
 import type { Project } from "../types/project";
 import { type UserSummary } from "../api/userApi";
 import {
@@ -69,10 +70,10 @@ import {
    deleteTeam,
    deleteAward,
    deleteComment,
-   updateUserRole,
+   // updateUserRole,
    createAward,
    assignAwardToProject,
-   removeAwardFromProject,
+   // removeAwardFromProject,
    createTeam,
    uploadTeamsCSV,
    type Team,
@@ -109,6 +110,115 @@ function TabPanel(props: TabPanelProps) {
       </div>
    );
 }
+
+// Custom actions for TablePagination: adds first and last page buttons
+const TablePaginationActions: React.FC<{
+   count: number;
+   page: number;
+   rowsPerPage: number;
+   onPageChange: (
+      event: React.MouseEvent<HTMLButtonElement> | null,
+      newPage: number,
+   ) => void;
+}> = ({ count, page, rowsPerPage, onPageChange }) => {
+   const theme = useTheme();
+
+   const handleFirstPageButtonClick = (
+      event: React.MouseEvent<HTMLButtonElement>,
+   ) => {
+      onPageChange(event, 0);
+   };
+
+   const handleBackButtonClick = (
+      event: React.MouseEvent<HTMLButtonElement>,
+   ) => {
+      onPageChange(event, page - 1);
+   };
+
+   const handleNextButtonClick = (
+      event: React.MouseEvent<HTMLButtonElement>,
+   ) => {
+      onPageChange(event, page + 1);
+   };
+
+   const handleLastPageButtonClick = (
+      event: React.MouseEvent<HTMLButtonElement>,
+   ) => {
+      onPageChange(event, Math.max(0, Math.ceil(count / rowsPerPage) - 1));
+   };
+
+   const atStart = page === 0;
+   const atEnd = page >= Math.ceil(count / rowsPerPage) - 1;
+
+   return (
+      <Box sx={{ flexShrink: 0, ml: 2.5 }}>
+         <Tooltip title="Most previous">
+            <span>
+               <IconButton
+                  onClick={handleFirstPageButtonClick}
+                  disabled={atStart}
+                  aria-label="first page"
+                  size="small"
+               >
+                  {theme.direction === "rtl" ? (
+                     <LastPageIcon fontSize="small" />
+                  ) : (
+                     <FirstPageIcon fontSize="small" />
+                  )}
+               </IconButton>
+            </span>
+         </Tooltip>
+         <Tooltip title="Previous">
+            <span>
+               <IconButton
+                  onClick={handleBackButtonClick}
+                  disabled={atStart}
+                  aria-label="previous page"
+                  size="small"
+               >
+                  {theme.direction === "rtl" ? (
+                     <KeyboardArrowRight fontSize="small" />
+                  ) : (
+                     <KeyboardArrowLeft fontSize="small" />
+                  )}
+               </IconButton>
+            </span>
+         </Tooltip>
+         <Tooltip title="Next">
+            <span>
+               <IconButton
+                  onClick={handleNextButtonClick}
+                  disabled={atEnd}
+                  aria-label="next page"
+                  size="small"
+               >
+                  {theme.direction === "rtl" ? (
+                     <KeyboardArrowLeft fontSize="small" />
+                  ) : (
+                     <KeyboardArrowRight fontSize="small" />
+                  )}
+               </IconButton>
+            </span>
+         </Tooltip>
+         <Tooltip title="Most last">
+            <span>
+               <IconButton
+                  onClick={handleLastPageButtonClick}
+                  disabled={atEnd}
+                  aria-label="last page"
+                  size="small"
+               >
+                  {theme.direction === "rtl" ? (
+                     <FirstPageIcon fontSize="small" />
+                  ) : (
+                     <LastPageIcon fontSize="small" />
+                  )}
+               </IconButton>
+            </span>
+         </Tooltip>
+      </Box>
+   );
+};
 
 // Stat card component with modern design
 const StatCard: React.FC<{
@@ -182,6 +292,14 @@ const AdminDashboard: React.FC = () => {
       severity: "success" as "success" | "error" | "warning" | "info",
    });
 
+   // Client-side pagination states
+   const [projectsPage, setProjectsPage] = useState(0);
+   const [projectsRowsPerPage, setProjectsRowsPerPage] = useState(10);
+   const [teamsPage, setTeamsPage] = useState(0);
+   const [teamsRowsPerPage, setTeamsRowsPerPage] = useState(10);
+   const [usersPage, setUsersPage] = useState(0);
+   const [usersRowsPerPage, setUsersRowsPerPage] = useState(10);
+
    // Mock data states
    const [teams, setTeams] = useState<Team[]>([]);
    const [users, setUsers] = useState<UserSummary[]>([]);
@@ -201,7 +319,7 @@ const AdminDashboard: React.FC = () => {
    >(null);
 
    // Dialog states
-   const [openProjectDialog, setOpenProjectDialog] = useState(false);
+   // const [openProjectDialog, setOpenProjectDialog] = useState(false);
    const [openTeamDialog, setOpenTeamDialog] = useState(false);
    const [openAwardDialog, setOpenAwardDialog] = useState(false);
    const [openAssignDialog, setOpenAssignDialog] = useState(false);
@@ -212,7 +330,7 @@ const AdminDashboard: React.FC = () => {
    const [newTeamName, setNewTeamName] = useState("");
    const [selectedAward, setSelectedAward] = useState<Award | null>(null);
    const [selectedUser, setSelectedUser] = useState<UserSummary | null>(null);
-   const [selectedItem, setSelectedItem] = useState<any>(null);
+   // const [selectedItem, setSelectedItem] = useState<any>(null);
    const [selectedFile, setSelectedFile] = useState<File | null>(null);
    const [awardForm, setAwardForm] = useState({
       name: "",
@@ -557,20 +675,20 @@ const AdminDashboard: React.FC = () => {
       }
    };
 
-   const handleLikeProject = async (projectId: string) => {
-      try {
-         const result = await likeProject(projectId);
-         if (result) {
-            showSnackbar(
-               result.data.button ? "Project liked!" : "Project unliked",
-               "success",
-            );
-            loadAllData(); // Reload to get updated like counts
-         }
-      } catch (error) {
-         showSnackbar("Failed to like/unlike project", "error");
-      }
-   };
+   // const handleLikeProject = async (projectId: string) => {
+   //    try {
+   //       const result = await likeProject(projectId);
+   //       if (result) {
+   //          showSnackbar(
+   //             result.data.button ? "Project liked!" : "Project unliked",
+   //             "success",
+   //          );
+   //          loadAllData(); // Reload to get updated like counts
+   //       }
+   //    } catch (error) {
+   //       showSnackbar("Failed to like/unlike project", "error");
+   //    }
+   // };
 
    // Filter functions
    const filteredProjects = projects.filter((project) => {
@@ -581,6 +699,20 @@ const AdminDashboard: React.FC = () => {
          filterCategory === "all" || project.category?.name === filterCategory;
       return matchesSearch && matchesCategory;
    });
+
+   // Sliced data for client-side pagination
+   const pagedProjects = filteredProjects.slice(
+      projectsPage * projectsRowsPerPage,
+      projectsPage * projectsRowsPerPage + projectsRowsPerPage,
+   );
+   const pagedTeams = teams.slice(
+      teamsPage * teamsRowsPerPage,
+      teamsPage * teamsRowsPerPage + teamsRowsPerPage,
+   );
+   const pagedUsers = users.slice(
+      usersPage * usersRowsPerPage,
+      usersPage * usersRowsPerPage + usersRowsPerPage,
+   );
 
    // Statistics
    const stats = {
@@ -837,7 +969,7 @@ const AdminDashboard: React.FC = () => {
                                              </TableCell>
                                           </TableRow>
                                        ) : (
-                                          filteredProjects.map((project) => (
+                                          pagedProjects.map((project) => (
                                              <TableRow key={project._id} hover>
                                                 <TableCell>
                                                    <Stack>
@@ -986,6 +1118,23 @@ const AdminDashboard: React.FC = () => {
                                        )}
                                     </TableBody>
                                  </Table>
+                                 <TablePagination
+                                    component="div"
+                                    rowsPerPageOptions={[5, 10, 25, 50]}
+                                    count={filteredProjects.length}
+                                    rowsPerPage={projectsRowsPerPage}
+                                    page={projectsPage}
+                                    onPageChange={(_e, newPage) =>
+                                       setProjectsPage(newPage)
+                                    }
+                                    onRowsPerPageChange={(e) => {
+                                       setProjectsRowsPerPage(
+                                          parseInt(e.target.value, 10),
+                                       );
+                                       setProjectsPage(0);
+                                    }}
+                                    ActionsComponent={TablePaginationActions}
+                                 />
                               </TableContainer>
                            )}
                         </Stack>
@@ -1035,7 +1184,7 @@ const AdminDashboard: React.FC = () => {
                                     </TableRow>
                                  </TableHead>
                                  <TableBody>
-                                    {teams.map((team) => (
+                                    {pagedTeams.map((team) => (
                                        <TableRow key={team._id} hover>
                                           <TableCell>
                                              <Typography
@@ -1099,6 +1248,23 @@ const AdminDashboard: React.FC = () => {
                                     ))}
                                  </TableBody>
                               </Table>
+                              <TablePagination
+                                 component="div"
+                                 rowsPerPageOptions={[5, 10, 25, 50]}
+                                 count={teams.length}
+                                 rowsPerPage={teamsRowsPerPage}
+                                 page={teamsPage}
+                                 onPageChange={(_e, newPage) =>
+                                    setTeamsPage(newPage)
+                                 }
+                                 onRowsPerPageChange={(e) => {
+                                    setTeamsRowsPerPage(
+                                       parseInt(e.target.value, 10),
+                                    );
+                                    setTeamsPage(0);
+                                 }}
+                                 ActionsComponent={TablePaginationActions}
+                              />
                            </TableContainer>
                         </Stack>
                      </TabPanel>
@@ -1308,7 +1474,7 @@ const AdminDashboard: React.FC = () => {
                                     </TableRow>
                                  </TableHead>
                                  <TableBody>
-                                    {users.map((user, index) => (
+                                    {pagedUsers.map((user, index) => (
                                        <TableRow key={index} hover>
                                           <TableCell>
                                              <Stack
@@ -1390,6 +1556,23 @@ const AdminDashboard: React.FC = () => {
                                     ))}
                                  </TableBody>
                               </Table>
+                              <TablePagination
+                                 component="div"
+                                 rowsPerPageOptions={[5, 10, 25, 50]}
+                                 count={users.length}
+                                 rowsPerPage={usersRowsPerPage}
+                                 page={usersPage}
+                                 onPageChange={(_e, newPage) =>
+                                    setUsersPage(newPage)
+                                 }
+                                 onRowsPerPageChange={(e) => {
+                                    setUsersRowsPerPage(
+                                       parseInt(e.target.value, 10),
+                                    );
+                                    setUsersPage(0);
+                                 }}
+                                 ActionsComponent={TablePaginationActions}
+                              />
                            </TableContainer>
                         </Stack>
                      </TabPanel>

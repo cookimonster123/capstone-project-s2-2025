@@ -9,6 +9,9 @@ import { Box } from "@mui/material";
  */
 const GlassmorphismBackground: React.FC = () => {
    const canvasRef = useRef<HTMLCanvasElement>(null);
+   const rafIdRef = useRef<number | null>(null);
+   const runningRef = useRef<boolean>(false);
+   const reducedMotionRef = useRef<boolean>(false);
 
    useEffect(() => {
       const canvas = canvasRef.current;
@@ -17,12 +20,41 @@ const GlassmorphismBackground: React.FC = () => {
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
 
+      // Track canvas dimensions for use inside classes
+      let cWidth = window.innerWidth;
+      let cHeight = window.innerHeight;
+
       const setCanvasSize = () => {
-         canvas.width = window.innerWidth;
-         canvas.height = window.innerHeight;
+         cWidth = window.innerWidth;
+         cHeight = window.innerHeight;
+         canvas.width = cWidth;
+         canvas.height = cHeight;
       };
       setCanvasSize();
       window.addEventListener("resize", setCanvasSize);
+
+      // Reduced motion preference
+      const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
+      reducedMotionRef.current = mql.matches;
+      const onReducedMotionChange = (e: MediaQueryListEvent) => {
+         reducedMotionRef.current = e.matches;
+         if (e.matches) {
+            runningRef.current = false;
+            if (rafIdRef.current !== null) {
+               cancelAnimationFrame(rafIdRef.current);
+               rafIdRef.current = null;
+            }
+            renderStaticFrame();
+         } else if (!runningRef.current) {
+            runningRef.current = true;
+            rafIdRef.current = requestAnimationFrame(animate);
+         }
+      };
+      if ("addEventListener" in mql) {
+         mql.addEventListener("change", onReducedMotionChange);
+      } else {
+         (mql as any).addListener(onReducedMotionChange);
+      }
 
       // 浮动光点
       class LightOrb {
@@ -127,37 +159,78 @@ const GlassmorphismBackground: React.FC = () => {
 
       // 创建光球
       for (let i = 0; i < 6; i++) {
-         orbs.push(new LightOrb(canvas.width, canvas.height));
+         orbs.push(new LightOrb(cWidth, cHeight));
       }
 
       // 创建粒子
       for (let i = 0; i < 40; i++) {
-         particles.push(new Particle(canvas.width, canvas.height));
+         particles.push(new Particle(cWidth, cHeight));
       }
 
       const animate = () => {
+         if (!runningRef.current || reducedMotionRef.current) return;
          ctx.fillStyle = "rgba(255, 255, 255, 0.08)";
-         ctx.fillRect(0, 0, canvas.width, canvas.height);
+         ctx.fillRect(0, 0, cWidth, cHeight);
 
          // 绘制光球
          orbs.forEach((orb) => {
-            orb.update(canvas.width, canvas.height);
+            orb.update(cWidth, cHeight);
             orb.draw(ctx);
          });
 
          // 绘制粒子
          particles.forEach((particle) => {
-            particle.update(canvas.width, canvas.height);
+            particle.update(cWidth, cHeight);
             particle.draw(ctx);
          });
 
-         requestAnimationFrame(animate);
+         rafIdRef.current = requestAnimationFrame(animate);
       };
 
-      animate();
+      const renderStaticFrame = () => {
+         ctx.fillStyle = "rgba(255, 255, 255, 1)";
+         ctx.fillRect(0, 0, cWidth, cHeight);
+         // Draw orbs/particles once without motion
+         orbs.forEach((orb) => orb.draw(ctx));
+         particles.forEach((p) => p.draw(ctx));
+      };
+
+      const onVisibilityChange = () => {
+         if (document.visibilityState === "hidden") {
+            runningRef.current = false;
+            if (rafIdRef.current !== null) {
+               cancelAnimationFrame(rafIdRef.current);
+               rafIdRef.current = null;
+            }
+         } else if (!reducedMotionRef.current) {
+            runningRef.current = true;
+            rafIdRef.current = requestAnimationFrame(animate);
+         }
+      };
+      document.addEventListener("visibilitychange", onVisibilityChange);
+
+      // Start
+      if (reducedMotionRef.current) {
+         runningRef.current = false;
+         renderStaticFrame();
+      } else {
+         runningRef.current = true;
+         rafIdRef.current = requestAnimationFrame(animate);
+      }
 
       return () => {
          window.removeEventListener("resize", setCanvasSize);
+         document.removeEventListener("visibilitychange", onVisibilityChange);
+         if ("removeEventListener" in mql) {
+            mql.removeEventListener("change", onReducedMotionChange);
+         } else {
+            (mql as any).removeListener(onReducedMotionChange);
+         }
+         runningRef.current = false;
+         if (rafIdRef.current !== null) {
+            cancelAnimationFrame(rafIdRef.current);
+            rafIdRef.current = null;
+         }
       };
    }, []);
 
@@ -179,6 +252,9 @@ const GlassmorphismBackground: React.FC = () => {
                   "0%": { backgroundPosition: "0% 50%" },
                   "50%": { backgroundPosition: "100% 50%" },
                   "100%": { backgroundPosition: "0% 50%" },
+               },
+               "@media (prefers-reduced-motion: reduce)": {
+                  animation: "none",
                },
                zIndex: 0,
             }}
@@ -237,6 +313,9 @@ const GlassmorphismBackground: React.FC = () => {
                      transform: "translate(-20px, 20px) rotate(-5deg)",
                   },
                },
+               "@media (prefers-reduced-motion: reduce)": {
+                  animation: "none",
+               },
             }}
          />
 
@@ -263,6 +342,9 @@ const GlassmorphismBackground: React.FC = () => {
                   "50%": {
                      transform: "translate(-30px, 40px) scale(1.1)",
                   },
+               },
+               "@media (prefers-reduced-motion: reduce)": {
+                  animation: "none",
                },
             }}
          />
@@ -292,6 +374,9 @@ const GlassmorphismBackground: React.FC = () => {
                      transform: "rotate(50deg) translate(20px, -20px)",
                   },
                },
+               "@media (prefers-reduced-motion: reduce)": {
+                  animation: "none",
+               },
             }}
          />
 
@@ -319,6 +404,9 @@ const GlassmorphismBackground: React.FC = () => {
                      transform: "translate(-40px, -20px) rotate(-3deg)",
                   },
                },
+               "@media (prefers-reduced-motion: reduce)": {
+                  animation: "none",
+               },
             }}
          />
 
@@ -345,6 +433,9 @@ const GlassmorphismBackground: React.FC = () => {
                   "50%": {
                      transform: "translate(50px, -50px)",
                   },
+               },
+               "@media (prefers-reduced-motion: reduce)": {
+                  animation: "none",
                },
             }}
          />
