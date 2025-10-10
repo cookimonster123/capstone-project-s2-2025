@@ -10,20 +10,14 @@ import {
    Typography,
    Box,
    Stack,
-   IconButton,
-   Tooltip,
    useTheme,
 } from "@mui/material";
-import { ThumbUpOffAlt, ThumbUp } from "@mui/icons-material";
 import WebIcon from "@mui/icons-material/Web";
 import SmartToyIcon from "@mui/icons-material/SmartToy";
 import PhoneIphoneIcon from "@mui/icons-material/PhoneIphone";
 import SportsEsportsIcon from "@mui/icons-material/SportsEsports";
 import type { Project } from "../../types/project";
-import { fetchUserById, fetchCurrentUserId } from "../../api/userApi";
-import type { UserSummary } from "../../api/userApi";
 import medalIconDefault from "../../assets/medal.svg";
-import { BASE_API_URL } from "../../config/api";
 
 type ProjectForCard = Project;
 type Props = {
@@ -38,7 +32,7 @@ type Props = {
    hoverLift?: boolean; // raise on hover (for gallery)
 };
 
-const DEFAULT_API_BASE = BASE_API_URL;
+// Note: Cards no longer handle like interactions; they display Likes only.
 
 /** Field resolvers */
 function resolveProjectId(p: ProjectForCard): string {
@@ -69,28 +63,11 @@ function resolveInitialLikes(p: ProjectForCard): number {
    return p.likeCounts ?? 0;
 }
 
-// Cache the current user info across cards to avoid N fetches
-let currentUserPromise: Promise<UserSummary | null> | null = null;
-async function getCurrentUserCached(): Promise<UserSummary | null> {
-   if (!currentUserPromise) {
-      currentUserPromise = (async () => {
-         try {
-            const uid = await fetchCurrentUserId();
-            const res = await fetchUserById(uid);
-            return res.user ?? null;
-         } catch (e) {
-            return null;
-         }
-      })();
-   }
-   return currentUserPromise;
-}
+// No per-card user fetch/cache is needed anymore
 
 function ProjectCard({
    project,
    onClick,
-   isAuthenticated,
-   apiBase = DEFAULT_API_BASE,
    height = 380,
    width = 408,
    dense = false,
@@ -99,8 +76,7 @@ function ProjectCard({
    const theme = useTheme();
    const isDark = theme.palette.mode === "dark";
 
-   const [user, setUser] = React.useState<UserSummary | null>(null);
-   const [liked, setLiked] = React.useState<boolean>(false);
+   // No user/liked state in the card anymore; we show static likes only
    const [likes, setLikes] = React.useState<number>(
       resolveInitialLikes(project),
    );
@@ -126,27 +102,8 @@ function ProjectCard({
       setRotateX(0);
       setRotateY(0);
    };
-   const [busy, setBusy] = React.useState(false);
 
-   // Fetch current user on mount
-   React.useEffect(() => {
-      if (!isAuthenticated) return;
-      let cancelled = false;
-      (async () => {
-         const u = await getCurrentUserCached();
-         if (!cancelled) setUser(u);
-      })();
-      return () => {
-         cancelled = true;
-      };
-   }, [isAuthenticated]);
-
-   // Sync liked state whenever user or project changes
-   React.useEffect(() => {
-      if (user && project._id) {
-         setLiked(user.likedProjects.map(String).includes(String(project._id)));
-      }
-   }, [user, project._id]);
+   // No like button on the card; likes can still be updated by global events
 
    const when = resolveSemester(project);
    const categoryName = resolveCategoryName(project);
@@ -169,65 +126,30 @@ function ProjectCard({
       setImageOk(true);
    }, [firstImageUrl]);
 
-   /** Like API */
-   async function callLikeAPI(projectId: string) {
-      const r = await fetch(
-         `${apiBase.replace(/\/$/, "")}/projects/${projectId}/like`,
-         {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-         },
+   // Listen for like count updates coming from profile or other sources
+   React.useEffect(() => {
+      function onLikeChanged(e: Event) {
+         const ce = e as CustomEvent<{ projectId: string; likeCounts: number }>;
+         const pid = resolveProjectId(project);
+         if (!pid) return;
+         if (
+            ce?.detail?.projectId === pid &&
+            typeof ce.detail.likeCounts === "number"
+         ) {
+            setLikes(ce.detail.likeCounts);
+         }
+      }
+      window.addEventListener(
+         "project-like-changed",
+         onLikeChanged as EventListener,
       );
-
-      if (r.status === 401) {
-         alert("Please log in to like projects.");
-         throw new Error("Unauthorized");
-      }
-      if (!r.ok) {
-         const msg = await r.text().catch(() => "");
-         throw new Error(`HTTP ${r.status} ${r.statusText} ${msg}`);
-      }
-
-      const payload: { data?: { button?: boolean; likeCounts?: number } } =
-         await r.json();
-      return {
-         liked: Boolean(payload?.data?.button ?? false),
-         likes: Number(payload?.data?.likeCounts ?? 0),
+      return () => {
+         window.removeEventListener(
+            "project-like-changed",
+            onLikeChanged as EventListener,
+         );
       };
-   }
-
-   const handleLikeClick: React.MouseEventHandler<HTMLButtonElement> = async (
-      e,
-   ) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (busy) return;
-      console.log(isAuthenticated);
-      if (!isAuthenticated) {
-         alert("Please log in to like projects.");
-         return;
-      }
-
-      const pid = resolveProjectId(project);
-      if (!pid) return;
-
-      setBusy(true);
-
-      const currentlyLiked = liked;
-      setLiked(!currentlyLiked);
-      setLikes((prev) => prev + (currentlyLiked ? -1 : 1));
-      try {
-         const res = await callLikeAPI(pid);
-         setLiked(res.liked); // backend truth
-         setLikes(res.likes); // backend likeCounts
-      } catch (err) {
-         console.error("[Like] failed:", err);
-         alert("Failed to like/unlike project.");
-      } finally {
-         setBusy(false);
-      }
-   };
+   }, [project]);
 
    return (
       <Card
@@ -531,67 +453,22 @@ function ProjectCard({
                </Stack>
 
                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                  <Tooltip
-                     title={
-                        isAuthenticated === false
-                           ? "Please log in"
-                           : liked
-                             ? "Unlike"
-                             : "Like"
-                     }
-                  >
-                     <span>
-                        <IconButton
-                           aria-label={
-                              liked ? "unlike project" : "like project"
-                           }
-                           onClick={handleLikeClick}
-                           disabled={busy || !isAuthenticated}
-                           size="small"
-                           sx={{
-                              opacity: isAuthenticated === false ? 0.6 : 1,
-                              cursor:
-                                 isAuthenticated === false
-                                    ? "not-allowed"
-                                    : "pointer",
-                              transition:
-                                 "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-                              "&:hover": {
-                                 transform: isAuthenticated
-                                    ? "scale(1.1)"
-                                    : "none",
-                                 bgcolor: isAuthenticated
-                                    ? "rgba(0, 102, 204, 0.04)"
-                                    : "transparent",
-                              },
-                              "&:hover svg": {
-                                 color:
-                                    liked && isAuthenticated
-                                       ? "#dc2626"
-                                       : isAuthenticated
-                                         ? "#06c"
-                                         : undefined,
-                              },
-                           }}
-                        >
-                           {liked && isAuthenticated ? (
-                              <ThumbUp
-                                 sx={{ color: "#ef4444", fontSize: 20 }}
-                              />
-                           ) : (
-                              <ThumbUpOffAlt
-                                 sx={{ fontSize: 20, color: "#6e6e73" }}
-                              />
-                           )}
-                        </IconButton>
-                     </span>
-                  </Tooltip>
                   <Typography
                      variant="body2"
                      sx={{
-                        color: liked && isAuthenticated ? "#ef4444" : "#6e6e73",
+                        color: "#6e6e73",
                         fontSize: dense ? 12.5 : 14,
                         fontWeight: 500,
+                     }}
+                  >
+                     Likes:
+                  </Typography>
+                  <Typography
+                     variant="body2"
+                     sx={{
+                        color: "#1d1d1f",
+                        fontSize: dense ? 12.5 : 14,
+                        fontWeight: 600,
                      }}
                   >
                      {Number.isFinite(likes) ? likes : 0}
