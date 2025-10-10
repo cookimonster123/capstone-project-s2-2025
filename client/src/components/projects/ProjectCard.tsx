@@ -69,7 +69,24 @@ function resolveInitialLikes(p: ProjectForCard): number {
    return p.likeCounts ?? 0;
 }
 
-export default function ProjectCard({
+// Cache the current user info across cards to avoid N fetches
+let currentUserPromise: Promise<UserSummary | null> | null = null;
+async function getCurrentUserCached(): Promise<UserSummary | null> {
+   if (!currentUserPromise) {
+      currentUserPromise = (async () => {
+         try {
+            const uid = await fetchCurrentUserId();
+            const res = await fetchUserById(uid);
+            return res.user ?? null;
+         } catch (e) {
+            return null;
+         }
+      })();
+   }
+   return currentUserPromise;
+}
+
+function ProjectCard({
    project,
    onClick,
    isAuthenticated,
@@ -114,18 +131,14 @@ export default function ProjectCard({
    // Fetch current user on mount
    React.useEffect(() => {
       if (!isAuthenticated) return;
-
-      const fetchUser = async () => {
-         try {
-            const currentUserId = await fetchCurrentUserId();
-            const userData = await fetchUserById(currentUserId);
-
-            setUser(userData.user);
-         } catch (error) {
-            console.error("Failed to fetch current user:", error);
-         }
+      let cancelled = false;
+      (async () => {
+         const u = await getCurrentUserCached();
+         if (!cancelled) setUser(u);
+      })();
+      return () => {
+         cancelled = true;
       };
-      fetchUser();
    }, [isAuthenticated]);
 
    // Sync liked state whenever user or project changes
@@ -589,6 +602,8 @@ export default function ProjectCard({
       </Card>
    );
 }
+
+export default React.memo(ProjectCard);
 // Choose an icon based on category name (receive values via args)
 function renderCategoryIcon(nameRaw: string, isDense: boolean) {
    const name = (nameRaw || "").toLowerCase();

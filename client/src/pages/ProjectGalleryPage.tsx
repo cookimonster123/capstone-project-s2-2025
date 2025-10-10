@@ -1,4 +1,10 @@
-import React, { useMemo, useState, useCallback, useEffect } from "react";
+import React, {
+   useMemo,
+   useState,
+   useCallback,
+   useEffect,
+   useRef,
+} from "react";
 import ProjectGrid from "../components/projects/ProjectGrid";
 import {
    Box,
@@ -39,6 +45,7 @@ const ProjectGalleryPage: React.FC = () => {
    const [error, setError] = useState<string | null>(null);
    const [searchParams, setSearchParams] = useSearchParams();
    const navigate = useNavigate();
+   const [reducedMotion, setReducedMotion] = useState(false);
 
    // Always start from top when entering the gallery
    useEffect(() => {
@@ -49,7 +56,28 @@ const ProjectGalleryPage: React.FC = () => {
       }
    }, []);
 
+   // Observe prefers-reduced-motion to optionally disable background animations
    useEffect(() => {
+      if (typeof window === "undefined" || !window.matchMedia) return;
+      const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+      setReducedMotion(mq.matches);
+      const onChange = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
+      try {
+         mq.addEventListener("change", onChange);
+         return () => mq.removeEventListener("change", onChange);
+      } catch {
+         // Safari fallback
+         (mq as any).addListener(onChange);
+         return () => {
+            (mq as any).removeListener(onChange);
+         };
+      }
+   }, []);
+
+   // Initialize search input from URL only once (avoid overwriting while typing)
+   const initializedFromUrl = useRef(false);
+   useEffect(() => {
+      if (initializedFromUrl.current) return;
       const tag = searchParams.get("tag");
       const q = searchParams.get("q");
       if (tag) {
@@ -57,6 +85,8 @@ const ProjectGalleryPage: React.FC = () => {
       } else if (q) {
          setSearchInput(q);
       }
+      initializedFromUrl.current = true;
+      // eslint-disable-next-line react-hooks/exhaustive-deps
    }, [searchParams]);
 
    // Initialize category from URL on load / when url changes
@@ -108,21 +138,30 @@ const ProjectGalleryPage: React.FC = () => {
 
    const handleSearchChange = useCallback(
       (e: React.ChangeEvent<HTMLInputElement>) => {
-         const val = e.target.value;
-         setSearchInput(val);
-
-         const params = new URLSearchParams(searchParams);
-         if (val.trim()) {
-            params.set("q", val.trim());
-            params.delete("tag");
-         } else {
-            params.delete("q");
-            params.delete("tag");
-         }
-         setSearchParams(params, { replace: true });
+         // Update only local state for immediate input responsiveness.
+         setSearchInput(e.target.value);
       },
-      [searchParams, setSearchParams],
+      [],
    );
+
+   // Sync debounced search value into the URL (?q=) to avoid router churn per keystroke
+   useEffect(() => {
+      const nextQ = debouncedSearch.trim();
+      const currentQ = searchParams.get("q") ?? "";
+      const params = new URLSearchParams(searchParams);
+      if (nextQ) {
+         if (nextQ !== currentQ) {
+            params.set("q", nextQ);
+            params.delete("tag");
+            setSearchParams(params, { replace: true });
+         }
+      } else if (currentQ) {
+         params.delete("q");
+         params.delete("tag");
+         setSearchParams(params, { replace: true });
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+   }, [debouncedSearch]);
 
    // Filter data
    const filteredProjects = useMemo(() => {
@@ -229,13 +268,80 @@ const ProjectGalleryPage: React.FC = () => {
       return Array.from(years).sort((a, b) => b - a);
    }, [projects]);
 
+   // Precompute decorative animation configs to avoid remounting on each render
+   const rand = (min: number, max: number) => Math.random() * (max - min) + min;
+   const glowCfgs = useMemo(() => {
+      const colors = ["0,102,204", "14,165,233", "56,189,248"];
+      const count = 5; // slightly reduced for perf
+      return Array.from({ length: count }).map((_, i) => {
+         const w = Math.round(rand(150, 400));
+         const h = Math.round(rand(150, 400));
+         const color = colors[i % colors.length];
+         const opacity = parseFloat(rand(0.1, 0.18).toFixed(2));
+         return {
+            w,
+            h,
+            color,
+            opacity,
+            top: `${Math.round(rand(0, 100))}%`,
+            left: `${Math.round(rand(0, 100))}%`,
+            dur: Math.round(rand(30, 70)),
+            delay: parseFloat(rand(0, 10).toFixed(2)),
+            dx1: Math.round(rand(-100, 100)),
+            dy1: Math.round(rand(-100, 100)),
+            dx2: Math.round(rand(-150, 150)),
+            dy2: Math.round(rand(-80, 160)),
+            s1: 1.3,
+            s2: 0.9,
+         };
+      });
+   }, []);
+
+   const particleCfgs = useMemo(() => {
+      const colors = ["#06c", "#0ea5e9", "#38bdf8"];
+      const count = 15; // reduced for perf
+      return Array.from({ length: count }).map((_, i) => {
+         const color = colors[i % colors.length];
+         return {
+            w: Math.round(rand(2, 7)),
+            h: Math.round(rand(2, 7)),
+            color,
+            op: parseFloat(rand(0.2, 0.5).toFixed(2)),
+            top: `${Math.round(rand(0, 100))}%`,
+            left: `${Math.round(rand(0, 100))}%`,
+            blur: Math.round(rand(8, 23)),
+            twinkle: parseFloat(rand(2, 6).toFixed(2)),
+            floatDur: Math.round(rand(15, 35)),
+            delay: parseFloat(rand(0, 5).toFixed(2)),
+            dxA: Math.round(rand(-30, 30)),
+            dyA: Math.round(rand(-70, -10)),
+            dxB: Math.round(rand(-40, 40)),
+            dyB: Math.round(rand(-100, -20)),
+            dxC: Math.round(rand(-20, 20)),
+            dyC: Math.round(rand(-50, -10)),
+         };
+      });
+   }, []);
+
+   const meteorCfgs = useMemo(() => {
+      const count = 3; // reduced for perf
+      return Array.from({ length: count }).map((_, i) => ({
+         h: Math.round(rand(120, 300)),
+         left: `${15 + i * 25}%`,
+         dur: parseFloat(rand(2.5, 4.5).toFixed(2)),
+         delay: parseFloat((i * 3 + rand(0, 4)).toFixed(2)),
+      }));
+   }, []);
+
    const handleProjectClick = async (project: Project) => {
       try {
          // Fetch fresh project data to ensure we have the latest information
          const freshProject = await fetchProjectById(project._id);
 
-         // Cache the project for better performance
-         projectCache.set(project._id, freshProject);
+         // Cache the project for better performance if present
+         if (freshProject) {
+            projectCache.set(project._id, freshProject);
+         }
 
          // Navigate to the project profile page
          navigate(`/profile/${project._id}`);
@@ -268,7 +374,9 @@ const ProjectGalleryPage: React.FC = () => {
                   radial-gradient(circle 800px at 75% 50%, rgba(14,165,233,0.09), transparent),
                   radial-gradient(circle 600px at 50% 80%, rgba(56,189,248,0.07), transparent)
                `,
-               animation: "backgroundPulse 12s ease-in-out infinite",
+               animation: reducedMotion
+                  ? "none"
+                  : "backgroundPulse 12s ease-in-out infinite",
                pointerEvents: "none",
                zIndex: 0,
                "@keyframes backgroundPulse": {
@@ -297,7 +405,9 @@ const ProjectGalleryPage: React.FC = () => {
                opacity: 0.5,
                pointerEvents: "none",
                zIndex: 0,
-               animation: "gridFlow 25s linear infinite",
+               animation: reducedMotion
+                  ? "none"
+                  : "gridFlow 25s linear infinite",
                "@keyframes gridFlow": {
                   "0%": { transform: "translate(0, 0)" },
                   "100%": { transform: "translate(80px, 80px)" },
@@ -318,93 +428,111 @@ const ProjectGalleryPage: React.FC = () => {
                overflow: "hidden",
             }}
          >
-            {/* 发光大球 */}
-            {[...Array(6)].map((_, i) => (
+            {/* 发光大球（稳定配置） */}
+            {glowCfgs.map((g, i) => (
                <Box
                   key={`glow-${i}`}
                   sx={{
                      position: "absolute",
-                     width: `${150 + Math.random() * 250}px`,
-                     height: `${150 + Math.random() * 250}px`,
+                     width: `${g.w}px`,
+                     height: `${g.h}px`,
                      borderRadius: "50%",
-                     background: `radial-gradient(circle, rgba(${i % 3 === 0 ? "0,102,204" : i % 3 === 1 ? "14,165,233" : "56,189,248"}, ${0.1 + Math.random() * 0.08}), transparent)`,
+                     background: `radial-gradient(circle, rgba(${g.color}, ${g.opacity}), transparent)`,
                      filter: "blur(60px)",
-                     top: `${Math.random() * 100}%`,
-                     left: `${Math.random() * 100}%`,
-                     animation: `glowFloat ${30 + Math.random() * 40}s ease-in-out infinite`,
-                     animationDelay: `${Math.random() * 10}s`,
-                     "@keyframes glowFloat": {
+                     top: g.top,
+                     left: g.left,
+                     "--dx1": `${g.dx1}px`,
+                     "--dy1": `${g.dy1}px`,
+                     "--dx2": `${g.dx2}px`,
+                     "--dy2": `${g.dy2}px`,
+                     "--s1": g.s1,
+                     "--s2": g.s2,
+                     animation: reducedMotion
+                        ? "none"
+                        : `glowFloatVar ${g.dur}s ease-in-out infinite`,
+                     animationDelay: `${g.delay}s`,
+                     "@keyframes glowFloatVar": {
                         "0%, 100%": { transform: "translate(0, 0) scale(1)" },
                         "33%": {
-                           transform: `translate(${-100 + Math.random() * 200}px, ${-100 + Math.random() * 200}px) scale(1.3)`,
+                           transform:
+                              "translate(var(--dx1), var(--dy1)) scale(var(--s1))",
                         },
                         "66%": {
-                           transform: `translate(${-150 + Math.random() * 300}px, ${-80 + Math.random() * 160}px) scale(0.9)`,
+                           transform:
+                              "translate(var(--dx2), var(--dy2)) scale(var(--s2))",
                         },
                      },
                   }}
                />
             ))}
 
-            {/* 闪烁粒子 */}
-            {[...Array(25)].map((_, i) => (
+            {/* 闪烁粒子（稳定配置） */}
+            {particleCfgs.map((p, i) => (
                <Box
                   key={`particle-${i}`}
                   sx={{
                      position: "absolute",
-                     width: `${2 + Math.random() * 5}px`,
-                     height: `${2 + Math.random() * 5}px`,
+                     width: `${p.w}px`,
+                     height: `${p.h}px`,
                      borderRadius: "50%",
-                     bgcolor:
-                        i % 3 === 0
-                           ? "#06c"
-                           : i % 3 === 1
-                             ? "#0ea5e9"
-                             : "#38bdf8",
-                     opacity: 0.2 + Math.random() * 0.3,
-                     top: `${Math.random() * 100}%`,
-                     left: `${Math.random() * 100}%`,
-                     boxShadow: `0 0 ${8 + Math.random() * 15}px currentColor`,
-                     animation: `twinkle ${2 + Math.random() * 4}s ease-in-out infinite, float3d ${15 + Math.random() * 20}s ease-in-out infinite`,
-                     animationDelay: `${Math.random() * 5}s`,
+                     bgcolor: p.color,
+                     opacity: p.op,
+                     top: p.top,
+                     left: p.left,
+                     boxShadow: `0 0 ${p.blur}px currentColor`,
+                     "--dxA": `${p.dxA}px`,
+                     "--dyA": `${p.dyA}px`,
+                     "--dxB": `${p.dxB}px`,
+                     "--dyB": `${p.dyB}px`,
+                     "--dxC": `${p.dxC}px`,
+                     "--dyC": `${p.dyC}px`,
+                     animation: reducedMotion
+                        ? "none"
+                        : `twinkle ${p.twinkle}s ease-in-out infinite, float3dVar ${p.floatDur}s ease-in-out infinite`,
+                     animationDelay: `${p.delay}s`,
                      "@keyframes twinkle": {
                         "0%, 100%": { opacity: 0.2 },
                         "50%": { opacity: 0.8 },
                      },
-                     "@keyframes float3d": {
+                     "@keyframes float3dVar": {
                         "0%, 100%": {
                            transform: "translate(0, 0) rotate(0deg)",
                         },
                         "25%": {
-                           transform: `translate(${-30 + Math.random() * 60}px, ${-40 - Math.random() * 30}px) rotate(90deg)`,
+                           transform:
+                              "translate(var(--dxA), var(--dyA)) rotate(90deg)",
                         },
                         "50%": {
-                           transform: `translate(${-40 + Math.random() * 80}px, ${-60 - Math.random() * 40}px) rotate(180deg)`,
+                           transform:
+                              "translate(var(--dxB), var(--dyB)) rotate(180deg)",
                         },
                         "75%": {
-                           transform: `translate(${-20 + Math.random() * 40}px, ${-30 - Math.random() * 20}px) rotate(270deg)`,
+                           transform:
+                              "translate(var(--dxC), var(--dyC)) rotate(270deg)",
                         },
                      },
                   }}
                />
             ))}
 
-            {/* 流星效果 */}
-            {[...Array(4)].map((_, i) => (
+            {/* 流星效果（稳定配置） */}
+            {meteorCfgs.map((m, i) => (
                <Box
                   key={`meteor-${i}`}
                   sx={{
                      position: "absolute",
                      width: "3px",
-                     height: `${120 + Math.random() * 180}px`,
+                     height: `${m.h}px`,
                      background:
                         "linear-gradient(180deg, transparent, rgba(0, 102, 204, 0.5), transparent)",
                      top: "-200px",
-                     left: `${15 + i * 25}%`,
-                     animation: `meteorFall ${2.5 + Math.random() * 2}s ease-in infinite`,
-                     animationDelay: `${i * 3 + Math.random() * 4}s`,
+                     left: m.left,
+                     animation: reducedMotion
+                        ? "none"
+                        : `meteorFallVar ${m.dur}s ease-in infinite`,
+                     animationDelay: `${m.delay}s`,
                      transform: "rotate(20deg)",
-                     "@keyframes meteorFall": {
+                     "@keyframes meteorFallVar": {
                         "0%": {
                            transform: "translateY(0) rotate(20deg) scaleY(0)",
                            opacity: 0,

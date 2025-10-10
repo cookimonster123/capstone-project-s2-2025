@@ -1,10 +1,10 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Typography, Box, Alert, Skeleton, Paper } from "@mui/material";
 import { SentimentDissatisfied as SadIcon } from "@mui/icons-material";
 import ProjectCard from "./ProjectCard";
 import type { Project } from "../../types/project";
 import { useAuth } from "../../context/AuthContext";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
 export interface ProjectGridProps {
    projects: Project[]; // pre-filtered projects to display
@@ -53,6 +53,10 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({
    const { isLoggedIn } = useAuth();
 
    const [skeletonCount] = useState(8);
+   const mountedRef = useRef(false);
+   useEffect(() => {
+      mountedRef.current = true;
+   }, []);
 
    return (
       <>
@@ -89,7 +93,7 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({
                      sx={{
                         display: "grid",
                         gridTemplateColumns:
-                           "repeat(auto-fill, minmax(380px, 1fr))",
+                           "repeat(auto-fit, minmax(380px, 1fr))",
                         gap: 2,
                      }}
                   >
@@ -110,27 +114,31 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({
                            <EmptyState />
                         </Box>
                      ) : (
-                        // Cards grid with stagger animation
+                        // Cards grid
                         <Box
                            sx={{
                               display: "grid",
                               gridTemplateColumns:
-                                 "repeat(auto-fill, minmax(380px, 1fr))",
+                                 "repeat(auto-fit, minmax(380px, 1fr))",
                               gap: 2,
                            }}
                         >
-                           <AnimatePresence mode="popLayout">
-                              {projects.map((project, idx) => (
+                           {projects.map((project, idx) => {
+                              const animateOnMount = !mountedRef.current;
+                              return (
                                  <motion.div
                                     key={project._id}
-                                    layout
-                                    initial={{ opacity: 0, y: 50, scale: 0.9 }}
+                                    // No layout/exit animations to prevent gaps
+                                    initial={
+                                       animateOnMount
+                                          ? { opacity: 0, y: 40, scale: 0.98 }
+                                          : false
+                                    }
                                     animate={{ opacity: 1, y: 0, scale: 1 }}
-                                    exit={{ opacity: 0, scale: 0.9 }}
                                     transition={{
-                                       duration: 0.5,
-                                       delay: idx * 0.05,
-                                       ease: [0.6, -0.05, 0.01, 0.99],
+                                       duration: animateOnMount ? 0.35 : 0.2,
+                                       delay: animateOnMount ? idx * 0.04 : 0,
+                                       ease: [0.4, 0, 0.2, 1],
                                     }}
                                     whileHover={{
                                        y: -8,
@@ -145,8 +153,8 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({
                                        hoverLift
                                     />
                                  </motion.div>
-                              ))}
-                           </AnimatePresence>
+                              );
+                           })}
                         </Box>
                      )}
                   </>
