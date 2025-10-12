@@ -45,7 +45,7 @@ export async function uploadAvatar(
          await deleteFileFromS3(user.profilePicture);
       }
 
-      // Check if AWS credentials are configured
+      /** Check if AWS credentials are configured
       if (
          !process.env.AWS_ACCESS_KEY_ID ||
          !process.env.AWS_SECRET_ACCESS_KEY
@@ -59,6 +59,7 @@ export async function uploadAvatar(
          });
          return;
       }
+      */
 
       const result = await uploadFilesToS3(file, userId, "avatar");
       if (!result.success) {
@@ -113,7 +114,7 @@ export async function removeSelfAvatar(
          });
          return;
       }
-
+      /** Check if AWS credentials are configured 
       if (user.profilePicture) {
          // Check if AWS credentials are configured
          if (
@@ -125,6 +126,13 @@ export async function removeSelfAvatar(
             console.log("AWS credentials not configured, skipping S3 deletion");
          }
       }
+      */
+
+      // Delete avatar URL from user profile
+      if (user.profilePicture) {
+         await deleteFileFromS3(user.profilePicture);
+      }
+
       user.profilePicture = "";
       await user.save();
 

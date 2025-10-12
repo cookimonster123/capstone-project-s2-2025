@@ -1,0 +1,73 @@
+services:
+  mongo:
+    image: mongo:8
+    container_name: mongo
+    restart: always
+    # Bind Mongo only to the EC2 loopback so it's NOT public,
+    # but you can still reach it via SSH tunnel for Compass.
+    ports:
+      - "127.0.0.1:27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - capstone
+    # For production, enable auth and update the URI below accordingly:
+    # environment:
+    #   MONGO_INITDB_ROOT_USERNAME: root
+    #   MONGO_INITDB_ROOT_PASSWORD: strongpassword
+
+  server:
+    build: ./server
+    container_name: server
+    env_file:
+      - ./server/.env
+    depends_on:
+      - mongo
+    environment:
+      # If no auth:
+      - MONGODB_URI=mongodb://mongo:27017/mydatabase
+      # If you enabled auth above, use this instead:
+      # - MONGODB_URI=mongodb://root:strongpassword@mongo:27017/mydatabase?authSource=admin
+    networks:
+      - capstone
+    restart: unless-stopped
+    # No public port; Caddy reaches it internally
+    # ports: []
+
+  client:
+    build: ./client
+    container_name: client
+    env_file:
+      - ./client/.env
+    networks:
+      - capstone
+    restart: unless-stopped
+    # No public port; Caddy reaches it internally
+    # ports: []
+
+  caddy:
+    image: caddy:2
+    container_name: caddy
+    depends_on:
+      - client
+      - server
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks:
+      - capstone
+    restart: unless-stopped
+
+networks:
+  capstone:
+    driver: bridge
+
+volumes:
+  mongo-data:
+  caddy-data:
+  caddy-config:
+

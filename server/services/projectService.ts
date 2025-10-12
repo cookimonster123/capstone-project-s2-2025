@@ -509,7 +509,7 @@ export async function HandleProjectImageUpload(
    imageFiles: Express.Multer.File[],
 ): Promise<void> {
    try {
-      // Skip if AWS is not configured
+      /** Skip if AWS is not configured
       if (
          !process.env.AWS_ACCESS_KEY_ID ||
          !process.env.AWS_SECRET_ACCESS_KEY
@@ -517,6 +517,7 @@ export async function HandleProjectImageUpload(
          console.log("AWS credentials not configured, skipping image upload");
          return;
       }
+      */
 
       const projectId = project._id.toString();
 
@@ -551,7 +552,7 @@ export async function HandleProjectImageDefault(
    project: InstanceType<typeof Project>,
 ): Promise<void> {
    try {
-      // Skip if AWS is not configured
+      /** Skip if AWS is not configured
       if (
          !process.env.AWS_ACCESS_KEY_ID ||
          !process.env.AWS_SECRET_ACCESS_KEY
@@ -561,6 +562,7 @@ export async function HandleProjectImageDefault(
          );
          return;
       }
+      */
 
       if (project.imageUrl.length === 0) {
          const prefix = "assets/projectImages/defaultImages/";
