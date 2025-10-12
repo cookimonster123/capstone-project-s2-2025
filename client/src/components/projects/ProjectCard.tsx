@@ -18,6 +18,7 @@ import PhoneIphoneIcon from "@mui/icons-material/PhoneIphone";
 import SportsEsportsIcon from "@mui/icons-material/SportsEsports";
 import type { Project } from "../../types/project";
 import medalIconDefault from "../../assets/medal.svg";
+import FavoriteIcon from "@mui/icons-material/Favorite";
 
 type ProjectForCard = Project;
 type Props = {
@@ -453,16 +454,7 @@ function ProjectCard({
                </Stack>
 
                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                  <Typography
-                     variant="body2"
-                     sx={{
-                        color: "#FF0000",
-                        fontSize: dense ? 12.5 : 14,
-                        fontWeight: 500,
-                     }}
-                  >
-                     Likes:
-                  </Typography>
+                  <FavoriteIcon color="error" fontSize="medium" />
                   <Typography
                      variant="body2"
                      sx={{

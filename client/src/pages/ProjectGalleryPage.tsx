@@ -281,6 +281,27 @@ const ProjectGalleryPage: React.FC = () => {
       // eslint-disable-next-line react-hooks/exhaustive-deps
    }, [filteredProjects.length]);
 
+   // Handle pagination with scroll to top
+   const handlePageChange = useCallback(
+      (_e: React.ChangeEvent<unknown>, value: number) => {
+         setPage(value);
+      },
+      [],
+   );
+
+   // Scroll to top when page changes (after state update)
+   useEffect(() => {
+      // Skip scroll on initial load
+      if (page === 1 && filteredProjects.length === 0) return;
+
+      // Scroll to top when page changes
+      try {
+         window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+      } catch {
+         window.scrollTo(0, 0);
+      }
+   }, [page]); // Only run when page changes
+
    const yearOptions = useMemo(() => {
       const years = new Set<number>();
       for (const p of projects) {
@@ -1253,7 +1274,7 @@ const ProjectGalleryPage: React.FC = () => {
                               filteredProjects.length / rowsPerPage,
                            )}
                            page={page}
-                           onChange={(_e, value) => setPage(value)}
+                           onChange={handlePageChange}
                            color="primary"
                            showFirstButton
                            showLastButton
