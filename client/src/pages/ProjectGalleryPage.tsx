@@ -857,18 +857,18 @@ const ProjectGalleryPage: React.FC = () => {
                                           theme.palette.mode === "dark"
                                              ? "#0099ff"
                                              : "#06c",
+                                       borderWidth: "2px",
                                     },
                                  "& .MuiInputLabel-root": {
                                     color: "text.secondary",
                                     fontSize: 15,
-                                    "&.Mui-focused": {
-                                       color: "primary.main",
-                                    },
                                  },
                                  "& .MuiSelect-select": {
                                     color: "text.primary",
                                     fontSize: 15,
                                  },
+                                 "& .MuiInputLabel-root:not(.MuiInputLabel-shrink) ~ .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline legend":
+                                    { width: 0 },
                               }}
                            >
                               <InputLabel
@@ -895,6 +895,7 @@ const ProjectGalleryPage: React.FC = () => {
                                  onChange={(e) => setCategory(e.target.value)}
                                  labelId="cat-label"
                                  label="Category"
+                                 displayEmpty
                                  open={openCat}
                                  onOpen={() => setOpenCat(true)}
                                  onClose={() => {
@@ -926,10 +927,10 @@ const ProjectGalleryPage: React.FC = () => {
                                  }
                                  renderValue={(selected) =>
                                     selected ? (
-                                       (selected as string as unknown as React.ReactNode)
+                                       (selected as React.ReactNode)
                                     ) : openCat ? (
                                        <span style={{ color: "#9aa0a6" }}>
-                                          Any
+                                          Category
                                        </span>
                                     ) : null
                                  }
@@ -937,16 +938,6 @@ const ProjectGalleryPage: React.FC = () => {
                                  <MenuItem value="">
                                     <em>Any</em>
                                  </MenuItem>
-                                 {/* Ensure controlled Select always has a matching option even before options load */}
-                                 {category &&
-                                    !categoryOptions.includes(category) && (
-                                       <MenuItem
-                                          value={category}
-                                          sx={{ display: "none" }}
-                                       >
-                                          {category}
-                                       </MenuItem>
-                                    )}
                                  {categoryOptions.map((c) => (
                                     <MenuItem key={c} value={c}>
                                        {c}
