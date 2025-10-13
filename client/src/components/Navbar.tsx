@@ -1,5 +1,5 @@
 import React from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
 import Button from "@mui/material/Button";
@@ -10,6 +10,8 @@ import Divider from "@mui/material/Divider";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
+import VolumeUpIcon from "@mui/icons-material/VolumeUp";
+import VolumeOffIcon from "@mui/icons-material/VolumeOff";
 import Drawer from "@mui/material/Drawer";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
@@ -24,6 +26,7 @@ import DarkModeToggle from "./common/DarkModeToggle";
 // Adjust these imports to your real asset names if needed.
 import logo from "../assets/capstone.svg";
 import defaultAvatar from "../assets/default_avatar.jpg";
+import bgm from "../assets/bgm.mp3";
 
 /** Single source of truth for header height. */
 export const NAV_HEIGHT = 80;
@@ -39,6 +42,22 @@ const Navbar: React.FC = () => {
    const [menuEl, setMenuEl] = React.useState<null | HTMLElement>(null);
    const [fullUser, setFullUser] = React.useState<any>(null);
    const [mobileOpen, setMobileOpen] = React.useState(false);
+   const { pathname } = useLocation();
+
+   // Background music state
+   const [isMuted, setIsMuted] = React.useState(true); // Start as muted to match audio element
+   // Persist manual mute across navigation/refresh using localStorage
+   const [userMutedManually, setUserMutedManually] = React.useState<boolean>(
+      () => {
+         try {
+            return localStorage.getItem("bgmUserMuted") === "1";
+         } catch {
+            return false;
+         }
+      },
+   );
+   const audioRef = React.useRef<HTMLAudioElement | null>(null);
+   const hasAutoPlayedRef = React.useRef(false);
 
    React.useEffect(() => {
       const loadUserDetails = async () => {
@@ -52,6 +71,128 @@ const Navbar: React.FC = () => {
       };
       loadUserDetails();
    }, [user?.id]);
+
+   // Initialize background music
+   React.useEffect(() => {
+      const audio = new Audio(bgm);
+      audio.loop = true;
+      audio.volume = 0.3; // Set moderate volume
+      audio.muted = true;
+      audioRef.current = audio;
+
+      // Sync React state with actual audio state & persisted manual mute
+      try {
+         const persistedManualMute =
+            localStorage.getItem("bgmUserMuted") === "1";
+         setIsMuted(true); // Audio starts muted
+         // If user had manually muted, keep the flag; if not, leave as is
+         if (persistedManualMute) {
+            // Keep userMutedManually true so auto-play won't trigger later
+            // Also ensure icon shows muted
+            // Note: audio is already muted by default
+         }
+      } catch {
+         setIsMuted(true);
+      }
+
+      // Try to auto-play (browsers may block this)
+      const playAudio = async () => {
+         try {
+            await audio.play();
+            // Auto-play succeeded but audio is still muted, keep UI consistent
+         } catch (error) {
+            console.log(
+               "Auto-play blocked by browser, user interaction required",
+            );
+            // State is already set to true above
+         }
+      };
+
+      playAudio();
+
+      return () => {
+         if (audioRef.current) {
+            audioRef.current.pause();
+            audioRef.current = null;
+         }
+      };
+   }, []);
+
+   // Handle music toggle
+   const toggleMusic = () => {
+      if (!audioRef.current) return;
+
+      if (isMuted) {
+         // User is manually unmuting
+         audioRef.current.muted = false;
+         audioRef.current.play().catch(console.error);
+         setIsMuted(false);
+         setUserMutedManually(false); // Reset manual mute flag
+         try {
+            localStorage.setItem("bgmUserMuted", "0");
+         } catch {}
+         // Don't reset hasAutoPlayedRef - user chose to unmute manually
+      } else {
+         // User is manually muting
+         audioRef.current.pause();
+         setIsMuted(true);
+         setUserMutedManually(true); // Set manual mute flag
+         try {
+            localStorage.setItem("bgmUserMuted", "1");
+         } catch {}
+      }
+   };
+
+   // Auto-play music on About/Projects with user-gesture fallback (for autoplay policies)
+   React.useEffect(() => {
+      const audio = audioRef.current;
+      if (!audio) return;
+
+      // Respect manual mute and current play state
+      if (userMutedManually || !isMuted) return;
+
+      // Only auto-play on projects and about pages
+      const isAllowedPath =
+         pathname.startsWith("/projects") || pathname === "/about";
+      if (!isAllowedPath) return;
+
+      function removeGestureListeners() {
+         window.removeEventListener("pointerdown", onFirstGesture);
+         window.removeEventListener("keydown", onFirstGesture);
+      }
+
+      async function tryPlay() {
+         try {
+            if (!audioRef.current) return;
+            audioRef.current.muted = false;
+            await audioRef.current.play();
+            setIsMuted(false);
+            hasAutoPlayedRef.current = true; // only after success
+            removeGestureListeners();
+         } catch (err) {
+            // Autoplay blocked; wait for first user gesture
+            window.addEventListener("pointerdown", onFirstGesture, {
+               once: true,
+            });
+            window.addEventListener("keydown", onFirstGesture, { once: true });
+         }
+      }
+
+      function onFirstGesture() {
+         // Re-check state and path at gesture time
+         if (!audioRef.current || userMutedManually)
+            return removeGestureListeners();
+         const stillAllowed =
+            pathname.startsWith("/projects") || pathname === "/about";
+         if (!stillAllowed) return removeGestureListeners();
+         void tryPlay();
+      }
+
+      void tryPlay();
+      return () => {
+         removeGestureListeners();
+      };
+   }, [pathname, isMuted, userMutedManually]);
 
    // Determine dashboard path based on user role
    const getDashboardPath = () => {
@@ -225,6 +366,76 @@ const Navbar: React.FC = () => {
             </Box>
 
             {/* Right: Upload + Auth */}
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2.5 }}>
+               {/* Music Toggle */}
+               <Tooltip
+                  title={
+                     isMuted
+                        ? "Unmute background music"
+                        : "Mute background music"
+                  }
+               >
+                  <IconButton
+                     onClick={toggleMusic}
+                     sx={{
+                        color: "text.primary",
+                        transition: "all 0.2s ease",
+                        "&:hover": {
+                           bgcolor: "rgba(0, 102, 204, 0.08)",
+                           color: "primary.main",
+                        },
+                     }}
+                  >
+                     {isMuted ? <VolumeOffIcon /> : <VolumeUpIcon />}
+                  </IconButton>
+               </Tooltip>
+            </Box>
+            {/* Rainbow melody wave when playing */}
+            {!isMuted && (
+               <Box
+                  aria-hidden
+                  sx={{
+                     display: "flex",
+                     alignItems: "flex-end",
+                     gap: 0.5,
+                     ml: 1,
+                     height: 18,
+                     "@keyframes equalize": {
+                        "0%, 100%": { transform: "scaleY(0.4)" },
+                        "50%": { transform: "scaleY(1)" },
+                     },
+                     "@keyframes rainbowShift": {
+                        "0%": { backgroundPosition: "0% 0%" },
+                        "100%": { backgroundPosition: "0% 100%" },
+                     },
+                     "@media (prefers-reduced-motion: reduce)": {
+                        ".bar": { animation: "none !important" },
+                     },
+                     ".bar": {
+                        width: 3,
+                        height: 14,
+                        borderRadius: 1,
+                        transformOrigin: "bottom",
+                        background:
+                           "linear-gradient(180deg, #ff5f6d, #f9d423, #00b09b, #00c6ff, #8e2de2)",
+                        backgroundSize: "100% 300%",
+                        animation:
+                           "equalize 1.2s ease-in-out infinite, rainbowShift 5s linear infinite",
+                     },
+                     ".bar:nth-of-type(1)": { animationDelay: "0s" },
+                     ".bar:nth-of-type(2)": { animationDelay: "0.12s" },
+                     ".bar:nth-of-type(3)": { animationDelay: "0.24s" },
+                     ".bar:nth-of-type(4)": { animationDelay: "0.36s" },
+                     ".bar:nth-of-type(5)": { animationDelay: "0.48s" },
+                  }}
+               >
+                  <Box className="bar" />
+                  <Box className="bar" />
+                  <Box className="bar" />
+                  <Box className="bar" />
+                  <Box className="bar" />
+               </Box>
+            )}
             <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                {/* Mobile menu button */}
                <IconButton
@@ -241,36 +452,38 @@ const Navbar: React.FC = () => {
                   <DarkModeToggle />
                </Box>
 
-               <Button
-                  component={NavLink}
-                  to="/upload"
-                  variant="contained"
-                  sx={{
-                     textTransform: "none",
-                     borderRadius: 2,
-                     px: 3,
-                     py: 1,
-                     bgcolor: "#06c",
-                     color: "#fff",
-                     fontSize: 15,
-                     fontWeight: 500,
-                     letterSpacing: "-0.01em",
-                     boxShadow: "0 1px 3px rgba(0,102,204,0.12)",
-                     transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-                     "&:hover": {
-                        bgcolor: "#0077ed",
-                        boxShadow: "0 4px 12px rgba(0,102,204,0.2)",
-                        transform: "translateY(-1px)",
-                     },
-                     "&:active": {
-                        transform: "translateY(0)",
+               {(!user || user.role !== "visitor") && (
+                  <Button
+                     component={NavLink}
+                     to="/upload"
+                     variant="contained"
+                     sx={{
+                        textTransform: "none",
+                        borderRadius: 2,
+                        px: 3,
+                        py: 1,
+                        bgcolor: "#06c",
+                        color: "#fff",
+                        fontSize: 15,
+                        fontWeight: 500,
+                        letterSpacing: "-0.01em",
                         boxShadow: "0 1px 3px rgba(0,102,204,0.12)",
-                     },
-                     display: { xs: "none", md: "inline-flex" },
-                  }}
-               >
-                  Upload
-               </Button>
+                        transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                        "&:hover": {
+                           bgcolor: "#0077ed",
+                           boxShadow: "0 4px 12px rgba(0,102,204,0.2)",
+                           transform: "translateY(-1px)",
+                        },
+                        "&:active": {
+                           transform: "translateY(0)",
+                           boxShadow: "0 1px 3px rgba(0,102,204,0.12)",
+                        },
+                        display: { xs: "none", md: "inline-flex" },
+                     }}
+                  >
+                     Upload
+                  </Button>
+               )}
 
                {!isLoggedIn ? (
                   <Button
@@ -474,13 +687,15 @@ const Navbar: React.FC = () => {
                      </ListItemButton>
                   ))}
                   <Divider sx={{ my: 1 }} />
-                  <ListItemButton
-                     component={NavLink}
-                     to="/upload"
-                     onClick={() => setMobileOpen(false)}
-                  >
-                     <ListItemText primary="Upload" />
-                  </ListItemButton>
+                  {(!user || user.role !== "visitor") && (
+                     <ListItemButton
+                        component={NavLink}
+                        to="/upload"
+                        onClick={() => setMobileOpen(false)}
+                     >
+                        <ListItemText primary="Upload" />
+                     </ListItemButton>
+                  )}
                   {!isLoggedIn ? (
                      <ListItemButton
                         component={NavLink}

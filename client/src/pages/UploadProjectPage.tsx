@@ -204,7 +204,7 @@ const UploadProjectPage: React.FC = () => {
          const teamId = (userRes.user?.team as string) || "";
          if (!teamId) {
             throw new Error(
-               "No team assigned to your account. Please contact staff.",
+               "You are not a capstone student and cannot upload a project.",
             );
          }
 

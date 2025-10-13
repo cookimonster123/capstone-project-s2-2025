@@ -18,16 +18,16 @@ import UploadIcon from "@mui/icons-material/Upload";
 import PhotoCamera from "@mui/icons-material/PhotoCamera";
 import DeleteIcon from "@mui/icons-material/Delete";
 
-import type { Project } from "../types/project";
-import { fetchProjectById } from "../api/projectApi";
-import ProjectCard from "../components/projects/ProjectCard";
+import type { Project } from "../types/project.ts";
+import { fetchProjectById } from "../api/projectApi.ts";
+import ProjectCard from "../components/projects/ProjectCard.tsx";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/AuthContext.tsx";
 import { fetchUserById, fetchFavoriteProjects } from "../api/userApi.ts";
-import { uploadAvatar, removeAvatar } from "../api/fileApi";
+import { uploadAvatar, removeAvatar } from "../api/fileApi.ts";
 import { motion } from "framer-motion";
-import GradientBackground from "../components/animations/GradientBackground";
-import FloatingElements from "../components/animations/FloatingElements";
+import GradientBackground from "../components/animations/GradientBackground.tsx";
+import FloatingElements from "../components/animations/FloatingElements.tsx";
 
 /**
  * StudentDashboard
@@ -259,7 +259,7 @@ const StudentDashboard: React.FC = () => {
                }}
                gutterBottom
             >
-               Student Dashboard
+               {"User Dashboard"}
             </Typography>
             <Typography color="text.secondary" sx={{ mb: 3 }}>
                Sign in to manage your capstone project.
@@ -337,8 +337,8 @@ const StudentDashboard: React.FC = () => {
                            sx={{ mb: 1 }}
                         >
                            {user?.name
-                              ? `${user.name} · Student Dashboard`
-                              : "Student Dashboard"}
+                              ? `${user.name} · Dashboard`
+                              : "User Dashboard"}
                         </Typography>
                         <Typography
                            textAlign="center"
@@ -524,7 +524,9 @@ const StudentDashboard: React.FC = () => {
                                              variant="body2"
                                              color="text.secondary"
                                           >
-                                             Computer Science
+                                             {user?.role === "capstoneStudent"
+                                                ? "Computer Science"
+                                                : "Visitor"}
                                           </Typography>
                                           <Typography
                                              variant="body2"

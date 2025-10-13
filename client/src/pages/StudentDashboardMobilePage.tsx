@@ -16,12 +16,12 @@ import UploadIcon from "@mui/icons-material/Upload";
 import PhotoCamera from "@mui/icons-material/PhotoCamera";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/AuthContext.tsx";
 import { fetchUserById, fetchFavoriteProjects } from "../api/userApi.ts";
-import { uploadAvatar, removeAvatar } from "../api/fileApi";
-import { fetchProjectById } from "../api/projectApi";
-import type { Project } from "../types/project";
-import ProjectCard from "../components/projects/ProjectCard";
+import { uploadAvatar, removeAvatar } from "../api/fileApi.ts";
+import { fetchProjectById } from "../api/projectApi.ts";
+import type { Project } from "../types/project.ts";
+import ProjectCard from "../components/projects/ProjectCard.tsx";
 
 const StudentDashboardMobilePage: React.FC = () => {
    const { isLoggedIn, user, signIn } = useAuth();
@@ -219,7 +219,7 @@ const StudentDashboardMobilePage: React.FC = () => {
          {!isLoggedIn ? (
             <Box sx={{ py: 6, textAlign: "center", px: 2 }}>
                <Typography variant="h5" fontWeight={700} gutterBottom>
-                  Student Dashboard
+                  User Dashboard
                </Typography>
                <Typography color="text.secondary" sx={{ mb: 2 }}>
                   Sign in to manage your capstone project.
@@ -359,7 +359,9 @@ const StudentDashboardMobilePage: React.FC = () => {
                                     variant="body2"
                                     color="text.secondary"
                                  >
-                                    Computer Science
+                                    {user?.role === "capstoneStudent"
+                                       ? "Computer Science"
+                                       : "Visitor"}
                                  </Typography>
                                  <Typography
                                     variant="body2"

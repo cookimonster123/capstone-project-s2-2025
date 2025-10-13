@@ -29,7 +29,14 @@ export const router = createBrowserRouter([
          { path: "projects-mobile", element: <ProjectGalleryMobilePage /> },
          { path: "profile", element: <ProfileResponsive /> },
          { path: "profile/:id", element: <ProjectProfileResponsive /> },
-         { path: "upload", element: <UploadProjectPage /> },
+         {
+            path: "upload",
+            element: (
+               <ProtectedRoute roles={["capstoneStudent", "staff", "admin"]}>
+                  <UploadProjectPage />
+               </ProtectedRoute>
+            ),
+         },
          { path: "sign-in", element: <LoginPage /> },
          { path: "register", element: <RegisterPage /> },
          { path: "login", element: <Navigate to="/sign-in" replace /> },
