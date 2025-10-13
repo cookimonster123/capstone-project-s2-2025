@@ -92,17 +92,22 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({
                   <Box
                      sx={{
                         display: "grid",
-                        gridTemplateColumns:
-                           "repeat(auto-fit, minmax(380px, 1fr))",
-                        gap: 2,
+                        gap: { xs: 1.5, sm: 2 },
+                        gridTemplateColumns: {
+                           xs: "1fr",
+                           sm: "repeat(auto-fit, minmax(300px, 1fr))",
+                           md: "repeat(auto-fit, minmax(380px, 1fr))",
+                        },
                      }}
                   >
                      {Array.from({ length: skeletonCount }).map((_, i) => (
                         <Skeleton
                            key={i}
                            variant="rectangular"
-                           height={380}
-                           sx={{ borderRadius: 2 }}
+                           sx={{
+                              borderRadius: 2,
+                              height: { xs: 260, sm: 320, md: 380 },
+                           }}
                         />
                      ))}
                   </Box>
@@ -118,9 +123,12 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({
                         <Box
                            sx={{
                               display: "grid",
-                              gridTemplateColumns:
-                                 "repeat(auto-fit, minmax(380px, 1fr))",
-                              gap: 2,
+                              gap: { xs: 1.5, sm: 2 },
+                              gridTemplateColumns: {
+                                 xs: "1fr",
+                                 sm: "repeat(auto-fit, minmax(300px, 1fr))",
+                                 md: "repeat(auto-fit, minmax(380px, 1fr))",
+                              },
                            }}
                         >
                            {projects.map((project, idx) => {

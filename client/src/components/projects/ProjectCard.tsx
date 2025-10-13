@@ -159,8 +159,8 @@ function ProjectCard({
          onMouseLeave={handleMouseLeave}
          onClick={() => onClick(project)}
          sx={{
-            width,
-            height,
+            width: { xs: "100%", sm: width },
+            height: { xs: 320, sm: height },
             borderRadius: 2.5,
             overflow: "hidden",
             display: "flex",
@@ -254,7 +254,7 @@ function ProjectCard({
          <Box
             sx={{
                position: "relative",
-               height: dense ? 180 : 210,
+               height: { xs: 160, sm: dense ? 180 : 210 },
                bgcolor: (theme) => {
                   if (!firstImageUrl || !imageOk) {
                      return theme.palette.mode === "dark"
@@ -314,7 +314,7 @@ function ProjectCard({
                flexDirection: "column",
                gap: dense ? 1 : 1.25,
                flexGrow: 1,
-               p: dense ? 1.5 : 2,
+               p: { xs: 1.25, sm: dense ? 1.5 : 2 },
                pb: dense ? 0.25 : 0.5,
                "&:last-child": { pb: dense ? 0.25 : 0.5 },
                position: "relative",
@@ -343,8 +343,8 @@ function ProjectCard({
                      WebkitBoxOrient: "vertical",
                      overflow: "hidden",
                      lineHeight: 1.3,
-                     minHeight: dense ? 34 : 40,
-                     fontSize: dense ? 16 : 18,
+                     minHeight: { xs: 32, sm: dense ? 34 : 40 },
+                     fontSize: { xs: 15, sm: dense ? 16 : 18 },
                      color: (theme) =>
                         theme.palette.mode === "dark" ? "#e8eaed" : "#1d1d1f",
                      letterSpacing: "-0.01em",

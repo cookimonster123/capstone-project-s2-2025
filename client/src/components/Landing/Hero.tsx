@@ -238,7 +238,7 @@ const Hero: React.FC<HeroProps> = ({
                         fullWidth
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Search for projects..."
+                        placeholder="Search Projects..."
                         InputProps={{
                            startAdornment: (
                               <InputAdornment position="start">

@@ -773,11 +773,10 @@ const ProjectProfileView: React.FC<ProjectProfileProps> = ({
                   sx={{
                      display: "grid",
                      gridTemplateColumns: {
-                        xs: "minmax(0, 1fr) 360px",
-                        sm: "minmax(0, 1fr) 380px",
+                        xs: "1fr",
                         md: "minmax(0, 1fr) 400px",
                      },
-                     gap: { xs: 3, sm: 4, md: 5 },
+                     gap: { xs: 2.5, sm: 3.5, md: 5 },
                      alignItems: "start",
                   }}
                >
