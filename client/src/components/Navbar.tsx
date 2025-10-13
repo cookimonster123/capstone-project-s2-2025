@@ -334,6 +334,14 @@ const Navbar: React.FC = () => {
                                     boxShadow: "0 0 0 3px rgba(0,102,204,0.1)",
                                  },
                               }}
+                              imgProps={{
+                                 style: {
+                                    // Help animated GIFs update correctly in filtered/blurred headers
+                                    willChange: "transform",
+                                    transform: "translateZ(0)",
+                                    imageRendering: "auto",
+                                 },
+                              }}
                            />
                         </Tooltip>
                      </Box>

@@ -298,12 +298,19 @@ const CommentSection: React.FC<CommentProps> = ({ projectId }) => {
                         return (
                            <Stack key={c._id} direction="row" spacing={2}>
                               <Avatar
-                                 src={
-                                    authorMap[authorId]?.profilePicture ||
-                                    initials
-                                 }
+                                 src={authorMap[authorId]?.profilePicture}
                                  sx={{ width: 40, height: 40 }}
-                              />
+                                 imgProps={{
+                                    style: {
+                                       willChange: "transform",
+                                       transform: "translateZ(0)",
+                                       imageRendering: "auto",
+                                    },
+                                 }}
+                              >
+                                 {!authorMap[authorId]?.profilePicture &&
+                                    initials}
+                              </Avatar>
                               <Box
                                  sx={{
                                     flex: 1,
