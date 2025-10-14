@@ -1,4 +1,6 @@
 #!/bin/bash
+# Go back to project root
+cd ../
 echo "Stopping all containers..."
 docker compose down
 

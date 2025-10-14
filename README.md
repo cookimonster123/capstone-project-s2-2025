@@ -6,7 +6,7 @@ This guide will help you set up the project from scratch on a clean machine (mac
 
 ## Prerequisites
 
-1.  **Install [Node.js](https://nodejs.org/):**
+1. **Install [Node.js](https://nodejs.org/):**
 
 - Download and install for your OS
 - This will also install `npm`
@@ -17,7 +17,7 @@ node -v
 npm -v
 ```
 
-2.  **Install [Git](https://git-scm.com/):**
+2. **Install [Git](https://git-scm.com/):**
 
 - Download and install for your OS.
 - Used for version control and cloning the repository.
@@ -54,14 +54,12 @@ npm install
 ### 3. MongoDB Atlas Setup
 
 1. **Create MongoDB Atlas Account:**
-
    - Sign up for a free account at [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
    - Create a new cluster (free tier)
 
 2. **Configure Database Access:**
 
 3. **Configure Network Access:**
-
    - Go to Security → Network Access
    - Click "Add IP Address"
    - Choose "Allow Access from Anywhere" (Add: 0.0.0.0/0)
@@ -137,11 +135,12 @@ npm run dev
 
 ## Common Commands
 
-| Command        | Location      | Description          |
-| -------------- | ------------- | -------------------- |
-| `npm install`  | client/server | Install dependencies |
-| `npm run dev`  | client/server | Start dev server     |
-| `npm run seed` | server        | Seed database        |
+| Command                | Location      | Description                       |
+| ---------------------- | ------------- | --------------------------------- |
+| `npm install`          | client/server | Install dependencies              |
+| `npm run dev`          | client/server | Start dev server                  |
+| `npm run seed`         | server        | Seed database                     |
+| `chmod -R +x ./Shells` | root          | Making all shell files executable |
 
 ## Project Structure
 
@@ -151,3 +150,80 @@ capstone-project-s2-2025-team-36/
 ├── server/   # Backend (Node.js + Express)
 └── README.md # This file
 ```
+
+## How to move the repo to your EC2 instance
+
+Steps:
+
+```bash
+      # Download the repo to local
+	   1. git clone github_repo_address
+	   # copy folder into ec2
+      # Ensure right your current location on terminal is same with the .pem file location
+	   2. scp -i xxx.pem localPATH -r ubuntu@ec2PublicDNS:/home/ubuntu
+	   # connect to ec2 and operate ec2 on terminal
+	   3. ssh -i "xxx.pem" ubuntu@ec2PublicDNS
+      # On terminal, go to the root of downloaded repo
+      4. cd capstone-project-s2-2025-team-36/
+      # Set cleanUp.sh file to executable
+      5. chmod +x cleanUp.sh
+      # Clean up all useless files
+      6. ./cleanUp.sh
+```
+
+## How to run the shells for quick website deployment with domain name
+
+Steps:
+
+```bash
+   0. Ensure you are on the EC2 terminal right now and current location is the root of our downloaded repo.
+   1. In the root folder, enter command - chmod -R +x ./Shells
+   2. Go to the Shells folder, enter command - cd Shells/
+   3. Go to ./CaddyConfigShells folder to replace domain names with your domain names in CaddyfileWithDomainName.sh
+   4. Go back to the Shells folder, enter command - cd ..
+   5. Config deployment environment, enter command - ./DeploymentShells/DeployWithDomainName.sh
+   6. Go to server folder to replace the CLIENT_URL in .env file
+   7. Go to the Shells folder on terminal, enter command - ./FinalDeploy.sh
+```
+
+## How to run the shells for quick website deployment without domain name
+
+Steps:
+
+```bash
+   0. Ensure you are on the EC2 terminal right now and current location is the root of our downloaded repo.
+   1. In the root folder, enter command - chmod -R +x ./Shells
+   2. Go to the Shells folder, enter command - cd Shells/
+   3. Config deployment environment, enter command - ./DeploymentShells/DeployWithoutDomainName.sh
+   4. Go to server folder to replace the CLIENT_URL in .env file
+   5. Go to the Shells folder on terminal, enter command - ./FinalDeploy.sh
+```
+
+## How to quickly undeploy (close the website)
+
+Steps:
+
+```bash
+   0. Ensure you are on the EC2 terminal right now and current location is the root of our downloaded repo.
+   1. In the root folder, enter command - chmod -R +x ./Shells
+   2. Go to the Shells folder, enter command - cd Shells/
+   3. Undeploy the website, enter command - ./Undeploy.sh
+```
+
+## How to connect to database on EC2
+
+Steps:
+
+```bash
+   0. Ensure you are on the EC2 terminal right now and current location is the root of our downloaded repo.
+   # Check if your website is running
+   1. docker ps
+   # Connect to DB through mongo Compass tool on your local computer
+   2. ssh -i xxx.pem -L 27017:localhost:27017 ubuntu@ec2PublicDNS
+   # Add url on Compass to connect to database
+   3. Add mongodb://localhost:27017 as url on your mongo Compass tool
+   # Disconnect the connection with EC2 DB on your local computer
+   4. ctrl+D and ctrl+C
+```
+
+Follow the steps above for deployment, running and testing. xxx.pem is the .pem type file, which will be downloaded when you create the EC2 instance on AWS
