@@ -1,13 +1,16 @@
+capstones.click {
+    redir https://www.capstones.click{uri}
+}
 
-:80 {
-  encode gzip
+www.capstones.click {
+    encode gzip
 
-  @api path /api*
-  handle @api {
-    reverse_proxy server:3000
-  }
+    @api path /api*
+    handle @api {
+        reverse_proxy server:3000
+    }
 
-  handle {
-    reverse_proxy client:5173
-  }
+    handle {
+        reverse_proxy client:5173
+    }
 }
