@@ -93,11 +93,13 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({
                      sx={{
                         display: "grid",
                         gap: { xs: 1.5, sm: 2 },
+                        // Keep card size constant even with 1–2 items by using fixed track sizes
                         gridTemplateColumns: {
                            xs: "1fr",
-                           sm: "repeat(auto-fit, minmax(300px, 1fr))",
-                           md: "repeat(auto-fit, minmax(380px, 1fr))",
+                           sm: "repeat(auto-fill, minmax(300px, 300px))",
+                           md: "repeat(auto-fill, minmax(380px, 380px))",
                         },
+                        justifyContent: { sm: "center" },
                      }}
                   >
                      {Array.from({ length: skeletonCount }).map((_, i) => (
@@ -124,11 +126,13 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({
                            sx={{
                               display: "grid",
                               gap: { xs: 1.5, sm: 2 },
+                              // Keep card size constant even with 1–2 items by using fixed track sizes
                               gridTemplateColumns: {
                                  xs: "1fr",
-                                 sm: "repeat(auto-fit, minmax(300px, 1fr))",
-                                 md: "repeat(auto-fit, minmax(380px, 1fr))",
+                                 sm: "repeat(auto-fill, minmax(300px, 300px))",
+                                 md: "repeat(auto-fill, minmax(380px, 380px))",
                               },
+                              justifyContent: { sm: "center" },
                            }}
                         >
                            {projects.map((project, idx) => {
