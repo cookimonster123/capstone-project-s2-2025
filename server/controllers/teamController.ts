@@ -1,6 +1,8 @@
 import type { Request, Response } from "express";
-import { Team, User } from "@models";
+import { Team, User, RegisteredStudent } from "@models";
 import { findTeamsPaginated } from "../services/teamService";
+import csvParser from "csv-parser";
+import { Readable } from "stream";
 
 /**
  * Get all teams
@@ -145,70 +147,112 @@ export const uploadTeamsCSV = async (
    res: Response,
 ): Promise<void> => {
    try {
-      const { teams: teamsData } = req.body;
-
-      if (!teamsData || !Array.isArray(teamsData)) {
+      // Prefer multipart file upload
+      if (!req.file || !req.file.buffer) {
          res.status(400).json({
             success: false,
-            message: "Invalid CSV data format",
+            message:
+               "Missing CSV file. Please upload a .csv file with columns: name,login_id,group_name,canvas_group_id",
          });
          return;
       }
 
-      const createdTeams = [];
-      const errors = [];
+      const rows: Array<{
+         name: string;
+         login_id: string;
+         group_name: string;
+         canvas_group_id: string;
+      }> = [];
 
-      for (const teamData of teamsData) {
-         try {
-            const { name, memberEmails } = teamData;
+      // Parse CSV using csv-parser
+      await new Promise<void>((resolve, reject) => {
+         const stream = Readable.from(req.file!.buffer);
+         stream
+            .pipe(csvParser())
+            .on("data", (data) => {
+               rows.push({
+                  name: String(data.name ?? "").trim(),
+                  login_id: String(data.login_id ?? "").trim(),
+                  group_name: String(data.group_name ?? "").trim(),
+                  canvas_group_id: String(data.canvas_group_id ?? "").trim(),
+               });
+            })
+            .on("end", () => resolve())
+            .on("error", (err) => reject(err));
+      });
 
-            if (!name) {
-               errors.push({ row: teamData, error: "Team name is required" });
-               continue;
-            }
+      // Validate and process
+      const errors: any[] = [];
+      const teamsMap = new Map<string, any>();
+      const json_data: Array<{
+         teamId: string;
+         group_name: string;
+         canvas_group_id: string;
+      }> = [];
 
-            // Find users by email
-            const members = [];
-            if (memberEmails && Array.isArray(memberEmails)) {
-               for (const email of memberEmails) {
-                  const user = await User.findOne({ email: email.trim() });
-                  if (user) {
-                     members.push(user._id);
-                  } else {
-                     errors.push({
-                        row: teamData,
-                        error: `User not found: ${email}`,
-                     });
-                  }
-               }
-            }
+      for (const row of rows) {
+         const { name, login_id, group_name, canvas_group_id } = row;
+         if (!name || !login_id || !group_name || !canvas_group_id) {
+            errors.push({ row, error: "Missing required columns" });
+            continue;
+         }
 
-            // Create team
-            const team = await Team.create({
-               name: name.trim(),
-               members,
-            });
-
-            // Update users' team field
-            await User.updateMany(
-               { _id: { $in: members } },
-               { $set: { team: team._id } },
-            );
-
-            createdTeams.push(team);
-         } catch (error) {
-            errors.push({
-               row: teamData,
-               error: error instanceof Error ? error.message : "Unknown error",
+         const key = `${group_name}__${canvas_group_id}`;
+         if (!teamsMap.has(key)) {
+            // find or create team by (name, canvasGroupId)
+            const team = await Team.findOneAndUpdate(
+               { name: group_name, canvasGroupId: canvas_group_id },
+               {
+                  $setOnInsert: {
+                     name: group_name,
+                     canvasGroupId: canvas_group_id,
+                  },
+               },
+               { new: true, upsert: true },
+            ).lean();
+            teamsMap.set(key, team);
+            json_data.push({
+               teamId: team._id.toString(),
+               group_name,
+               canvas_group_id,
             });
          }
       }
 
+      // Prepare students upsert
+      const students = rows
+         .filter(
+            (r) => r.name && r.login_id && r.group_name && r.canvas_group_id,
+         )
+         .map((r) => {
+            const key = `${r.group_name}__${r.canvas_group_id}`;
+            const team = teamsMap.get(key);
+            const upi = r.login_id.toLowerCase();
+            return {
+               upi,
+               name: r.name,
+               teamName: r.group_name,
+               email: `${upi}@aucklanduni.ac.nz`,
+               team: team?._id,
+            };
+         });
+
+      if (students.length === 0) {
+         res.status(400).json({
+            success: false,
+            message: "No valid rows found in CSV",
+         });
+         return;
+      }
+
+      // Bulk upsert registered students
+      await RegisteredStudent.bulkUpsert(students as any);
+
       res.status(200).json({
          success: true,
-         message: `Created ${createdTeams.length} teams`,
-         createdTeams,
-         errors: errors.length > 0 ? errors : undefined,
+         message: `Processed ${rows.length} rows, created ${teamsMap.size} teams, registered ${students.length} students`,
+         json_data,
+         errors: errors.length ? errors : undefined,
       });
    } catch (error) {
       console.error("Error uploading teams CSV:", error);

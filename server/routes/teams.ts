@@ -1,4 +1,5 @@
 import { Router } from "express";
+import multer from "multer";
 import {
    getAllTeams,
    getTeamById,
@@ -9,6 +10,7 @@ import {
 import { authenticateToken, authorizeRoles } from "../middleware/auth";
 
 const router = Router();
+const upload = multer({ storage: multer.memoryStorage() });
 
 /**
  * @route   GET /api/teams
@@ -55,6 +57,7 @@ router.post(
    "/upload-csv",
    authenticateToken,
    authorizeRoles(["admin", "staff"]),
+   upload.single("file"),
    uploadTeamsCSV,
 );
 

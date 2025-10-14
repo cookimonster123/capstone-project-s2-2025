@@ -293,17 +293,24 @@ export async function getTeamByEmail(
 ): Promise<mongoose.Types.ObjectId | null> {
    try {
       const upi = email.split("@")[0];
-      const student = await RegisteredStudent.findOne({ upi: upi }).select(
-         "teamName",
-      );
+      const student = await RegisteredStudent.findOne({ upi: upi })
+         .select("team teamName")
+         .lean();
 
-      if (!student || !student.teamName) {
+      if (!student) {
          return null;
+      }
+
+      // Prefer direct team reference when available
+      if ((student as any).team) {
+         return (student as any).team as mongoose.Types.ObjectId;
       }
 
       // TODO: Parse teamName if necessary
       // Assume teamName in RegisteredStudent matches Team.name
-      const team = await Team.findOne({ name: student.teamName }).select("_id");
+      const team = await Team.findOne({
+         name: (student as any).teamName,
+      }).select("_id");
 
       return team ? team._id : null;
    } catch (error) {

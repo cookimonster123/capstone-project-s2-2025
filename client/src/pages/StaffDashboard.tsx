@@ -561,27 +561,7 @@ const StaffDashboard: React.FC = () => {
       if (!selectedFile) return;
 
       try {
-         // Read CSV file
-         const text = await selectedFile.text();
-         const lines = text.split(/\r?\n/).filter((line) => line.trim());
-
-         if (lines.length === 0) {
-            showSnackbar("CSV file is empty", "error");
-            return;
-         }
-
-         // Parse CSV: teamName, email1, email2, email3...
-         const teamsData = lines.map((line) => {
-            const columns = line.split(",").map((col) => col.trim());
-            const [name, ...memberEmails] = columns;
-            return {
-               name,
-               memberEmails: memberEmails.filter((email) => email.length > 0),
-            };
-         });
-
-         // Upload to API
-         const result = await uploadTeamsCSV({ teams: teamsData });
+         const result = await uploadTeamsCSV(selectedFile);
 
          if (result.success) {
             showSnackbar(result.message, "success");
@@ -602,7 +582,7 @@ const StaffDashboard: React.FC = () => {
          setSelectedFile(null);
       } catch (error) {
          console.error("Error uploading CSV:", error);
-         showSnackbar("Failed to parse or upload CSV", "error");
+         showSnackbar("Failed to upload CSV", "error");
       }
    };
 

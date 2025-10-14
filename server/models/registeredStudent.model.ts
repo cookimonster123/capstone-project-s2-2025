@@ -4,14 +4,25 @@ import { IBulkUpsertResult } from "../interfaces/registeredStudent";
 export interface IRegisteredStudent extends Document {
    upi: string;
    name: string;
-   teamName?: string;
+   teamName?: string; // legacy compatibility
+   email?: string; // derived from login_id (upi) for university domain
+   team?: mongoose.Types.ObjectId; // direct link to Team
 }
 
 // Interface for static methods
 interface IRegisteredStudentModel extends Model<IRegisteredStudent> {
    isRegisteredStudent(upi: string): Promise<boolean>;
    bulkUpsert(
-      students: { upi: string; name: string; teamName: string }[],
+      students: (
+         | { upi: string; name: string; teamName: string }
+         | {
+              upi: string;
+              name: string;
+              teamName?: string;
+              email?: string;
+              team?: mongoose.Types.ObjectId;
+           }
+      )[],
    ): Promise<IBulkUpsertResult>;
 }
 
@@ -42,6 +53,19 @@ const registeredStudentSchema = new Schema<IRegisteredStudent>(
          required: false,
          maxlength: 100,
       },
+      email: {
+         type: String,
+         required: false,
+         lowercase: true,
+         trim: true,
+         match: /.+\@.+\..+/, // basic email format
+      },
+      team: {
+         type: Schema.Types.ObjectId,
+         ref: "Team",
+         required: false,
+         index: true,
+      },
    },
    {
       collection: "registeredstudents", // Explicit collection name
@@ -59,7 +83,16 @@ registeredStudentSchema.statics.isRegisteredStudent = async function (
 
 // Static method for bulk insert with duplicate handling
 registeredStudentSchema.statics.bulkUpsert = async function (
-   students: { upi: string; name: string; teamName: string }[],
+   students: (
+      | { upi: string; name: string; teamName: string }
+      | {
+           upi: string;
+           name: string;
+           teamName?: string;
+           email?: string;
+           team?: mongoose.Types.ObjectId;
+        }
+   )[],
 ): Promise<IBulkUpsertResult> {
    const operations = students.map((student) => ({
       updateOne: {
@@ -69,6 +102,12 @@ registeredStudentSchema.statics.bulkUpsert = async function (
                upi: student.upi.toLowerCase().trim(),
                name: student.name.trim(),
                teamName: student.teamName ? student.teamName.trim() : undefined,
+               email: (student as any).email
+                  ? String((student as any).email)
+                       .toLowerCase()
+                       .trim()
+                  : undefined,
+               team: (student as any).team ?? undefined,
             },
          },
          upsert: true,

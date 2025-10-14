@@ -233,26 +233,62 @@ export const fetchTeamsPaginated = async (
 };
 
 // Upload teams CSV
-export const uploadTeamsCSV = async (csvData: {
-   teams: Array<{ name: string; memberEmails: string[] }>;
-}): Promise<{ success: boolean; message: string; errors?: any[] }> => {
+export const uploadTeamsCSV = async (
+   file: File,
+): Promise<{
+   success: boolean;
+   message: string;
+   errors?: any[];
+   json_data?: any[];
+}> => {
    try {
+      const form = new FormData();
+      form.append("file", file);
+
       const response = await fetch(`${BASE_API_URL}/teams/upload-csv`, {
          method: "POST",
-         headers: {
-            "Content-Type": "application/json",
-         },
          credentials: "include",
-         body: JSON.stringify(csvData),
+         body: form,
       });
 
-      const data = await response.json();
-      return data;
-   } catch (error) {
-      console.error("Error uploading teams CSV:", error);
+      const contentType = response.headers.get("content-type") || "";
+      const data = contentType.includes("application/json")
+         ? await response.json()
+         : { message: await response.text() };
+
+      if (!response.ok) {
+         return {
+            success: false,
+            message:
+               data?.message ||
+               data?.error ||
+               `Upload failed (${response.status})`,
+            errors: (data as any)?.errors,
+         };
+      }
+
+      return data as any;
+   } catch (err) {
+      console.error("Error uploading teams CSV:", err);
+
+      // Safely derive a readable message from the caught value (which may be unknown)
+      let message = "Failed to upload CSV";
+      if (err instanceof Error) {
+         message = err.message;
+      } else if (typeof err === "string") {
+         message = err;
+      } else {
+         try {
+            const serialized = JSON.stringify(err);
+            if (serialized && serialized !== "{}") message = serialized;
+         } catch {
+            // ignore serialization errors and keep default message
+         }
+      }
+
       return {
          success: false,
-         message: "Failed to upload CSV",
+         message,
       };
    }
 };
