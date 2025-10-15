@@ -29,21 +29,10 @@ app.set("trust proxy", 1);
 
 app.use(
    cors({
-      origin: (origin, callback) => {
-         const allowed = [
-            process.env.CLIENT_URL, // e.g. https://www.capstones.click
-            "http://localhost:5173",
-         ].filter(Boolean) as string[];
-         if (!origin || allowed.includes(origin)) return callback(null, true);
-         // allow subdomain variants if needed
-         try {
-            const o = new URL(origin);
-            const allowedHosts = allowed.map((u) => new URL(u).host);
-            if (allowedHosts.includes(o.host)) return callback(null, true);
-         } catch {}
-         return callback(new Error("CORS not allowed"));
-      },
-      credentials: true,
+      origin:
+         `http://localhost:${process.env.CLIENT_URL}` ||
+         "http://localhost:5173",
+      credentials: true, // Allow cookies to be sent
    }),
 );
 connectDB();
