@@ -2,6 +2,11 @@ import { Request, Response } from "express";
 import {
    loginUser,
    registerUser,
+   requestRegistrationMagicLink,
+   confirmRegistrationMagicLink,
+   emailExists,
+   requestPasswordResetLink,
+   resetPasswordWithToken,
    checkCapstoneStudent,
    getTeamByEmail,
 } from "../services/authService";
@@ -45,6 +50,140 @@ export const register = async (req: Request, res: Response): Promise<void> => {
    } catch (error: any) {
       console.error("Registration controller error:", error.message);
       res.status(500).json({ error: "Server error" });
+   }
+};
+
+/**
+ * Request a magic link to complete registration
+ */
+export const requestMagicLink = async (
+   req: Request,
+   res: Response,
+): Promise<void> => {
+   try {
+      // Build base URL for link (prefer env; fallback current request)
+      const base =
+         process.env.SERVER_PUBLIC_URL ||
+         `${req.protocol}://${req.get("host")}`;
+      const result = await requestRegistrationMagicLink(req.body, base);
+      if (!result.success) {
+         res.status(400).json(result);
+         return;
+      }
+      res.status(200).json(result);
+   } catch (error: any) {
+      console.error("requestMagicLink controller error:", error.message);
+      res.status(500).json({ error: "Server error" });
+   }
+};
+
+/**
+ * Confirm magic link and sign the user in
+ */
+export const confirmMagicLink = async (
+   req: Request,
+   res: Response,
+): Promise<void> => {
+   try {
+      const token = (req.query.token as string) || "";
+      if (!token) {
+         res.status(400).json({ success: false, error: "Missing token" });
+         return;
+      }
+
+      const result = await confirmRegistrationMagicLink(token);
+      const clientUrl =
+         process.env.CLIENT_PUBLIC_URL ||
+         `http://localhost:${process.env.CLIENT_URL || 5173}`;
+      if (!result.success) {
+         // Redirect back with error code for better UX
+         const reason = encodeURIComponent(result.error || "invalid");
+         res.redirect(`${clientUrl}/register?verifyError=${reason}`);
+         return;
+      }
+
+      // Set cookie and redirect to client with success flag
+      res.cookie("token", result.data?.token, {
+         httpOnly: true,
+         secure: process.env.NODE_ENV === "production",
+         sameSite: "strict",
+         maxAge: 60 * 60 * 1000,
+      });
+
+      res.redirect(`${clientUrl}/register?verified=1`);
+   } catch (error: any) {
+      console.error("confirmMagicLink controller error:", error.message);
+      res.status(500).json({ error: "Server error" });
+   }
+};
+
+/**
+ * Public endpoint to check if an email exists
+ */
+export const checkEmail = async (
+   req: Request,
+   res: Response,
+): Promise<void> => {
+   try {
+      const email =
+         (req.query.email as string) || (req.body?.email as string) || "";
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+         res.status(400).json({ success: false, error: "Invalid email" });
+         return;
+      }
+      const exists = await emailExists(email);
+      res.status(200).json({ success: true, data: { exists } });
+   } catch (error: any) {
+      console.error("checkEmail controller error:", error.message);
+      res.status(500).json({ success: false, error: "Server error" });
+   }
+};
+
+/**
+ * Request a password reset magic link
+ */
+export const requestPasswordReset = async (
+   req: Request,
+   res: Response,
+): Promise<void> => {
+   try {
+      const { email } = req.body as { email: string };
+      const clientBase =
+         process.env.CLIENT_PUBLIC_URL ||
+         `http://localhost:${process.env.CLIENT_URL || 5173}`;
+      const result = await requestPasswordResetLink(email, clientBase);
+      if (!result.success) {
+         res.status(400).json(result);
+         return;
+      }
+      res.status(200).json(result);
+   } catch (error: any) {
+      console.error("requestPasswordReset controller error:", error.message);
+      res.status(500).json({ success: false, error: "Server error" });
+   }
+};
+
+/**
+ * Reset password via token
+ */
+export const resetPassword = async (
+   req: Request,
+   res: Response,
+): Promise<void> => {
+   try {
+      const { token, password } = req.body as {
+         token: string;
+         password: string;
+      };
+      const result = await resetPasswordWithToken(token, password);
+      if (!result.success) {
+         res.status(400).json(result);
+         return;
+      }
+      res.status(200).json(result);
+   } catch (error: any) {
+      console.error("resetPassword controller error:", error.message);
+      res.status(500).json({ success: false, error: "Server error" });
    }
 };
 

@@ -10,9 +10,14 @@ import {
    AuthTokenData,
    LoginUserData,
 } from "../interfaces";
-import { Team } from "@models";
+import { Team, RegistrationToken, PasswordResetToken } from "@models";
 import mongoose from "mongoose";
 import { addUserToTeam } from "./teamService";
+import crypto from "crypto";
+import {
+   sendRegistrationMagicLink,
+   sendPasswordResetLink,
+} from "./emailService";
 
 /**
  * Validates user registration data
@@ -197,6 +202,243 @@ export async function registerUser(
 }
 
 /**
+ * Request a registration magic link (does not create the user yet).
+ */
+export async function requestRegistrationMagicLink(
+   userData: RegisterUserData,
+   linkBaseUrl: string,
+): Promise<ServiceResult<{ message: string }>> {
+   try {
+      const { error } = validateUserRegistration(userData);
+      if (error) {
+         return { success: false, error: error.details[0].message };
+      }
+
+      const { name, email, password } = userData;
+
+      const exists = await User.findOne({ email });
+      if (exists) {
+         return { success: false, error: "User already registered" };
+      }
+
+      const passwordHash = await hashPassword(password);
+      const tokenRaw = crypto.randomBytes(32).toString("hex");
+      const tokenHash = await bcrypt.hash(tokenRaw, 10);
+      const expiresAt = new Date(Date.now() + 1000 * 60 * 30); // 30 minutes
+
+      // Upsert pending record for this email
+      await RegistrationToken.findOneAndUpdate(
+         { email, purpose: "register" },
+         {
+            $set: {
+               email,
+               name,
+               passwordHash,
+               tokenHash,
+               purpose: "register",
+               expiresAt,
+            },
+            $unset: { usedAt: "" },
+         },
+         { upsert: true, new: true, setDefaultsOnInsert: true },
+      );
+
+      const confirmUrl = `${linkBaseUrl.replace(/\/$/, "")}/api/auth/register/confirm?token=${tokenRaw}`;
+
+      const mailed = await sendRegistrationMagicLink(email, confirmUrl, name);
+      if (!mailed) {
+         if (process.env.NODE_ENV !== "production") {
+            console.log(`[DEV] Magic link for ${email}: ${confirmUrl}`);
+         } else {
+            return { success: false, error: "Email service not configured" };
+         }
+      }
+
+      return { success: true, data: { message: "Magic link sent" } };
+   } catch (err) {
+      console.error("Error in requestRegistrationMagicLink:", err);
+      throw err;
+   }
+}
+
+/**
+ * Confirm magic link: create the user and return auth data
+ */
+export async function confirmRegistrationMagicLink(
+   tokenRaw: string,
+): Promise<ServiceResult<AuthTokenData>> {
+   try {
+      // Find a pending record that matches the token (not expired, not used)
+      const candidates = await RegistrationToken.find({
+         purpose: "register",
+         usedAt: { $exists: false },
+         expiresAt: { $gt: new Date() },
+      }).sort({ updatedAt: -1 });
+      if (!candidates.length) {
+         return { success: false, error: "Invalid or expired link" };
+      }
+
+      let pending: any = null;
+      for (const doc of candidates) {
+         const ok = await bcrypt.compare(tokenRaw, doc.tokenHash);
+         if (ok) {
+            pending = doc;
+            break;
+         }
+      }
+      if (!pending) {
+         return { success: false, error: "Invalid link" };
+      }
+
+      // Ensure user does not already exist (race-safe)
+      const existingUser = await User.findOne({ email: pending.email });
+      if (existingUser) {
+         return { success: false, error: "User already registered" };
+      }
+
+      // Determine role and team
+      const isCapstoneStudent = await checkCapstoneStudent(pending.email);
+      const userRole = isCapstoneStudent ? "capstoneStudent" : "visitor";
+      const teamObjectId = isCapstoneStudent
+         ? await getTeamByEmail(pending.email)
+         : null;
+
+      const user = new User({
+         name: pending.name,
+         email: pending.email,
+         password: pending.passwordHash,
+         role: userRole,
+         team: teamObjectId,
+      });
+
+      await user.save();
+
+      if (isCapstoneStudent && teamObjectId) {
+         await addUserToTeam(user._id.toString(), teamObjectId.toString());
+      }
+
+      await RegistrationToken.updateOne(
+         { _id: pending._id },
+         { usedAt: new Date() },
+      );
+
+      const token = generateToken({
+         id: user._id.toString(),
+         email: user.email,
+         role: user.role,
+      });
+
+      return {
+         success: true,
+         data: {
+            token,
+            user: {
+               id: user._id.toString(),
+               email: user.email,
+               role: user.role,
+               name: user.name,
+            },
+         },
+      };
+   } catch (err) {
+      console.error("Error in confirmRegistrationMagicLink:", err);
+      throw err;
+   }
+}
+
+// ===== Password Reset (Magic Link to Client) =====
+
+export async function requestPasswordResetLink(
+   email: string,
+   clientBaseUrl: string,
+): Promise<ServiceResult<{ message: string }>> {
+   try {
+      // Basic format check
+      const schema = Joi.object({ email: Joi.string().email().required() });
+      const { error } = schema.validate({ email });
+      if (error) return { success: false, error: error.details[0].message };
+
+      const user = await User.findOne({ email });
+      if (!user) {
+         return { success: false, error: "User email does not exist" };
+      }
+
+      const tokenRaw = crypto.randomBytes(32).toString("hex");
+      const tokenHash = await bcrypt.hash(tokenRaw, 10);
+      const expiresAt = new Date(Date.now() + 1000 * 60 * 30); // 30 minutes
+
+      await PasswordResetToken.findOneAndUpdate(
+         { email },
+         { $set: { email, tokenHash, expiresAt }, $unset: { usedAt: "" } },
+         { upsert: true, new: true, setDefaultsOnInsert: true },
+      );
+
+      const linkBase = clientBaseUrl.replace(/\/$/, "");
+      const resetUrl = `${linkBase}/reset-password?token=${tokenRaw}`;
+
+      const mailed = await sendPasswordResetLink(email, resetUrl, user.name);
+      if (!mailed) {
+         if (process.env.NODE_ENV !== "production") {
+            console.log(`[DEV] Password reset link for ${email}: ${resetUrl}`);
+         } else {
+            return { success: false, error: "Email service not configured" };
+         }
+      }
+
+      return { success: true, data: { message: "Reset link sent" } };
+   } catch (err) {
+      console.error("Error in requestPasswordResetLink:", err);
+      throw err;
+   }
+}
+
+export async function resetPasswordWithToken(
+   tokenRaw: string,
+   newPassword: string,
+): Promise<ServiceResult<{ message: string }>> {
+   try {
+      const schema = Joi.object({ password: Joi.string().min(6).required() });
+      const { error } = schema.validate({ password: newPassword });
+      if (error) return { success: false, error: error.details[0].message };
+
+      const candidates = await PasswordResetToken.find({
+         usedAt: { $exists: false },
+         expiresAt: { $gt: new Date() },
+      }).sort({ updatedAt: -1 });
+      if (!candidates.length) {
+         return { success: false, error: "Invalid or expired link" };
+      }
+
+      let pending: any = null;
+      for (const doc of candidates) {
+         const ok = await bcrypt.compare(tokenRaw, doc.tokenHash);
+         if (ok) {
+            pending = doc;
+            break;
+         }
+      }
+      if (!pending) return { success: false, error: "Invalid or expired link" };
+
+      const user = await User.findOne({ email: pending.email }).select(
+         "+password",
+      );
+      if (!user) return { success: false, error: "User not found" };
+
+      const hashed = await hashPassword(newPassword);
+      await User.updateOne({ _id: user._id }, { $set: { password: hashed } });
+      await PasswordResetToken.updateOne(
+         { _id: pending._id },
+         { usedAt: new Date() },
+      );
+
+      return { success: true, data: { message: "Password has been reset" } };
+   } catch (err) {
+      console.error("Error in resetPasswordWithToken:", err);
+      throw err;
+   }
+}
+
+/**
  * Validates user login data
  * @param userData - The user login data to validate
  * @returns Validation result containing validated data or error details
@@ -278,6 +520,19 @@ export async function loginUser(
    } catch (error) {
       console.error("Error in loginUser service:", error);
       throw error;
+   }
+}
+
+/**
+ * Check if a user with the given email exists
+ */
+export async function emailExists(email: string): Promise<boolean> {
+   try {
+      const exists = await User.exists({ email });
+      return !!exists;
+   } catch (err) {
+      console.error("Error checking email existence:", err);
+      return false;
    }
 }
 

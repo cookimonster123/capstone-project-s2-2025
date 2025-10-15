@@ -185,7 +185,8 @@ Steps:
    4. Go back to the Shells folder, enter command - cd ..
    5. Config deployment environment, enter command - ./DeploymentShells/DeployWithDomainName.sh
    6. Go to client folder to replace the VITE_GOOGLE_CLIENT_ID in .env file
-   7. Go to server folder to replace the CLIENT_URL and GOOGLE_CLIENT_ID in .env file
+   # For google client id, you need to config authorised ip for web on google as well
+   7. Go to server folder to replace the CLIENT_URL and GOOGLE_CLIENT_ID and SMTP configuration part in .env file
    8. Go to the Shells folder on terminal, enter command - ./FinalDeploy.sh
 ```
 
@@ -199,7 +200,8 @@ Steps:
    2. Go to the Shells folder, enter command - cd Shells/
    3. Config deployment environment, enter command - ./DeploymentShells/DeployWithoutDomainName.sh
    4. Go to client folder to replace the VITE_GOOGLE_CLIENT_ID in .env file
-   5. Go to server folder to replace the CLIENT_URL and GOOGLE_CLIENT_ID in .env file
+   # For google client id, you need to config authorised ip for web on google as well
+   5. Go to server folder to replace the CLIENT_URL and GOOGLE_CLIENT_ID and SMTP configuration part in .env file
    6. Go to the Shells folder on terminal, enter command - ./FinalDeploy.sh
 ```
 

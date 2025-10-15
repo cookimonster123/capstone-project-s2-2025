@@ -28,6 +28,11 @@ PORT=3000
 AWS_REGION=ap-southeast-2
 AWS_S3_BUCKET_NAME=showcaseweb
 
+# SMTP Configuration for sending emails
+SMTP_SERVICE=
+SMTP_USER=
+SMTP_PASS=
+
 #AWS Credentials - Uncomment and set these if not using IAM roles
 #AWS_ACCESS_KEY_ID= 
 #AWS_SECRET_ACCESS_KEY= 

@@ -10,6 +10,7 @@ import UploadProjectPage from "./pages/UploadProjectPage";
 import StudentDashboard from "./pages/StudentDashboard";
 import StudentDashboardMobilePage from "./pages/StudentDashboardMobilePage";
 import LoginPage from "./pages/LoginPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import RegisterPage from "./pages/RegisterPage";
 import StaffDashboard from "./pages/StaffDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -40,6 +41,7 @@ export const router = createBrowserRouter([
          { path: "sign-in", element: <LoginPage /> },
          { path: "register", element: <RegisterPage /> },
          { path: "login", element: <Navigate to="/sign-in" replace /> },
+         { path: "reset-password", element: <ResetPasswordPage /> },
          {
             path: "staff",
             element: (

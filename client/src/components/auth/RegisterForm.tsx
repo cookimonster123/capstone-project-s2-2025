@@ -1,5 +1,9 @@
-import React, { useState } from "react";
-import { Link as RouterLink, useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import {
+   Link as RouterLink,
+   useNavigate,
+   useSearchParams,
+} from "react-router-dom";
 import {
    Alert,
    Box,
@@ -13,7 +17,7 @@ import {
    useTheme,
 } from "@mui/material";
 import { Visibility, VisibilityOff, ArrowBack } from "@mui/icons-material";
-import { registerUser } from "../../api/authApi";
+import { requestRegisterMagicLink } from "../../api/authApi";
 import type { FormFieldErrors, RegisterFormData } from "@types";
 
 // Registration form (MUI)
@@ -27,8 +31,10 @@ const RegisterForm: React.FC = () => {
    const [showPassword, setShowPassword] = useState(false);
    const [message, setMessage] = useState("");
    const [errors, setErrors] = useState<FormFieldErrors>({});
+   const [submitting, setSubmitting] = useState(false);
 
    const nav = useNavigate();
+   const [searchParams] = useSearchParams();
 
    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const { name, value } = e.target;
@@ -38,9 +44,28 @@ const RegisterForm: React.FC = () => {
       }
    };
 
+   // Show success message at the bottom when redirected back with verified=1
+   useEffect(() => {
+      if (searchParams.get("verified") === "1") {
+         setErrors({});
+         setMessage(
+            "Registration verified successfully. Redirecting to sign-in...",
+         );
+         const t = setTimeout(() => nav("/sign-in"), 1800);
+         return () => clearTimeout(t);
+      }
+      const err = searchParams.get("verifyError");
+      if (err) {
+         setMessage("");
+         setErrors((prev) => ({ ...prev, form: decodeURIComponent(err) }));
+      }
+   }, [searchParams, nav]);
+
    const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
+      if (submitting) return; // prevent double submit
       setErrors({});
+      // Clear any prior message; we'll set a new one only if validation passes
       setMessage("");
 
       const nextErrors: typeof errors = {};
@@ -54,6 +79,11 @@ const RegisterForm: React.FC = () => {
          !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
       ) {
          nextErrors.email = "Please enter a valid email";
+      } else {
+         const domain = formData.email.split("@")[1]?.toLowerCase();
+         if (domain === "aucklanduni.ac.nz") {
+            nextErrors.email = "Please log in with Google";
+         }
       }
       if (!formData.password || formData.password.length < 6) {
          nextErrors.password = "Password must be at least 6 characters";
@@ -63,9 +93,15 @@ const RegisterForm: React.FC = () => {
          return;
       }
 
-      const result = await registerUser(formData);
+      // Inputs are valid: now show optimistic message and start request
+      setSubmitting(true);
+      setMessage(
+         "We've emailed you a one-time sign-in link. Please check your inbox to complete registration.",
+      );
+      const result = await requestRegisterMagicLink(formData);
       if (!result.success) {
-         const errorMessage = result.error || "Registration failed";
+         const errorMessage =
+            result.error || "Failed to send verification link";
          // Handle API errors
          if (/email/i.test(errorMessage)) {
             setErrors((prev) => ({ ...prev, email: errorMessage! }));
@@ -81,9 +117,12 @@ const RegisterForm: React.FC = () => {
          } else {
             setErrors((prev) => ({ ...prev, form: result.error! }));
          }
+         // Clear optimistic message on failure
+         setMessage("");
+         setSubmitting(false); // re-enable on failure only
       } else {
-         setMessage("Registration successful!");
-         nav("/sign-in");
+         // Keep the optimistic message
+         // Do not navigate; user will click the link from email
       }
    };
 
@@ -506,21 +545,28 @@ const RegisterForm: React.FC = () => {
                      },
                      "&:active": { boxShadow: "none" },
                      "&:disabled": {
-                        backgroundColor: "#90caf9",
-                        color: "#fff",
+                        backgroundColor: (theme) =>
+                           theme.palette.mode === "dark"
+                              ? "#5a5f6b"
+                              : "#bdbdbd",
+                        color: (theme) =>
+                           theme.palette.mode === "dark"
+                              ? "#e0e0e0"
+                              : "#ffffff",
                      },
                   }}
+                  disabled={submitting}
                >
                   Create an account
                </Button>
 
                {message && (
-                  <Alert severity="success" sx={{ mt: 2 }}>
+                  <Alert variant="filled" severity="success" sx={{ mt: 2 }}>
                      {message}
                   </Alert>
                )}
                {errors.form && (
-                  <Alert severity="error" sx={{ mt: 2 }}>
+                  <Alert variant="filled" severity="error" sx={{ mt: 2 }}>
                      {errors.form}
                   </Alert>
                )}

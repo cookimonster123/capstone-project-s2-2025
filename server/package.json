@@ -30,7 +30,8 @@
       "joi-objectid": "^4.0.2",
       "jsonwebtoken": "^9.0.2",
       "mongoose": "^8.17.2",
-      "multer": "^2.0.2"
+      "multer": "^2.0.2",
+      "nodemailer": "^6.10.1"
    },
    "devDependencies": {
       "@types/bcryptjs": "^2.4.6",

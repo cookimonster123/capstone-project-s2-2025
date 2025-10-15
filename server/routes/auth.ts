@@ -1,12 +1,27 @@
 import Router from "express";
-import { register, login, logout, loginWithGoogle } from "@controllers";
+import {
+   register,
+   login,
+   logout,
+   requestMagicLink,
+   confirmMagicLink,
+   checkEmail,
+   requestPasswordReset,
+   resetPassword,
+   loginWithGoogle,
+} from "@controllers";
 import { authenticateToken, authorizeRoles } from "../middleware/auth";
 
 const router = Router();
 
 router.post("/register", register);
+router.post("/register/request-magic-link", requestMagicLink);
+router.get("/register/confirm", confirmMagicLink);
 router.post("/login", login);
 router.post("/logout", logout);
+router.get("/check-email", checkEmail);
+router.post("/password/request-reset", requestPasswordReset);
+router.post("/password/reset", resetPassword);
 router.post("/google", loginWithGoogle);
 
 // Dummy protected endpoints for testing auth middleware
