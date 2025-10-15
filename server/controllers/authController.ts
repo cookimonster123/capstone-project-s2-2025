@@ -92,9 +92,22 @@ export const confirmMagicLink = async (
       }
 
       const result = await confirmRegistrationMagicLink(token);
-      const clientUrl =
-         process.env.CLIENT_PUBLIC_URL ||
-         `http://localhost:${process.env.CLIENT_URL || 5173}`;
+      // Build a robust client base to redirect back to the frontend:
+      // 1) Prefer CLIENT_PUBLIC_URL if provided (should be a full origin)
+      // 2) Else, if CLIENT_URL looks like a full origin (http/https), use it
+      // 3) Else, in development use Vite dev server (5173 default)
+      // 4) Else, fallback to server public URL or current request host
+      const explicitClient = (process.env.CLIENT_URL || "").trim();
+      const hasScheme = /^https?:\/\//i.test(explicitClient);
+      const clientBase = hasScheme
+         ? explicitClient
+         : process.env.NODE_ENV !== "production"
+           ? `http://localhost:${process.env.CLIENT_DEV_PORT || 5173}`
+           : (
+                process.env.SERVER_PUBLIC_URL ||
+                `${req.protocol}://${req.get("host")}`
+             ).trim();
+      const clientUrl = clientBase.replace(/\/$/, "");
       if (!result.success) {
          // Redirect back with error code for better UX
          const reason = encodeURIComponent(result.error || "invalid");
@@ -106,7 +119,8 @@ export const confirmMagicLink = async (
       res.cookie("token", result.data?.token, {
          httpOnly: true,
          secure: process.env.NODE_ENV === "production",
-         sameSite: "strict",
+         sameSite:
+            process.env.NODE_ENV === "production" ? ("none" as any) : "strict",
          maxAge: 60 * 60 * 1000,
       });
 
@@ -148,9 +162,21 @@ export const requestPasswordReset = async (
 ): Promise<void> => {
    try {
       const { email } = req.body as { email: string };
-      const clientBase =
-         process.env.CLIENT_PUBLIC_URL ||
-         `http://localhost:${process.env.CLIENT_URL || 5173}`;
+      // Build a robust public client base:
+      // 1) If CLIENT_PUBLIC_URL (full origin) is set, use it
+      // 2) Else, if CLIENT_URL is a full origin (starts with http), use it
+      // 3) Else, in development use Vite dev server (5173 by default)
+      // 4) Else, fall back to server public URL or current request host
+      const explicitClient = (process.env.CLIENT_URL || "").trim();
+      const hasScheme = /^https?:\/\//i.test(explicitClient);
+      const clientBase = hasScheme
+         ? explicitClient
+         : process.env.NODE_ENV !== "production"
+           ? `http://localhost:${process.env.CLIENT_DEV_PORT || 5173}`
+           : (
+                process.env.SERVER_PUBLIC_URL ||
+                `${req.protocol}://${req.get("host")}`
+             ).trim();
       const result = await requestPasswordResetLink(email, clientBase);
       if (!result.success) {
          res.status(400).json(result);

@@ -20,7 +20,7 @@ NODE_ENV=development #Change to "production" for production deployment
 GOOGLE_CLIENT_ID= # Add your Google OAuth Client ID here
 
 # Replace "5173" below with your EC2 IPv4 below when deploying e.g., http://123.456.789.012 (default port: 80)
-#CLIENT_URL=http://EC2_PUBLIC_IPV4 # For deployment
+#CLIENT_URL=http://EC2_PUBLIC_IPV4_OR_DOMAIN_NAME # For deployment
 CLIENT_URL=5173 # Local testing
 PORT=3000
 

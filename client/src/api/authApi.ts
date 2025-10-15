@@ -105,9 +105,11 @@ export const checkEmailExists = async (
    email: string,
 ): Promise<{ success: boolean; exists?: boolean; error?: string }> => {
    try {
-      const url = new URL(`${BASE_API_URL}/auth/check-email`);
-      url.searchParams.set("email", email);
-      const response = await fetch(url.toString(), { credentials: "include" });
+      const qs = new URLSearchParams({ email });
+      const response = await fetch(
+         `${BASE_API_URL}/auth/check-email?${qs.toString()}`,
+         { credentials: "include" },
+      );
       const data = await response.json();
       if (data?.success && data?.data) {
          return { success: true, exists: !!data.data.exists };
