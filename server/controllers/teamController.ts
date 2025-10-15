@@ -164,17 +164,61 @@ export const uploadTeamsCSV = async (
          canvas_group_id: string;
       }> = [];
 
-      // Parse CSV using csv-parser
+      // Parse CSV using csv-parser, normalizing headers and accepting common Canvas variants
       await new Promise<void>((resolve, reject) => {
          const stream = Readable.from(req.file!.buffer);
          stream
-            .pipe(csvParser())
+            .pipe(
+               csvParser({
+                  mapHeaders: ({ header }) => {
+                     if (!header) return header as any;
+                     const h = String(header).trim().toLowerCase();
+                     // Normalize spaces/underscores
+                     const norm = h.replace(/\s+/g, "_");
+                     return norm;
+                  },
+               }),
+            )
             .on("data", (data) => {
+               // Resolve aliases for each required field
+               const getField = (obj: any, keys: string[]) => {
+                  for (const k of keys) {
+                     if (obj[k] !== undefined && obj[k] !== null) return obj[k];
+                  }
+                  return "";
+               };
+               const name = getField(data, [
+                  "name",
+                  "student",
+                  "student_name",
+                  "full_name",
+               ]);
+               const loginId = getField(data, [
+                  "login_id",
+                  "login",
+                  "loginid",
+                  "login-id",
+                  "sis_login_id",
+                  "username",
+               ]);
+               const groupName = getField(data, [
+                  "group_name",
+                  "group",
+                  "groupname",
+                  "group_name_1",
+               ]);
+               const canvasGroupId = getField(data, [
+                  "canvas_group_id",
+                  "group_id",
+                  "canvas_groupid",
+                  "canvas_group",
+               ]);
+
                rows.push({
-                  name: String(data.name ?? "").trim(),
-                  login_id: String(data.login_id ?? "").trim(),
-                  group_name: String(data.group_name ?? "").trim(),
-                  canvas_group_id: String(data.canvas_group_id ?? "").trim(),
+                  name: String(name ?? "").trim(),
+                  login_id: String(loginId ?? "").trim(),
+                  group_name: String(groupName ?? "").trim(),
+                  canvas_group_id: String(canvasGroupId ?? "").trim(),
                });
             })
             .on("end", () => resolve())
@@ -192,8 +236,18 @@ export const uploadTeamsCSV = async (
 
       for (const row of rows) {
          const { name, login_id, group_name, canvas_group_id } = row;
+         // Skip completely blank lines (common in CSV exports)
+         const allEmpty = [name, login_id, group_name, canvas_group_id]
+            .map((v) => String(v || "").trim())
+            .every((v) => v === "");
+         if (allEmpty) {
+            continue;
+         }
          if (!name || !login_id || !group_name || !canvas_group_id) {
-            errors.push({ row, error: "Missing required columns" });
+            errors.push({
+               row,
+               error: "Missing required columns (need: name, login_id, group_name, canvas_group_id)",
+            });
             continue;
          }
 

@@ -1,5 +1,5 @@
 import Router from "express";
-import { register, login, logout } from "@controllers";
+import { register, login, logout, loginWithGoogle } from "@controllers";
 import { authenticateToken, authorizeRoles } from "../middleware/auth";
 
 const router = Router();
@@ -7,6 +7,7 @@ const router = Router();
 router.post("/register", register);
 router.post("/login", login);
 router.post("/logout", logout);
+router.post("/google", loginWithGoogle);
 
 // Dummy protected endpoints for testing auth middleware
 router.get("/profile", authenticateToken, (req: any, res) => {

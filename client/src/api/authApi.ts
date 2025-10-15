@@ -59,3 +59,23 @@ export const loginUser = async (
       };
    }
 };
+
+// Google OAuth login using Google Identity credential
+export const loginWithGoogle = async (
+   credential: string,
+): Promise<{ success: boolean; data?: any; error?: string }> => {
+   try {
+      const response = await fetch(`${BASE_API_URL}/auth/google`, {
+         method: "POST",
+         headers: { "Content-Type": "application/json" },
+         credentials: "include",
+         body: JSON.stringify({ credential }),
+      });
+      const data = await response.json();
+      if (!response.ok)
+         return { success: false, error: data?.error || "Login failed" };
+      return data;
+   } catch (err: any) {
+      return { success: false, error: err?.message || "Network error" };
+   }
+};

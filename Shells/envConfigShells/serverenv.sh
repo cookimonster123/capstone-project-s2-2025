@@ -16,7 +16,8 @@ MONGODB_URI=mongodb://mongo:27017/mydatabase
 #MONGODB_URI=Your_MongoDB_Connection_String_Here
 
 JWT_SECRET=test_jwt_secret_key_for_testing_purposes_only
-NODE_ENV=development
+NODE_ENV=development #Change to "production" for production deployment
+GOOGLE_CLIENT_ID= # Add your Google OAuth Client ID here
 
 # Replace "5173" below with your EC2 IPv4 below when deploying e.g., http://123.456.789.012 (default port: 80)
 #CLIENT_URL=http://EC2_PUBLIC_IPV4 # For deployment

@@ -24,12 +24,26 @@ const app = express();
 
 app.use(loggingMiddleware);
 
+// Behind a reverse proxy (e.g., Caddy/Nginx) so secure cookies are respected
+app.set("trust proxy", 1);
+
 app.use(
    cors({
-      origin:
-         `http://localhost:${process.env.CLIENT_URL}` ||
-         "http://localhost:5173",
-      credentials: true, // Allow cookies to be sent
+      origin: (origin, callback) => {
+         const allowed = [
+            process.env.CLIENT_URL, // e.g. https://www.capstones.click
+            "http://localhost:5173",
+         ].filter(Boolean) as string[];
+         if (!origin || allowed.includes(origin)) return callback(null, true);
+         // allow subdomain variants if needed
+         try {
+            const o = new URL(origin);
+            const allowedHosts = allowed.map((u) => new URL(u).host);
+            if (allowedHosts.includes(o.host)) return callback(null, true);
+         } catch {}
+         return callback(new Error("CORS not allowed"));
+      },
+      credentials: true,
    }),
 );
 connectDB();

@@ -3,7 +3,7 @@
  * Handles user authentication with dark mode support
  * Fixed: Added InputProps sx for proper background color control
  */
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
 import {
    Alert,
@@ -21,7 +21,7 @@ import {
 } from "@mui/material";
 import { Visibility, VisibilityOff, ArrowBack } from "@mui/icons-material";
 import type { FormFieldErrors } from "@types";
-import { loginUser } from "../../api/authApi";
+import { loginUser, loginWithGoogle } from "../../api/authApi";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
@@ -31,6 +31,8 @@ const LoginForm: React.FC = () => {
    const [message, setMessage] = useState("");
    const [loading, setLoading] = useState(false);
    const [errors, setErrors] = useState<FormFieldErrors>({});
+   const googleButtonRef = useRef<HTMLDivElement | null>(null);
+   const googleInitRef = useRef(false);
 
    const [showPassword, setShowPassword] = useState(false);
    const [rememberMe, setRememberMe] = useState(false);
@@ -53,6 +55,157 @@ const LoginForm: React.FC = () => {
          );
       }
    }, []);
+
+   // Initialize Google Identity Services once and render the official Sign-In button
+   useEffect(() => {
+      const initGoogle = async () => {
+         if (googleInitRef.current) return;
+         const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as
+            | string
+            | undefined;
+         if (!clientId) {
+            // Config missing; do not block the page, but surface a clear error when the user tries
+            return;
+         }
+
+         try {
+            (window as any).google.accounts.id.initialize({
+               client_id: clientId,
+               // Avoid FedCM AbortError path; rely on popup/button flow
+               use_fedcm_for_prompt: false,
+               itp_support: true,
+               callback: async (response: any) => {
+                  try {
+                     if (!response?.credential) {
+                        setErrors((prev) => ({
+                           ...prev,
+                           form: "Google login failed: No credential returned",
+                        }));
+                        return;
+                     }
+                     const result = await loginWithGoogle(response.credential);
+                     if (result.success && result.data?.user) {
+                        const u = result.data.user;
+                        const pic =
+                           typeof u.profilePicture === "string" &&
+                           u.profilePicture.trim() !== ""
+                              ? u.profilePicture.trim()
+                              : undefined;
+                        signIn({
+                           id: u.id,
+                           name: u.name,
+                           email: u.email,
+                           role: u.role,
+                           ...(pic ? { profilePicture: pic } : {}),
+                        });
+                        const role = u.role;
+                        if (role === "admin") nav("/admin");
+                        else if (role === "staff") nav("/staff");
+                        else nav("/");
+                     } else {
+                        setErrors((prev) => ({
+                           ...prev,
+                           form: result.error || "Google login failed",
+                        }));
+                     }
+                  } catch (e: any) {
+                     setErrors((prev) => ({
+                        ...prev,
+                        form: e?.message || "Google login error",
+                     }));
+                  }
+               },
+            });
+
+            // Render the official Sign-In button (popup based, resilient across browsers)
+            if (googleButtonRef.current) {
+               try {
+                  (window as any).google.accounts.id.renderButton(
+                     googleButtonRef.current,
+                     {
+                        type: "standard",
+                        theme:
+                           theme.palette.mode === "dark"
+                              ? "filled_black"
+                              : "outline",
+                        size: "large",
+                        text: "continue_with",
+                        shape: "rectangular",
+                        logo_alignment: "left",
+                     },
+                  );
+               } catch (e) {
+                  // best-effort; ignore render errors
+               }
+            }
+
+            // Try a non-intrusive prompt; add diagnostics for visibility
+            try {
+               (window as any).google.accounts.id.prompt(
+                  (notification: any) => {
+                     const logPrefix = "Google prompt: ";
+                     if (
+                        notification.isNotDisplayed &&
+                        notification.isNotDisplayed()
+                     ) {
+                        const reason =
+                           notification.getNotDisplayedReason?.() ||
+                           "not_displayed";
+                        console.info(logPrefix + "not_displayed -", reason);
+                     } else if (
+                        notification.isSkippedMoment &&
+                        notification.isSkippedMoment()
+                     ) {
+                        const reason =
+                           notification.getSkippedReason?.() || "skipped";
+                        console.info(logPrefix + "skipped -", reason);
+                     } else if (
+                        notification.isDismissedMoment &&
+                        notification.isDismissedMoment()
+                     ) {
+                        const reason =
+                           notification.getDismissedReason?.() || "dismissed";
+                        console.info(logPrefix + "dismissed -", reason);
+                     }
+                  },
+               );
+            } catch {}
+
+            googleInitRef.current = true;
+         } catch (e) {
+            // Initialization failed; user can still use the email/password path
+         }
+      };
+
+      const ensureScript = () =>
+         new Promise<void>((resolve, reject) => {
+            if ((window as any).google?.accounts?.id) return resolve();
+            const existing = document.querySelector<HTMLScriptElement>(
+               "script[src='https://accounts.google.com/gsi/client']",
+            );
+            if (existing) {
+               existing.addEventListener("load", () => resolve());
+               existing.addEventListener("error", () =>
+                  reject(new Error("Failed to load Google script")),
+               );
+               return;
+            }
+            const s = document.createElement("script");
+            s.src = "https://accounts.google.com/gsi/client";
+            s.async = true;
+            s.defer = true;
+            s.onload = () => resolve();
+            s.onerror = () => reject(new Error("Failed to load Google script"));
+            document.head.appendChild(s);
+         });
+
+      ensureScript()
+         .then(() => initGoogle())
+         .catch(() => {
+            // Script failed; do nothing (email login remains)
+         });
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+   }, [theme.palette.mode]);
 
    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const { name, value } = e.target;
@@ -598,7 +751,16 @@ const LoginForm: React.FC = () => {
                   {loading ? "Logging in…" : "Log in"}
                </Button>
 
-               <Box sx={{ display: "flex", justifyContent: "center", mt: 1 }}>
+               <Box
+                  sx={{
+                     display: "flex",
+                     justifyContent: "center",
+                     alignItems: "center",
+                     gap: 1.5,
+                     mt: 1,
+                     flexWrap: "wrap",
+                  }}
+               >
                   <Button
                      type="button"
                      variant="text"
@@ -606,6 +768,11 @@ const LoginForm: React.FC = () => {
                   >
                      Forgot your password?
                   </Button>
+               </Box>
+
+               {/* Official Google Sign-In button mount point (popup flow) */}
+               <Box sx={{ display: "flex", justifyContent: "center", mt: 1 }}>
+                  <div ref={googleButtonRef} aria-label="Sign in with Google" />
                </Box>
 
                {message && (

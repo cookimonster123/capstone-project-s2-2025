@@ -1,5 +1,7 @@
 # Capstone Project S2 2025 Team 36
 
+# Our website link: https://www.capstones.click/
+
 ## Developer Setup Guide
 
 This guide will help you set up the project from scratch on a clean machine (macOS, Windows, or Linux). It covers installing all prerequisites, setting up the client and server, and running the application.
@@ -182,8 +184,9 @@ Steps:
    3. Go to ./CaddyConfigShells folder to replace domain names with your domain names in CaddyfileWithDomainName.sh
    4. Go back to the Shells folder, enter command - cd ..
    5. Config deployment environment, enter command - ./DeploymentShells/DeployWithDomainName.sh
-   6. Go to server folder to replace the CLIENT_URL in .env file
-   7. Go to the Shells folder on terminal, enter command - ./FinalDeploy.sh
+   6. Go to client folder to replace the VITE_GOOGLE_CLIENT_ID in .env file
+   7. Go to server folder to replace the CLIENT_URL and GOOGLE_CLIENT_ID in .env file
+   8. Go to the Shells folder on terminal, enter command - ./FinalDeploy.sh
 ```
 
 ## How to run the shells for quick website deployment without domain name
@@ -195,8 +198,9 @@ Steps:
    1. In the root folder, enter command - chmod -R +x ./Shells
    2. Go to the Shells folder, enter command - cd Shells/
    3. Config deployment environment, enter command - ./DeploymentShells/DeployWithoutDomainName.sh
-   4. Go to server folder to replace the CLIENT_URL in .env file
-   5. Go to the Shells folder on terminal, enter command - ./FinalDeploy.sh
+   4. Go to client folder to replace the VITE_GOOGLE_CLIENT_ID in .env file
+   5. Go to server folder to replace the CLIENT_URL and GOOGLE_CLIENT_ID in .env file
+   6. Go to the Shells folder on terminal, enter command - ./FinalDeploy.sh
 ```
 
 ## How to quickly undeploy (close the website)
