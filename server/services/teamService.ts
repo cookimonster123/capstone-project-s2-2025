@@ -70,9 +70,11 @@ export async function addUserToTeam(
       if (!user) {
          throw new Error("User not found");
       }
-
-      team.members.push(user._id);
-      await team.save();
+      // Use $addToSet for atomic, duplicate-free member addition
+      await Team.updateOne(
+         { _id: teamId },
+         { $addToSet: { members: user._id } },
+      );
    } catch (error) {
       console.error("Error adding user to team:", error);
       throw error;
