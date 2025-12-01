@@ -17,9 +17,15 @@
       "jsx": "react-jsx",
 
       /* Linting */
+      "baseUrl": ".",
       "paths": {
-         "@app/*": ["./src/app/*"],
-         "@lib/*": ["./src/lib/*"]
+         "@/*": ["./src/*"],
+         "@types": ["./src/types/index.ts"],
+         "@types/*": ["./src/types/*"],
+         "@api/*": ["./src/api/*"],
+         "@components/*": ["./src/components/*"],
+         "@pages/*": ["./src/pages/*"],
+         "@hooks/*": ["./src/hooks/*"]
       },
       "ignoreDeprecations": "6.0",
       "strict": true,
