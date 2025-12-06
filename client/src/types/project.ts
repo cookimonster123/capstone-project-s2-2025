@@ -48,12 +48,9 @@ export interface Project {
    awards?: AwardInfo[];
    likeCounts?: number;
    imageUrl?: string[];
-
    links: ProjectLink[];
    createdAt: string;
    updatedAt: string;
-
-   likesCount?: number;
    userLiked?: boolean;
 }
 

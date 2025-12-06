@@ -23,7 +23,9 @@
          "@types": ["./src/types/index.ts"],
          "@types/*": ["./src/types/*"],
          "@api/*": ["./src/api/*"],
+         "@api": ["./src/api/index.ts"],
          "@components/*": ["./src/components/*"],
+         "@components": ["./src/components/index.ts"],
          "@pages/*": ["./src/pages/*"],
          "@hooks/*": ["./src/hooks/*"]
       },
