@@ -1,5 +1,11 @@
+import { ProjectGalleryPage } from "@pages";
+
 function App() {
-   return <></>;
+   return (
+      <>
+         <ProjectGalleryPage />
+      </>
+   );
 }
 
 export default App;
