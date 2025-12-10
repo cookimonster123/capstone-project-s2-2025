@@ -1,16 +1,28 @@
 import type { Project } from "@types";
 interface ProjectCardProps {
    project: Project;
+   onProjectClick: (project: Project) => void;
 }
 
-export function ProjectCard({ project }: ProjectCardProps) {
+/**
+ * Renders a single project card with image, name, and description
+ *
+ * @param {ProjectCardProps} props - Component props
+ * @param {Project} props.project - Project object containing name and description
+ * @param {Function} props.onProjectClick - Callback fired when card is clicked
+ * @returns {JSX.Element} A card component displaying project information
+ */
+export function ProjectCard({ project, onProjectClick }: ProjectCardProps) {
    const projectName = project.name;
    const projectDescription = project.description;
-   const categoryName = project.category?.name || "";
-   const semesterInfo = project.semester;
+   // const categoryName = project.category?.name || "";
+   // const semesterInfo = project.semester;
 
    return (
-      <div className="max-w-sm rounded overflow-hidden shadow-lg">
+      <div
+         className="max-w-sm rounded overflow-hidden shadow-lg"
+         onClick={() => onProjectClick(project)}
+      >
          <img
             className="w-full"
             src="../../assets/cat.jpg"
