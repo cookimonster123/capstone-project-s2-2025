@@ -4,6 +4,14 @@ interface ProjectCardProps {
    onProjectClick: (project: Project) => void;
 }
 
+/**
+ * Renders a single project card with image, name, and description
+ *
+ * @param {ProjectCardProps} props - Component props
+ * @param {Project} props.project - Project object containing name and description
+ * @param {Function} props.onProjectClick - Callback fired when card is clicked
+ * @returns {JSX.Element} A card component displaying project information
+ */
 export function ProjectCard({ project, onProjectClick }: ProjectCardProps) {
    const projectName = project.name;
    const projectDescription = project.description;

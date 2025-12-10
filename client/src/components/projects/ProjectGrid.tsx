@@ -6,6 +6,14 @@ interface ProjectGridProps {
    onProjectClick: (project: Project) => void;
 }
 
+/**
+ * Renders a responsive grid of project cards
+ *
+ * @param {ProjectGridProps} props - Component props
+ * @param {Project[]} props.projects - Array of project objects to display
+ * @param {Function} props.onProjectClick - Callback fired when a project is clicked
+ * @returns {JSX.Element} A grid layout containing ProjectCard components
+ */
 export function ProjectGrid({
    projects = [],
    onProjectClick,
